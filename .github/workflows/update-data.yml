@@ -18,6 +18,12 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r requirements.txt
+      - name: Run tests
+        # Fail fast before any fetch/build/deploy if normalisation regresses
+        # (e.g. the silent date-format collapse).
+        run: |
+          pip install pytest
+          python -m pytest -q
       - name: Fetch new data and rebuild site
         run: python -m pipeline.run
       - name: Commit refreshed data + manifest
