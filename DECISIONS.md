@@ -6,6 +6,35 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — DEPLOYED (first watched run); live at drjmartins.github.io/cancer-waiting-times (Code)
+Public repo drjmartins/cancer-waiting-times, GitHub Pages via Actions. All four
+post-deploy checks pass: (1) Actions run green and the Pages site loads (200 for
+index/compare/data); (2) the checkout-without-data/raw RE-FETCH path works —
+forced by dropping 2022-23 from the manifest, the hosted runner re-downloaded
+the 53.4MB CSV fresh, normalised/merged, and committed the manifest+store back
+(verified, data restored to 5 FYs); (3) download links resolve on the live site
+(gz 10.4MB, headline 4.6MB, per-FY 57MB all 200) — the no-op-rebuild fix means
+the gitignored downloads/ ship in the Pages artefact; (4) daily cron 0 16 UTC is
+registered and the hosted no-op path rebuilds + deploys cleanly.
+Gotchas surfaced by the first run (this is what first deploys are for):
+ - GitHub did not index the workflow from the initial bulk push; touching the
+   file in a follow-up commit forced registration.
+ - 3 comparison tests passed on macOS but FAILED on Linux CI: they opened
+   CMB62__all__All.json while the build writes lowercase slugs (..._all.json);
+   macOS's case-insensitive FS hid it. Fixed by deriving the name via _slug.
+   The tests-before-deploy gate caught it (nothing shipped on the red run).
+ - Every run rewrites meta.json's built_at, so each daily run makes a one-line
+   "Auto update CWT data" commit even with no data change (it is the footer's
+   "last updated" date; harmless).
+
+## 2026-06-10 — FDS28 high-phi funnel VERIFIED not degenerate (Code)
+Eyeballed as flagged: FDS28 all-cancers phi=79.9 (very high — genuine large
+between-trust variation in FDS reporting; FDS denominators are big, up to ~22k).
+Limits flare very wide at low n but converge at high n, and a sensible handful of
+high-volume trusts still breach: 15 beyond 95%, 4 beyond 99.8% of 140 clearing.
+So the adjustment is not so strong that nothing is ever flagged (the opposite
+failure to the 71/139 over-flagging). No change needed.
+
 ## 2026-06-10 — run_real always rebuilds the site, even on a no-op fetch (Code)
 Deploy-blocking bug found before first deploy: run_real() early-returned before
 build() when no new files were found, but the download slices and comparison
