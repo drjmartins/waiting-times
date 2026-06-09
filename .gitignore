@@ -5,9 +5,9 @@ data/raw/
 # seed a real run). Never belongs in the repo.
 data/processed/tidy_synthetic.parquet
 
-# Full tidy CSV download artefact (~200MB) exceeds GitHub's 100MB file limit.
-# Rebuilt every run into the site/ Pages artefact; not stored in git.
-site/data/cwt_tidy.csv
+# Download artefacts (per-FY CSVs, headline extract, gzipped full file). Large
+# and rebuilt every run into the site/ Pages artefact; not stored in git.
+site/data/downloads/
 
 # Python / OS cruft
 __pycache__/

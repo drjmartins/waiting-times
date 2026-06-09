@@ -6,6 +6,53 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-09 — Comparison basis = rolling 3 most-recent FINALISED months, pooled (planning session, logged by Code)
+Default comparison period is the most recent 3 FINALISED months (currently
+Jul–Sep 2025), NOT the single most-recent-final month. Rationale: a 3-month
+aggregate stabilises the denominator exactly where the threshold/fallback bite
+(granular breakdowns), is more current in spirit than one ~8-month-old month
+(pools the freshest STABLE data), and finalised-only means the comparison
+doesn't shift under users as provisional data revises (provisional months still
+appear in per-trust time series, just not as the comparison basis). AGGREGATION
+(hold firm): sum numerators and sum denominators across the 3 months, then
+compute performance from the totals — never average three monthly percentages
+(mis-weights months of different sizes). Exact months stated on screen
+("Jul–Sep 2025, finalised"). config: COMPARISON_WINDOW_MONTHS=3. No period
+selector built for v1 (the robust default is what matters); the precompute keys
+off finalised months so a selector is a cheap later add.
+
+## 2026-06-09 — Comparison precompute at build time; region scoping is a client filter (Claude Code)
+Precompute one JSON per measure (standard x all/cancer/route/modality) at build
+time rather than computing client-side over 1.1M rows — cleaner given the
+breakdown combinatorics. Each file ships the national p0, z-values (1.96/3.09)
+and threshold; the front end draws the funnel limit curves and does scope
+filtering + fallback. Because limits are NATIONAL-anchored, one file serves every
+scope (region = a client-side filter on the trust list), so no per-region
+duplication. 61 measures, ~1.2MB total, committed. Combination breakdowns stay in
+the store but are NOT offered as comparison measures in v1.
+OBSERVATION for planning/methods: with plain binomial 95%/99.8% limits (as the
+spec/protocol specify), ~71 of 139 trusts breach the 99.8% limit on the CMB62
+all-cancers headline. This is expected funnel OVERDISPERSION on NHS provider data
+(real between-trust variation exceeds binomial). I followed the spec exactly and
+did NOT add an overdispersion adjustment (Spiegelhalter additive/multiplicative)
+— flagging it as a methods question if the high breach rate reads as alarming.
+
+## 2026-06-09 — Download slices replace the 200MB single CSV; downloads/ is artefact-only (Claude Code)
+build_site_data._build_downloads emits per-financial-year CSVs (cwt_tidy_<FY>.csv,
+~47–59MB each), an all-cancers headline extract (cwt_headline_all_cancers.csv,
+~4.4MB) and the gzipped full file (cwt_tidy_full.csv.gz, ~10MB, was ~200MB raw),
+plus a downloads/index.json manifest. The whole site/data/downloads/ dir is
+.gitignore'd (rebuilt each run into the Pages artefact, like the old CSV) since
+the per-FY files exceed sensible git sizes. The front-end download UI is the
+planning session's to design — files are provided.
+
+## 2026-06-09 — FLAG: index.html footer still says "synthetic, must not be used" (Claude Code)
+The per-org page footer reads "Prototype built on synthetic data … must not be
+used for analysis." That is now FALSE — the site is built from genuine NHS data.
+This is product wording (planning's call) but it is a MUST-FIX-BEFORE-DEPLOY: a
+real-data dashboard that disclaims itself as synthetic is contradictory. Not
+changed unilaterally; flagged for the planning session.
+
 ## 2026-06-09 — Comparison view v1 is REGIONS-ONLY; ICB deferred (planning session, logged by Code)
 Trust comparison view compares trusts scoped to England or a single NHS region.
 ICB is deliberately NOT a comparator scope in v1: trust↔region is clean and
