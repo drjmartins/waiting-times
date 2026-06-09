@@ -1,0 +1,15 @@
+# Source CSVs: large (~230MB) and re-downloadable; CI re-fetches, never commits.
+data/raw/
+
+# Dev-only synthetic store (kept separate from the real store so it can never
+# seed a real run). Never belongs in the repo.
+data/processed/tidy_synthetic.parquet
+
+# Full tidy CSV download artefact (~200MB) exceeds GitHub's 100MB file limit.
+# Rebuilt every run into the site/ Pages artefact; not stored in git.
+site/data/cwt_tidy.csv
+
+# Python / OS cruft
+__pycache__/
+*.py[cod]
+.DS_Store

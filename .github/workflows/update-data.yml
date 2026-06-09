@@ -1,0 +1,37 @@
+name: Update CWT data and deploy
+
+on:
+  schedule:
+    - cron: "0 16 * * *"   # daily 16:00 UTC; only does work when NHS posts new files
+  workflow_dispatch: {}      # manual trigger
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - name: Fetch new data and rebuild site
+        run: python -m pipeline.run
+      - name: Commit refreshed data + manifest
+        run: |
+          git config user.name "cwt-bot"
+          git config user.email "cwt-bot@users.noreply.github.com"
+          git add data/manifest.json data/processed site/data
+          git commit -m "Auto update CWT data" || echo "No changes to commit"
+          git push
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages }
+    steps:
+      - uses: actions/deploy-pages@v4

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cancer Waiting Times Explorer</title>
+<style>
+  :root{
+    /* Clinical chart-paper palette: cool slate ink, a single signal-amber for
+       the target line, restrained teal for the org series. */
+    --ink:#11202b; --ink-soft:#4a5a64; --line:#d7e0e3; --paper:#fbfcfc;
+    --panel:#ffffff; --org:#0f7d8c; --nat:#9aa7ad; --target:#c8881d;
+    --good:#2f7d4f; --bad:#b23b3b; --grid:#eef3f4;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.5}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 24px 80px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:8px}
+  h1{font-size:30px;margin:0 0 2px;letter-spacing:-.01em}
+  .sub{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;
+    text-transform:uppercase;letter-spacing:.14em;color:var(--ink-soft)}
+  .controls{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;
+    margin:22px 0 10px}
+  label{display:block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:5px}
+  select,input[type=search]{font:inherit;font-size:15px;padding:8px 10px;
+    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:320px}
+  .note{background:#fff7e8;border:1px solid #f0dcae;border-left:3px solid var(--target);
+    padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0 26px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}select,input[type=search]{min-width:0;width:100%}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 16px 10px}
+  .card h3{margin:0 0 2px;font-size:16px}
+  .card .meta{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);margin-bottom:8px}
+  .latest{font-size:13px;color:var(--ink-soft);margin:4px 0 0}
+  .latest b{font-size:22px;color:var(--ink);font-family:inherit}
+  .prize{margin-top:30px;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;padding:20px 22px}
+  .prize h2{margin:0 0 4px;font-size:20px}
+  .prize p.lede{margin:0 0 16px;color:var(--ink-soft);font-size:14px;max-width:60ch}
+  .prizegrid{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+  .slider label{margin-bottom:10px}
+  .slider input{width:260px}
+  .result{flex:1;min-width:240px;border-left:2px solid var(--org);padding-left:18px}
+  .result .big{font-size:38px;font-weight:600;letter-spacing:-.02em;color:var(--org);line-height:1}
+  .result .cap{font-size:13.5px;color:var(--ink-soft);margin-top:6px;max-width:42ch}
+  .pill{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:10px;border:1px solid currentColor}
+  .prov{color:#9a7a1e} .fin{color:var(--good)}
+  footer{margin-top:42px;border-top:1px solid var(--line);padding-top:16px;
+    font-size:12.5px;color:var(--ink-soft)}
+  a{color:var(--org)}
+  svg text{font-family:ui-monospace,Menlo,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cancer Waiting Times Explorer</h1>
+    <div class="sub">England &middot; provider &amp; ICB performance against the three standards</div>
+  </header>
+
+  <div class="controls">
+    <div>
+      <label for="orgpick">Organisation</label>
+      <input list="orglist" id="orgpick" type="search" placeholder="Type a trust or ICB name or code">
+      <datalist id="orglist"></datalist>
+    </div>
+  </div>
+
+  <div class="note" id="breaknote">Loading&hellip;</div>
+
+  <div class="grid" id="charts"></div>
+
+  <section class="prize" id="prize" style="display:none">
+    <h2>Size of the prize</h2>
+    <p class="lede">If this organisation reached a higher proportion treated within the
+      standard, how many more patients per month would that represent? This is an
+      arithmetic gap based on recent activity, not a modelled clinical outcome.</p>
+    <div class="prizegrid">
+      <div class="slider">
+        <label for="std">Standard</label>
+        <select id="std"></select>
+        <div style="height:14px"></div>
+        <label for="tgt">Target performance: <span id="tgtval"></span></label>
+        <input type="range" id="tgt" min="50" max="100" step="1">
+      </div>
+      <div class="result">
+        <div class="big" id="prizebig">&ndash;</div>
+        <div class="cap" id="prizecap"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <strong>Prototype built on synthetic data.</strong> Numbers shown are fabricated
+    for development and must not be used for analysis. In production this page is
+    rebuilt monthly from NHS England's published Monthly Combined CSVs.
+    The 31-day and 62-day standards changed in October 2023; earlier figures are not
+    directly comparable. Source: NHS England Cancer Waiting Times statistics, Open
+    Government Licence v3.0.
+  </footer>
+</div>
+
+<script>
+const DATA = "data/";
+let META=null, NATIONAL=null, CURRENT=null;
+
+const fmt = p => (p*100).toFixed(1)+"%";
+const monthLabel = m => {const[y,mm]=m.split("-");return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mm-1]+" "+y.slice(2);};
+
+async function init(){
+  META = await (await fetch(DATA+"meta.json")).json();
+  NATIONAL = await (await fetch(DATA+"national.json")).json();
+  const idx = await (await fetch(DATA+"index.json")).json();
+  const dl = document.getElementById("orglist");
+  idx.forEach(o=>{const opt=document.createElement("option");
+    opt.value = `${o.name} (${o.code})`; opt.dataset.code=o.code; dl.appendChild(opt);});
+  window._idx = idx;
+  document.getElementById("breaknote").innerHTML =
+    "&#9888; "+META.note+" This explorer defaults to data from "+META.comparability_break+" onward.";
+  document.getElementById("orgpick").addEventListener("change", onPick);
+  // default to the first provider
+  const first = idx.find(o=>o.level==="provider") || idx[0];
+  document.getElementById("orgpick").value = `${first.name} (${first.code})`;
+  loadOrg(first.code);
+}
+
+function onPick(e){
+  const m = e.target.value.match(/\(([^)]+)\)\s*$/);
+  if(!m) return;
+  const o = window._idx.find(x=>x.code===m[1]);
+  if(o) loadOrg(o.code);
+}
+
+async function loadOrg(code){
+  CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
+  renderCharts();
+  setupPrize();
+}
+
+function renderCharts(){
+  const host = document.getElementById("charts");
+  host.innerHTML="";
+  for(const std of Object.keys(META.standards)){
+    const s = CURRENT.standards[std]; if(!s) continue;
+    const nat = NATIONAL.standards[std];
+    const last = s.performance.length-1;
+    const card = document.createElement("div"); card.className="card";
+    const statusPill = s.data_status[last]==="final"
+      ? '<span class="pill fin">final</span>' : '<span class="pill prov">provisional</span>';
+    card.innerHTML =
+      `<h3>${s.label.split("(")[0].trim()}</h3>
+       <div class="meta">${std} &middot; target ${fmt(s.target)} ${statusPill}</div>
+       ${chartSVG(s, nat)}
+       <p class="latest"><b>${fmt(s.performance[last])}</b> &nbsp;${monthLabel(s.months[last])}
+         &middot; ${s.within_target[last].toLocaleString()} of ${s.total[last].toLocaleString()}</p>`;
+    host.appendChild(card);
+  }
+}
+
+function chartSVG(s, nat){
+  const W=440,H=170,P={l:34,r:10,t:12,b:22};
+  const xs = s.months, n=xs.length;
+  const x = i => P.l + (i/(n-1))*(W-P.l-P.r);
+  const y = v => P.t + (1-v)*(H-P.t-P.b);
+  const path = arr => arr.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  // gridlines at 25/50/75/100
+  let g="";
+  [0.25,0.5,0.75,1].forEach(v=>{g+=`<line x1="${P.l}" y1="${y(v)}" x2="${W-P.r}" y2="${y(v)}" stroke="var(--grid)"/>`+
+    `<text x="2" y="${y(v)+3}" font-size="9" fill="var(--ink-soft)">${v*100}</text>`;});
+  // target line
+  const ty=y(s.target);
+  const tline=`<line x1="${P.l}" y1="${ty}" x2="${W-P.r}" y2="${ty}" stroke="var(--target)" stroke-dasharray="4 3" stroke-width="1.4"/>`;
+  // national comparison (align by shared months length)
+  let natpath="";
+  if(nat){const m=Math.min(nat.performance.length,n);
+    const np=nat.performance.slice(nat.performance.length-m);
+    natpath=`<path d="${path(np)}" fill="none" stroke="var(--nat)" stroke-width="1.4" stroke-dasharray="2 2"/>`;}
+  const labels=[xs[0],xs[n-1]].map((m,i)=>`<text x="${i?W-P.r:P.l}" y="${H-6}" font-size="9" fill="var(--ink-soft)" text-anchor="${i?'end':'start'}">${monthLabel(m)}</text>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${tline}${natpath}
+    <path d="${path(s.performance)}" fill="none" stroke="var(--org)" stroke-width="2.2"/>
+    ${labels}</svg>`;
+}
+
+function setupPrize(){
+  const box=document.getElementById("prize"); box.style.display="block";
+  const sel=document.getElementById("std"); sel.innerHTML="";
+  Object.keys(CURRENT.standards).forEach(std=>{
+    const o=document.createElement("option");o.value=std;
+    o.textContent=CURRENT.standards[std].label.split("(")[0].trim();sel.appendChild(o);});
+  sel.onchange=recalcInit; recalcInit();
+}
+function recalcInit(){
+  const std=document.getElementById("std").value;
+  const s=CURRENT.standards[std];
+  const last=s.performance.length-1;
+  const tgt=document.getElementById("tgt");
+  tgt.value=Math.round(s.target*100);
+  tgt.oninput=()=>recalc(std);
+  recalc(std);
+}
+function recalc(std){
+  const s=CURRENT.standards[std];
+  const last=s.performance.length-1;
+  const cur=s.performance[last], denom=s.total[last];
+  const target=(+document.getElementById("tgt").value)/100;
+  document.getElementById("tgtval").textContent=fmt(target);
+  const extra=Math.round(denom*(target-cur));
+  const big=document.getElementById("prizebig");
+  const cap=document.getElementById("prizecap");
+  if(extra>0){big.textContent="+"+extra.toLocaleString();big.style.color="var(--org)";
+    cap.textContent=`more patients per month would be seen within the ${std} standard, at ${fmt(target)} vs the current ${fmt(cur)} (based on ${denom.toLocaleString()} in scope in ${monthLabel(s.months[last])}).`;}
+  else{big.textContent="0";big.style.color="var(--good)";
+    cap.textContent=`Current performance (${fmt(cur)}) already meets or exceeds ${fmt(target)}.`;}
+}
+init();
+</script>
+</body>
+</html>
