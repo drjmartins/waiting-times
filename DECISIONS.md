@@ -6,6 +6,22 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-09 — Checkpoint commit, date-format CI test, workflow validated (Claude Code)
+Committed the clean real rebuild (252 orgs, 48 months, zero synthetic) as the
+Git baseline; added `.gitignore`. Added `tests/test_normalise.py` pinning the
+dual date-format behaviour (+ Total→national, Commissioner→icb, all-slice), wired
+to run in CI before any fetch/deploy. Validated `update-data.yml` locally: YAML
+parses, step order correct, incremental run is a clean no-op when nothing is new,
+commit step respects `.gitignore`. NOT yet run on GitHub (no remote/Pages) — held
+pending the comparison-view spec from the planning session. Deployment on hold.
+
+## 2026-06-09 — cwt_tidy.csv (200MB) is artefact-only, never git-committed (Claude Code)
+The full tidy download is ~200MB — over GitHub's 100MB file limit, so committing
+it would make the workflow's `git push` fail. It is `.gitignore`d: rebuilt every
+run into the `site/` Pages artefact (deployed) but never stored in git. NOTE for
+planning session: serving/offering a 200MB CSV download is a UX/product question
+(compress? per-year split? on-demand?) — flagging, not deciding.
+
 ## 2026-06-09 — Date format differs BY FILE VINTAGE; parse ISO-first w/ dayfirst fallback (Claude Code)
 Correction to the entry below: a blanket `dayfirst=True` is WRONG. The 2025-26
 files use DD/MM/YYYY (`01/10/2025`) but older files (≤2024-25) use ISO
