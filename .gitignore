@@ -12,4 +12,5 @@ site/data/cwt_tidy.csv
 # Python / OS cruft
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .DS_Store

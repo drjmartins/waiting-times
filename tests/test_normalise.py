@@ -74,3 +74,14 @@ def test_all_slice_is_detected():
     out = _normalise([_real_row("01/10/2025")])
     assert out["breakdown_type"].iloc[0] == "all"
     assert out["breakdown_value"].iloc[0] == "All"
+
+
+def test_region_captured_from_parent_org():
+    out = _normalise([_real_row("01/10/2025", Parent_Org="North West")])
+    assert out["region"].iloc[0] == "North West"
+
+
+def test_region_absent_is_blank_not_error():
+    # synthetic / future sources without a region column must not break
+    out = _normalise([_real_row("01/10/2025")])
+    assert out["region"].iloc[0] == ""

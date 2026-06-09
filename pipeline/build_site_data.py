@@ -16,6 +16,16 @@ import pandas as pd
 
 from . import config
 
+# Non-real placeholder orgs (e.g. the 'UNKNOWN' unallocated-commissioner bucket).
+# Hidden from the picker and comparison view, but RETAINED in the tidy store and
+# in national totals so sums still reconcile.
+PLACEHOLDER_NAMES = {"UNKNOWN"}
+
+
+def _is_placeholder(code, name):
+    return (str(code).strip().upper() in PLACEHOLDER_NAMES
+            or str(name).strip().upper() in PLACEHOLDER_NAMES)
+
 
 def _org_payload(df_org):
     """Build the per-org JSON: one block per standard, 'All' breakdown only."""
@@ -43,12 +53,15 @@ def build(df, out_dir=config.SITE_DATA_DIR):
     # Per-org files + index
     index = []
     for (code, name, level), g in df.groupby(["org_code", "org_name", "org_level"]):
+        if _is_placeholder(code, name):
+            continue  # kept in the store/national totals, just not selectable
+        region = g["region"].iloc[0]
         payload = _org_payload(g)
-        payload.update({"code": code, "name": name, "level": level})
+        payload.update({"code": code, "name": name, "level": level, "region": region})
         with open(os.path.join(out_dir, "org", f"{code}.json"), "w") as f:
             json.dump(payload, f, separators=(",", ":"))
         if level != "national":
-            index.append({"code": code, "name": name, "level": level})
+            index.append({"code": code, "name": name, "level": level, "region": region})
     index.sort(key=lambda r: r["name"])
     with open(os.path.join(out_dir, "index.json"), "w") as f:
         json.dump(index, f, separators=(",", ":"))

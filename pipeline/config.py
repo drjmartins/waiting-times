@@ -36,6 +36,7 @@ CANONICAL_COLUMNS = [
     "org_level",      # 'national' | 'provider' | 'icb'
     "org_code",       # ODS code, e.g. 'RJ1'; 'ENG' for national
     "org_name",       # human-readable
+    "region",         # NHS England region (from Parent_Org); 'England' if region-less
     "standard",       # one of STANDARDS keys
     "breakdown_type", # 'all' | 'cancer' | 'modality' | 'route'
     "breakdown_value",# e.g. 'All', 'Breast', 'Surgery', 'Screening'

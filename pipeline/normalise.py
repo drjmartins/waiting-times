@@ -43,6 +43,11 @@ COLUMN_CANDIDATES = {
 BREAKDOWN_TYPE_CANDIDATES = ["BREAKDOWN", "BREAKDOWN_TYPE", "CATEGORY_TYPE"]
 BREAKDOWN_VALUE_CANDIDATES = ["BREAKDOWN_VALUE", "CATEGORY", "STAGE", "CANCER_TYPE", "MODALITY", "ROUTE"]
 
+# NHS region for each provider. In the CWT file this is carried by Parent_Org
+# (verified one-to-one with the 7 NHS England regions, no ODS lookup needed).
+# Optional: sources without it (e.g. the synthetic generator) yield region "".
+REGION_CANDIDATES = ["Parent_Org", "PARENT_ORG", "REGION", "NHS_REGION", "Region"]
+
 # NHS three-column breakdown layout: canonical dimension -> source column.
 REAL_BREAKDOWN_COLS = {
     "cancer":   "Cancer_Type",
@@ -161,6 +166,10 @@ def normalise(df, source_file, data_status):
             f"Columns present: {list(df.columns)[:30]}"
         )
 
+    # NHS region (optional). Captured from Parent_Org where present.
+    region_col = _find_column(out, REGION_CANDIDATES)
+    out["region"] = out[region_col].astype(str).str.strip() if region_col else ""
+
     out["standard"] = out["standard"].map(_map_standard)
     out = out[out["standard"].notna()]  # drop USC/breast-symptomatic referral rows
 
@@ -178,6 +187,7 @@ def normalise(df, source_file, data_status):
     out.loc[is_national, "org_level"] = "national"
     out.loc[is_national, "org_code"] = "ENG"
     out.loc[is_national, "org_name"] = "England"
+    out.loc[is_national, "region"] = "England"
 
     out["performance"] = (out["within_target"] / out["total"]).round(4)
     out["data_status"] = data_status

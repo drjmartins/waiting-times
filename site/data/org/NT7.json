@@ -1,1 +1,1 @@
-{"standards":{"CMB62":{"label":"62-day combined (referral to treatment)","target":0.85,"months":["2024-09","2025-02"],"performance":[0.5,1.0],"within_target":[0,0],"total":[1,0],"data_status":["final","final"]}},"code":"NT7","name":"NETCARE HEALTHCARE UK","level":"provider"}
+{"standards":{"CMB62":{"label":"62-day combined (referral to treatment)","target":0.85,"months":["2024-09","2025-02"],"performance":[0.5,1.0],"within_target":[0,0],"total":[1,0],"data_status":["final","final"]}},"code":"NT7","name":"NETCARE HEALTHCARE UK","level":"provider","region":"London"}
