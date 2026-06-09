@@ -41,30 +41,39 @@ def run_real():
     discovered = discover.discover_csv_links(html)
     manifest = discover.load_manifest()
     todo = discover.select_files_to_process(discovered, manifest)
-    if not todo:
-        print("No new or revised files. Nothing to do.")
-        return
     store = _load_store()
-    os.makedirs(config.RAW_DIR, exist_ok=True)
-    for item in todo:
-        print(f"Processing ({item['reason']}): {item['anchor_text']}")
-        raw_path = os.path.join(config.RAW_DIR, os.path.basename(item["url"]))
-        with requests.get(item["url"], stream=True, timeout=300) as r:
-            r.raise_for_status()
-            with open(raw_path, "wb") as f:
-                for chunk in r.iter_content(1 << 16):
-                    f.write(chunk)
-        raw = pd.read_csv(raw_path, low_memory=False)
-        tidy = normalise.normalise(raw, os.path.basename(item["url"]), item["status"])
-        store = normalise.merge_with_revisions(store, tidy)
-        manifest["files"][item["url"]] = {
-            "financial_year": item["financial_year"], "status": item["status"],
-            "anchor_text": item["anchor_text"],
-        }
-    _save_store(store)
-    discover.save_manifest(manifest)
+    if todo:
+        os.makedirs(config.RAW_DIR, exist_ok=True)
+        for item in todo:
+            print(f"Processing ({item['reason']}): {item['anchor_text']}")
+            raw_path = os.path.join(config.RAW_DIR, os.path.basename(item["url"]))
+            with requests.get(item["url"], stream=True, timeout=300) as r:
+                r.raise_for_status()
+                with open(raw_path, "wb") as f:
+                    for chunk in r.iter_content(1 << 16):
+                        f.write(chunk)
+            raw = pd.read_csv(raw_path, low_memory=False)
+            tidy = normalise.normalise(raw, os.path.basename(item["url"]), item["status"])
+            store = normalise.merge_with_revisions(store, tidy)
+            manifest["files"][item["url"]] = {
+                "financial_year": item["financial_year"], "status": item["status"],
+                "anchor_text": item["anchor_text"],
+            }
+        _save_store(store)
+        discover.save_manifest(manifest)
+    else:
+        print("No new or revised files.")
+
+    if store is None or len(store) == 0:
+        print("No data in store and nothing to fetch; skipping build.")
+        return
+    # Always rebuild the site from the current store, even on a no-op fetch:
+    # the download slices and comparison JSONs are build artefacts (gitignored,
+    # not in the checkout), so the Pages artefact would otherwise ship without
+    # them on any run that found no new data.
     meta = build_site_data.build(store)
-    print(f"Rebuilt site data: {meta['n_orgs']} orgs, {len(meta['months'])} months.")
+    print(f"{'Rebuilt' if todo else 'Rebuilt (no new data)'} site data: "
+          f"{meta['n_orgs']} orgs, {len(meta['months'])} months.")
 
 
 def run_synthetic():

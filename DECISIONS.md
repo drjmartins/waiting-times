@@ -6,6 +6,25 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — run_real always rebuilds the site, even on a no-op fetch (Code)
+Deploy-blocking bug found before first deploy: run_real() early-returned before
+build() when no new files were found, but the download slices and comparison
+JSONs are build artefacts that are .gitignore'd (not in the CI checkout). So any
+scheduled run with nothing new would upload a Pages artefact missing site/data/
+downloads/ and refreshed compare/ -> 404s on the live site. Fixed: fetch is
+conditional, but build() always runs from the current store (skipped only if the
+store is empty). Verified locally: deleting downloads/ then running a no-op fetch
+regenerates them. KNOWN-TO-VERIFY on the hosted run: that the artefact actually
+ships downloads/ (check #3).
+
+## 2026-06-10 — FDS28 funnel has very high phi (~80) — eyeball it (Code, non-blocking)
+FDS28 all-cancers overdispersion phi is ~80 (vs 15 for CMB62, 4 for Lung),
+plausibly real (FDS reporting varies hugely between trusts) but worth confirming
+the limits aren't so wide that nothing is ever flagged — the opposite failure to
+the 71-of-139 over-flagging we just fixed. 62-day and Lung look well-calibrated.
+TO VERIFY: render FDS28 all-cancers adjusted funnel and check a sensible number
+of genuine outliers still surface.
+
 ## 2026-06-10 — Funnel limits are overdispersion-ADJUSTED by default (Spiegelhalter); unadjusted via toggle (planning session + Code)
 The default funnel was showing plain BINOMIAL limits everywhere — and the same
 formula in every scope (the earlier "headline tight vs South West flaring" was a
