@@ -9,6 +9,9 @@ data/processed/tidy_synthetic.parquet
 # and rebuilt every run into the site/ Pages artefact; not stored in git.
 site/data/downloads/
 
+# Local dev verification screenshots (not part of the site or pipeline)
+screenshots/
+
 # Python / OS cruft
 __pycache__/
 *.py[cod]

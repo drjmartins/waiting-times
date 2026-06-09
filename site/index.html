@@ -97,14 +97,7 @@
     </div>
   </section>
 
-  <footer>
-    <strong>Prototype built on synthetic data.</strong> Numbers shown are fabricated
-    for development and must not be used for analysis. In production this page is
-    rebuilt monthly from NHS England's published Monthly Combined CSVs.
-    The 31-day and 62-day standards changed in October 2023; earlier figures are not
-    directly comparable. Source: NHS England Cancer Waiting Times statistics, Open
-    Government Licence v3.0.
-  </footer>
+  <footer id="foot"></footer>
 </div>
 
 <script>
@@ -113,9 +106,19 @@ let META=null, NATIONAL=null, CURRENT=null;
 
 const fmt = p => (p*100).toFixed(1)+"%";
 const monthLabel = m => {const[y,mm]=m.split("-");return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mm-1]+" "+y.slice(2);};
+const _MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const fullMonth = m => {const[y,mm]=m.split("-");return _MN[+mm-1]+" "+y;};
+const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+_MN[+m-1]+" "+y;};
+function footerHTML(META){
+  const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
+  return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
+    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
+    `The 31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable and are shown separately.`;
+}
 
 async function init(){
   META = await (await fetch(DATA+"meta.json")).json();
+  document.getElementById("foot").innerHTML = footerHTML(META);
   NATIONAL = await (await fetch(DATA+"national.json")).json();
   const idx = await (await fetch(DATA+"index.json")).json();
   const dl = document.getElementById("orglist");

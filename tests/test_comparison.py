@@ -59,6 +59,31 @@ def test_pooling_sums_numerators_not_averages_percentages(tmp_path):
     assert d["national"]["performance"] == round(145 / 2000, 4)
 
 
+def test_num_preserves_fractional_keeps_whole_as_int():
+    assert b._num(531.0) == 531 and isinstance(b._num(531.0), int)
+    assert b._num(0.5) == 0.5          # NHS rounding artefact must not truncate to 0
+
+
+def test_overdispersion_phi_floor_and_growth():
+    import pandas as pd
+    # no between-trust spread -> phi clamps to 1.0 (fall back to binomial)
+    flat = pd.DataFrame({"total": [100, 100, 100, 100], "performance": [0.7, 0.7, 0.7, 0.7]})
+    assert b._overdispersion(flat, 0.7) == 1.0
+    # genuine spread -> phi > 1 (limits will widen)
+    spread = pd.DataFrame({"total": [100] * 6, "performance": [0.4, 0.5, 0.6, 0.8, 0.9, 0.95]})
+    assert b._overdispersion(spread, 0.7) > 1.0
+
+
+def test_measure_json_has_overdispersion_and_no_bogus_zero(tmp_path):
+    df = pd.DataFrame([
+        _row("2025-07", "RAA", 70, 100), _row("2025-07", "RBB", 60, 100),
+        _row("2025-07", "RCC", 80, 100), _row("2025-07", "RDD", 50, 100),
+    ])
+    b._build_comparison(df, str(tmp_path))
+    d = json.load(open(tmp_path / "compare" / "CMB62__all__All.json"))
+    assert d["overdispersion"]["phi"] >= 1.0 and d["overdispersion"]["winsorised"] is True
+
+
 def test_sub_threshold_flag(tmp_path):
     df = pd.DataFrame([
         _row("2025-07", "BIG", 80, 100),

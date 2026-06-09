@@ -60,6 +60,9 @@
     <div><label for="std">Standard</label><select id="std"></select></div>
     <div><label for="bd">Breakdown</label><select id="bd"></select></div>
     <div><label for="scope">Compare across</label><select id="scope"></select></div>
+    <div><label for="adj">Control limits</label><select id="adj">
+      <option value="adj">Overdispersion-adjusted (default)</option>
+      <option value="raw">Unadjusted (binomial)</option></select></div>
   </div>
   <div class="period" id="period"></div>
 
@@ -71,10 +74,10 @@
     <div class="meta" id="funmeta"></div>
     <div id="funnel"></div>
     <div class="legend">
-      <span><i class="dot" style="background:var(--org)"></i> within limits</span>
-      <span><i class="dot" style="background:var(--target)"></i> beyond 95%</span>
-      <span><i class="dot" style="background:var(--bad)"></i> beyond 99.8%</span>
-      <span><i class="dot" style="border:1.5px solid var(--ink-soft);background:#fff"></i> sub-threshold (funnel only)</span>
+      <span><i class="dot" style="background:var(--org)"></i> below the England line</span>
+      <span><i class="dot" style="border:1.6px solid var(--org);background:#fff"></i> above the England line</span>
+      <span>larger point = further beyond the 95% / 99.8% limits</span>
+      <span><i class="dot" style="border:1.2px solid var(--nat);background:#fff"></i> sub-threshold (funnel only)</span>
       <span><i class="dot" style="background:#cfd8db"></i> rest of England</span>
     </div>
   </div>
@@ -99,9 +102,20 @@ const DATA="data/", C=DATA+"compare/";
 let CAT=null, M=null;
 const fmt = p => (p*100).toFixed(1)+"%";
 const z95key="p95", z998key="p998";
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const fullMonth = m => {const[y,mm]=m.split("-");return MONTHS[+mm-1]+" "+y;};
+const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+MONTHS[+m-1]+" "+y;};
+function footerHTML(META){
+  const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
+  return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
+    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
+    `The 31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable and are shown separately.`;
+}
 
 async function init(){
   CAT = await (await fetch(C+"index.json")).json();
+  const META = await (await fetch(DATA+"meta.json")).json();
+  document.getElementById("foot").innerHTML = footerHTML(META);
   document.getElementById("period").textContent =
     "Comparison basis: "+CAT.period_label+" · most recent "+CAT.window_months+" finalised months, numerators and denominators pooled.";
   // standards present in the catalogue, in canonical order
@@ -117,15 +131,14 @@ async function init(){
   stdSel.value = (q.get("std") && stds.includes(q.get("std"))) ? q.get("std") : "CMB62";
   stdSel.onchange=()=>{populateBreakdown();load();};
   document.getElementById("bd").onchange=load;
-  scopeSel.onchange=render;   // scope change is client-side only
+  scopeSel.onchange=render;   // scope + limit-mode changes are client-side only
+  document.getElementById("adj").onchange=render;
   populateBreakdown();
   const bd=document.getElementById("bd");
   if(q.get("m") && [...bd.options].some(o=>o.value===q.get("m"))) bd.value=q.get("m");
   if(q.get("scope")) scopeSel.value=q.get("scope");
+  if(q.get("adj")==="raw") document.getElementById("adj").value="raw";
   load();
-  document.getElementById("foot").innerHTML =
-    "Built from NHS England Cancer Waiting Times statistics (Open Government Licence v3.0). "+
-    "31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable.";
 }
 
 function populateBreakdown(){
@@ -175,15 +188,20 @@ function render(){
   document.getElementById("breaknote").innerHTML =
     "&#9888; The October 2023 standards change applies: comparison uses finalised data from "+CAT.period_label.split(",")[0]+", well after the break.";
 
+  const adjusted = document.getElementById("adj").value==="adj";
+  const phi = adjusted ? (M.overdispersion && M.overdispersion.phi || 1) : 1;
+  const phiTxt = (M.overdispersion ? M.overdispersion.phi : 1).toFixed(1);
+
   const all=M.trusts;
   const inScope = effScope==="England" ? all : all.filter(t=>t.region===effScope);
   const rest = effScope==="England" ? [] : all.filter(t=>t.region!==effScope);
 
   document.getElementById("funtitle").textContent = `${M.label} — funnel plot`;
   document.getElementById("funmeta").textContent =
-    `${effScope} · England line ${fmt(M.national.performance)} · ${inScope.length} trusts `+
-    `(${inScope.filter(t=>!t.sub_threshold).length} above the ≥${CAT.threshold} threshold) · ${M.period_label}`;
-  document.getElementById("funnel").innerHTML = funnelSVG(inScope, rest);
+    `${effScope} · England line ${fmt(M.national.performance)} · `+
+    `${adjusted?`overdispersion-adjusted limits (φ=${phiTxt})`:`unadjusted binomial limits`} · `+
+    `${inScope.length} trusts (${inScope.filter(t=>!t.sub_threshold).length} above the ≥${CAT.threshold} threshold) · ${M.period_label}`;
+  document.getElementById("funnel").innerHTML = funnelSVG(inScope, rest, phi);
 
   const clear = inScope.filter(t=>!t.sub_threshold).sort((a,b)=>a.performance-b.performance);
   document.getElementById("pctmeta").textContent =
@@ -192,37 +210,47 @@ function render(){
   document.getElementById("pct").innerHTML = percentileSVG(clear);
 
   const t=CAT.targets[M.standard];
+  const nUnits = M.overdispersion ? M.overdispersion.n_units : 0;
   document.getElementById("methods").innerHTML = [
-    `Control limits are anchored to the <b>national</b> distribution (England line ${fmt(M.national.performance)}), not recomputed within the region: an outlier always means an outlier relative to England. Limits shown are 95% and 99.8% (±2 and ±3 SD equivalents).`,
+    `Control limits are anchored to the <b>national</b> distribution (England line ${fmt(M.national.performance)}), not recomputed within the region: an outlier always means an outlier relative to England. Limits are 95% and 99.8% (±2 and ±3 SD equivalents).`,
+    adjusted
+      ? `By default the limits include an <b>overdispersion adjustment</b> (after Spiegelhalter; φ=${phiTxt}, Winsorised across ${nUnits} reliable trusts), widening them to reflect genuine structural variation between trusts beyond simple random variation. Without it, plain binomial limits flag a large share of trusts as outliers because they assume all trusts are otherwise identical. Use the control above to see the unadjusted view.`
+      : `Showing <b>unadjusted (binomial)</b> limits. These assume all trusts are otherwise identical and so flag a large share as outliers; the default overdispersion-adjusted view (φ=${phiTxt}) is usually more meaningful.`,
+    `Point <b>fill</b> shows direction — filled is below the England line, hollow is above — and point <b>size</b> grows the further a trust sits beyond the limits. No colour means good or bad: a trust outside the limits is unusual given its volume, not, on its own, evidence of good or poor care.`,
     `Reliability threshold: a trust with fewer than ${CAT.threshold} patients pooled over ${M.period_label} is sub-threshold — shown in the funnel (where low volume widens the limits) but excluded from the percentile view.`,
     `Comparison pools ${CAT.window_months} finalised months (${M.period_label}) by summing numerators and denominators — not by averaging monthly percentages.`,
-    t?`Operational target for this standard is ${fmt(t)} (amber line), shown for reference; it is not a control limit.`:``,
+    t?`Operational target for this standard is ${fmt(t)} (faint amber line), shown for reference; it is not a control limit.`:``,
     fellBack?`Scope automatically widened from ${scope} to England (too few reliable trusts for this measure).`:``,
   ].filter(Boolean).map(s=>`<li>${s}</li>`).join("");
 }
 
-function limit(p0,z,n){const s=Math.sqrt(p0*(1-p0)/n);return [Math.max(0,p0-z*s),Math.min(1,p0+z*s)];}
+function limit(p0,z,n,phi){
+  if(!(n>0)||!(p0>0&&p0<1)) return [0,1];   // sub-threshold / degenerate: limits span the axis
+  const s=Math.sqrt((phi||1)*p0*(1-p0)/n);
+  return [Math.max(0,p0-z*s),Math.min(1,p0+z*s)];
+}
 
-function funnelSVG(inScope, rest){
+function funnelSVG(inScope, rest, phi){
   const W=1000,H=420,P={l:54,r:16,t:16,b:40};
   const p0=M.national.performance, z95=M.z[z95key], z998=M.z[z998key];
   const all=inScope.concat(rest);
   const maxN=Math.max(10,...all.map(t=>t.total));
-  // y-domain: zoom to the data + limit flare, padded, clamped to [0,1]
-  let ylo=Math.min(p0,...inScope.map(t=>t.performance));
-  let yhi=Math.max(p0,...inScope.map(t=>t.performance));
-  const lo3=limit(p0,z998,Math.max(10,Math.min(...all.map(t=>t.total))))[0];
-  ylo=Math.max(0,Math.min(ylo,lo3)-0.04); yhi=Math.min(1,yhi+0.04);
-  if(yhi-ylo<0.2){const c=(yhi+ylo)/2;ylo=Math.max(0,c-0.12);yhi=Math.min(1,c+0.12);}
-  const x=n=>P.l+(n/maxN)*(W-P.l-P.r);
-  const y=v=>P.t+(1-(v-ylo)/(yhi-ylo))*(H-P.t-P.b);
+  const tgt=CAT.targets[M.standard];
+  // y-domain auto-zooms to the data (favours detail); padded, clamped to [0,1].
+  const perfs=inScope.map(t=>t.performance);
+  let ylo=Math.min(p0,...perfs), yhi=Math.max(p0,...perfs);
+  if(tgt){ylo=Math.min(ylo,tgt);yhi=Math.max(yhi,tgt);}
+  ylo=Math.max(0,ylo-0.04); yhi=Math.min(1,yhi+0.04);
+  if(yhi-ylo<0.15){const c=(yhi+ylo)/2;ylo=Math.max(0,c-0.09);yhi=Math.min(1,c+0.09);}
+  const x=n=>P.l+(Math.min(n,maxN)/maxN)*(W-P.l-P.r);
+  const yraw=v=>P.t+(1-(v-ylo)/(yhi-ylo))*(H-P.t-P.b);
+  const y=v=>Math.max(P.t,Math.min(H-P.b,yraw(v)));   // clamp into the plot band
 
-  // limit curves
-  let band95="",band998="";
+  // limit curves (dispersion-aware via phi)
   const steps=120;
   const top95=[],bot95=[],top998=[],bot998=[];
   for(let i=1;i<=steps;i++){const n=Math.max(1,maxN*i/steps);
-    const [l95,h95]=limit(p0,z95,n),[l998,h998]=limit(p0,z998,n);
+    const [l95,h95]=limit(p0,z95,n,phi),[l998,h998]=limit(p0,z998,n,phi);
     top95.push([x(n),y(h95)]);bot95.push([x(n),y(l95)]);
     top998.push([x(n),y(h998)]);bot998.push([x(n),y(l998)]);}
   const path=pts=>pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
@@ -243,18 +271,24 @@ function funnelSVG(inScope, rest){
   const centre=`<line x1="${P.l}" y1="${y(p0)}" x2="${W-P.r}" y2="${y(p0)}" stroke="var(--nat)" stroke-width="1.5"/>`;
   const t=CAT.targets[M.standard];
   const tline=(t&&t>=ylo&&t<=yhi)?`<line x1="${P.l}" y1="${y(t)}" x2="${W-P.r}" y2="${y(t)}" stroke="var(--target)" stroke-width="1.2" stroke-dasharray="1 3" opacity=".6"/>`:"";
-  // points
+  // points. Single neutral hue. FILL = direction (filled below the England line,
+  // hollow above); SIZE = how far beyond the limits. No good/bad colour scale.
+  const HUE="var(--org)";
   const pt=(t,faint)=>{
     const cx=x(t.total),cy=y(t.performance);
-    if(faint) return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#cfd8db" opacity=".6"/>`;
-    let fill="var(--org)";
-    const [l95,h95]=limit(p0,z95,t.total),[l998,h998]=limit(p0,z998,t.total);
-    if(t.performance<l998||t.performance>h998) fill="var(--bad)";
-    else if(t.performance<l95||t.performance>h95) fill="var(--target)";
     const d=JSON.stringify({n:t.name,p:t.performance,t:t.total,r:t.region}).replace(/"/g,'&quot;');
-    if(t.sub_threshold)
-      return `<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.6" fill="#fff" stroke="var(--ink-soft)" stroke-width="1.4"/>`;
-    return `<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.8" fill="${fill}" opacity=".85"/>`;
+    if(faint)  // rest of England (region scope): faint grey context
+      return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.8" fill="#cfd8db" opacity=".5"/>`;
+    if(t.sub_threshold)  // funnel-only, unreliable: muted hollow ring, no direction/emphasis
+      return `<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#fff" stroke="var(--nat)" stroke-width="1.1" opacity=".8"/>`;
+    const [l95,h95]=limit(p0,z95,t.total,phi),[l998,h998]=limit(p0,z998,t.total,phi);
+    let lvl=0;
+    if(t.performance<l998||t.performance>h998) lvl=2;
+    else if(t.performance<l95||t.performance>h95) lvl=1;
+    const r=[3.2,4.8,6.2][lvl], op=[.55,.92,1][lvl], sw=[1.1,1.5,1.9][lvl];
+    const below = t.performance < p0;                  // direction
+    const fill = below ? HUE : "#fff";                 // filled = below line, hollow = above
+    return `<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}" stroke="${HUE}" stroke-width="${sw}" opacity="${op}"/>`;
   };
   const restPts=rest.map(t=>pt(t,true)).join("");
   const scopePts=inScope.map(t=>pt(t,false)).join("");

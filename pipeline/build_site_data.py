@@ -89,6 +89,36 @@ def _measure_label(std, breakdown_type, breakdown_value):
     return f"{base} — all cancers" if breakdown_type == "all" else f"{base} — {breakdown_value}"
 
 
+def _num(v):
+    """NHS small-number rounding leaves fractional values (e.g. 0.5); keep them
+    truthful rather than truncating 0.5 -> 0, but show whole counts as ints."""
+    v = float(v)
+    return int(v) if v.is_integer() else round(v, 1)
+
+
+def _overdispersion(t, p0):
+    """
+    Winsorised multiplicative overdispersion factor phi (after Spiegelhalter).
+    Plain binomial limits assume every trust is otherwise identical and so flag
+    a large share of trusts at large denominators; phi widens the limits to
+    reflect genuine between-trust variation. Estimated from threshold-clearing
+    units only (a 0.5-patient unit has no business setting the dispersion), and
+    Winsorised at the 10th/90th percentiles so a few extreme trusts don't blow
+    it up. Returns phi >= 1 (1.0 = no overdispersion / fall back to binomial).
+    """
+    if p0 is None or not (0 < p0 < 1):
+        return 1.0
+    rel = t[t["total"] >= config.RELIABILITY_THRESHOLD]
+    if len(rel) < 3:
+        return 1.0
+    se = (p0 * (1 - p0) / rel["total"]) ** 0.5
+    z = ((rel["performance"] - p0) / se).sort_values().reset_index(drop=True)
+    n = len(z)
+    lo, hi = z.iloc[int(0.10 * n)], z.iloc[min(n - 1, int(0.90 * n))]
+    phi = float((z.clip(lo, hi) ** 2).mean())
+    return round(max(1.0, phi), 3)
+
+
 def _build_comparison(df, out_dir):
     """
     Precompute one funnel/comparison dataset per measure (standard x optional
@@ -117,8 +147,9 @@ def _build_comparison(df, out_dir):
             continue
         t["performance"] = (t["within"] / t["total"]).round(4)
         t["sub_threshold"] = t["total"] < config.RELIABILITY_THRESHOLD
-        within_sum, total_sum = int(t["within"].sum()), int(t["total"].sum())
+        within_sum, total_sum = float(t["within"].sum()), float(t["total"].sum())
         p0 = round(within_sum / total_sum, 4) if total_sum else None
+        phi = _overdispersion(t, p0)
 
         fname = f"{std}__{bt}__{_slug(bv)}.json"
         n = 2
@@ -128,7 +159,7 @@ def _build_comparison(df, out_dir):
         used.add(fname)
 
         trusts = [{"code": r.org_code, "name": r.org_name, "region": r.region,
-                   "within": int(r.within), "total": int(r.total),
+                   "within": _num(r.within), "total": _num(r.total),
                    "performance": r.performance, "sub_threshold": bool(r.sub_threshold)}
                   for r in t.sort_values("total", ascending=False).itertuples()]
         with open(os.path.join(compare_dir, fname), "w") as f:
@@ -137,7 +168,9 @@ def _build_comparison(df, out_dir):
                 "label": _measure_label(std, bt, bv),
                 "period_months": months, "period_label": _period_label(months),
                 "threshold": config.RELIABILITY_THRESHOLD, "z": config.FUNNEL_LIMITS,
-                "national": {"within": within_sum, "total": total_sum, "performance": p0},
+                "overdispersion": {"phi": phi, "winsorised": True,
+                                   "n_units": int((t["total"] >= config.RELIABILITY_THRESHOLD).sum())},
+                "national": {"within": _num(within_sum), "total": _num(total_sum), "performance": p0},
                 "trusts": trusts,
             }, f, separators=(",", ":"))
 

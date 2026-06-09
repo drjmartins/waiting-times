@@ -6,6 +6,52 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — Funnel limits are overdispersion-ADJUSTED by default (Spiegelhalter); unadjusted via toggle (planning session + Code)
+The default funnel was showing plain BINOMIAL limits everywhere — and the same
+formula in every scope (the earlier "headline tight vs South West flaring" was a
+denominator-RANGE artefact, not adjusted-vs-unadjusted; nothing was adjusted).
+Fixed: limits now include a Winsorised multiplicative overdispersion factor phi
+(after Spiegelhalter), computed at build time per measure, applied by default;
+an unadjusted (binomial) view remains via the control. phi is estimated from
+threshold-clearing units only (a 0.5-patient unit must not set dispersion) and
+Winsorised at the 10th/90th percentiles so a few extreme trusts don't blow it up;
+floored at 1.0. Effect on 99.8% breaches: CMB62 all-cancers 71->3 (phi=15.0),
+CMB31 89->10 (phi=23), FDS28 104->4 (phi=80), Lung 25->2 (phi=4). A default funnel
+flagging half the trusts had failed at its job; this restores it.
+FLAG TO RESEARCH SIDE: the overdispersion choice (multiplicative Winsorised phi
+vs additive random-effects, the Winsorisation fraction, whether to adjust at all)
+is a METHODS decision for the underlying study protocol, not just the dashboard —
+dashboard and protocol should use the same convention. Raising for alignment.
+
+## 2026-06-10 — Funnel point encoding is non-judgemental (Code)
+Replaced the red/amber/teal (bad/warn/good) point colours, which mislabelled
+HIGH-performing outliers as failures and undercut the "position is not goodness,
+not a league table" framing. New encoding: single neutral hue for all points;
+FILL = direction (filled below the England line, hollow above); SIZE/emphasis =
+how far beyond the limits (within < beyond-95% < beyond-99.8%). A high and a low
+outlier now look equally noteworthy but visibly different in direction, neither
+coloured 'bad'. Bonus: colour-blind safe. Sub-threshold = muted hollow grey ring
+(funnel only); rest-of-England = faint grey. y-axis stays auto-zoomed to the
+data with bounds labelled.
+
+## 2026-06-10 — NHS small-number rounding leaves fractional values (0.5); don't truncate (Code)
+Found during verification: 137,748 store rows (12%) carry fractional within/total
+(min 0.5) from NHS small-number rounding. The comparison precompute was int()-
+truncating, turning 0.5 -> 0, which injected 11 bogus zero-denominator "trusts"
+(Ramsay, Spire, HCA…) with nonsense 1.0/0.0 performance into the headline and
+div-by-zero'd the dispersion calc. Fixed: _num() keeps fractional values truthful
+(0.5 stays 0.5, whole counts stay int); dispersion uses threshold-clearing units
+only; the funnel limit() guards n<=0. These tiny units are sub-threshold anyway
+(funnel-only). NOTE: the per-org page still int-casts its time series — cosmetic,
+tiny months, left for a later pass.
+
+## 2026-06-10 — Corrected live-tool footer/methods copy applied; "synthetic" footer removed (planning session copy, applied by Code)
+index.html no longer claims "synthetic data … must not be used" (was false and a
+deploy-blocker). Both pages now carry the live-tool-copy.md short footer, with
+{latest_month}/{build_date} filled client-side from meta.json so they never go
+stale. The comparison methods notes use the copy's overdispersion explanation
+(which assumes adjusted-by-default — now consistent with the code).
+
 ## 2026-06-09 — Comparison basis = rolling 3 most-recent FINALISED months, pooled (planning session, logged by Code)
 Default comparison period is the most recent 3 FINALISED months (currently
 Jul–Sep 2025), NOT the single most-recent-final month. Rationale: a 3-month
