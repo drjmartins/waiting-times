@@ -52,7 +52,7 @@ def test_pooling_sums_numerators_not_averages_percentages(tmp_path):
         _row("2025-09", "RAA", 50, 1000),
     ])
     b._build_comparison(df, str(tmp_path))
-    d = json.load(open(tmp_path / "compare" / "CMB62__all__All.json"))
+    d = json.load(open(tmp_path / "compare" / f"CMB62__all__{b._slug('All')}.json"))
     t = d["trusts"][0]
     assert t["within"] == 145 and t["total"] == 2000      # summed, not averaged
     assert t["performance"] == round(145 / 2000, 4)        # 0.0725, pooled
@@ -80,7 +80,7 @@ def test_measure_json_has_overdispersion_and_no_bogus_zero(tmp_path):
         _row("2025-07", "RCC", 80, 100), _row("2025-07", "RDD", 50, 100),
     ])
     b._build_comparison(df, str(tmp_path))
-    d = json.load(open(tmp_path / "compare" / "CMB62__all__All.json"))
+    d = json.load(open(tmp_path / "compare" / f"CMB62__all__{b._slug('All')}.json"))
     assert d["overdispersion"]["phi"] >= 1.0 and d["overdispersion"]["winsorised"] is True
 
 
@@ -90,7 +90,7 @@ def test_sub_threshold_flag(tmp_path):
         _row("2025-07", "TINY", 4, 6),   # total 6 < threshold 10
     ])
     b._build_comparison(df, str(tmp_path))
-    d = json.load(open(tmp_path / "compare" / "CMB62__all__All.json"))
+    d = json.load(open(tmp_path / "compare" / f"CMB62__all__{b._slug('All')}.json"))
     flags = {t["code"]: t["sub_threshold"] for t in d["trusts"]}
     assert flags["TINY"] is True and flags["BIG"] is False
     assert d["threshold"] == config.RELIABILITY_THRESHOLD
