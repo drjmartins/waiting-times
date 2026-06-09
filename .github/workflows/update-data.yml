@@ -1,5 +1,6 @@
 name: Update CWT data and deploy
 
+# Daily refresh + deploy. Manual run via the Actions tab or `gh workflow run`.
 on:
   schedule:
     - cron: "0 16 * * *"   # daily 16:00 UTC; only does work when NHS posts new files
