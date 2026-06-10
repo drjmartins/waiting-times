@@ -6,6 +6,100 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — PRE-DEPLOY decommission check PASSED; pipeline pulls the SURVIVING source (Code)
+The 11-Jun-2026 decommission targets the OLD "provider flat files" — NOT the
+source this pipeline uses. Verified live against england.nhs.uk today:
+ - The page's decommission notice reads: "we will be decommissioning the
+   provider flat files below from 11th June 2026. The new format can be found
+   under the Combined Provider and Commissioner (ICB based) section." That
+   Combined (ICB-based) section IS exactly what discover.py scrapes.
+ - discover.discover_csv_links() run against the LIVE page returns exactly the 5
+   Combined CSVs (2022-23…2025-26, prov+final) and nothing else. There are only
+   5 .csv anchors on the whole page — all combined — so there is ZERO risk of the
+   marker ("Monthly Combined CSV") grabbing a decommissioned provider flat file.
+ - normalise.py column mapping HOLDS against the live current combined header:
+   all required fields resolve (Period/Basis/Org_Code/Org_Name/Standard_or_Item/
+   Within/Total) and all three breakdown cols (Cancer_Type / Referral_Route_or_
+   Stage / Treatment_Modality) + Parent_Org region are present.
+ - Manifest is in steady state: select_files_to_process() = 0 to do; manifest's 5
+   URLs match live.
+Note: the combined files are ALREADY in their current ("new") format — that was
+the Nov-2025 structural change this pipeline already handles; the decommission
+only REMOVES the parallel provider flat files, it does not change the combined
+layout. RESIDUAL: verified against today's (10 Jun) page; the change is tomorrow.
+The notice says the combined section is unchanged, and normalise fails LOUDLY +
+CI gates deploy if a field ever stops mapping, so a bad layout shift errors
+rather than ships. RECOMMENDATION: watch the first scheduled run on/after 11 Jun
+(or trigger one manually) to close this fully. Decommission does NOT block the
+redesign deploy.
+
+## 2026-06-10 — Per-org filtering feature: AGREED DIRECTION (single-dim + real pairwise combos, load-on-demand) (planning session, logged by Code)
+Direction set after the breakdown-data investigation (full 3-way crossing is
+impossible — source has no cancer×route×modality cells). The feature will be:
+ - Single-dimension filters (cancer / route / modality) PLUS the specific NHS
+   pairwise combinations where they actually exist — NOT an arbitrary Cartesian
+   cross. Don't offer combos the source doesn't publish.
+ - Filter UI RESHAPES per standard: FDS28 = cancer only (no route/modality);
+   31-day & 62-day = fuller set (cancer, route, modality + their real pairwises).
+ - Breakdowns LOAD ON DEMAND via a separate per-org breakdown file (e.g.
+   org/<CODE>.breakdown.json, ~20-40KB gz) fetched only when a filter is opened;
+   the lean 'all'-only file still drives first paint. THIS TOUCHES THE PIPELINE
+   (build_site_data must emit the new file) — not pure front-end.
+ - National comparison line matches the SELECTED slice (like-for-like): if the
+   user filters to e.g. Breast | Surgery, the England overlay is that same slice.
+ - Thin SUB-THRESHOLD months are shown but FLAGGED, not hidden (consistent with
+   the funnel's reliability-threshold treatment).
+NOT BUILDING YET — full spec to follow after the redesign renders are reviewed.
+
+## 2026-06-10 — Per-org page v2 redesign built; PAUSED before deploy (Code, from planning spec)
+Implemented per-org-redesign-spec_1.md in site/index.html — PURE FRONT-END, no
+pipeline change (all needed fields — within_target, total, data_status — already
+ship in the per-org/national JSON; nothing had to be flagged back). Changes:
+(1) page DEFAULTS to National (national.json wrapped with name "England"), not
+the first org alphabetically; (2) flat search picker replaced by a grouped
+<select>: National pinned top, then Providers (201), then Commissioners (50),
+alpha within group, grouping done client-side off index.json's level; (3) the
+three small charts replaced by ONE large time-series chart + three summary cards
+(FDS28/CMB31/CMB62) showing latest % + sparkline that DOUBLE AS THE STANDARD
+SWITCHER (click a card → big chart switches, active card marked); (4) hover
+tooltips anchored to each point: "Sep 2025 · 92.1% · 1,400 of 1,520 · final".
+Big chart = org line (solid for finalised, dashed+lighter for the provisional
+tail), faint dashed England overlay (suppressed when the org IS national), amber
+target rule, y-axis auto-zoomed to data+target. Interaction per spec: switching
+ORG keeps the selected standard (CURRENT_STD persists; only falls back if a std
+is absent); switching STANDARD redraws only the chart. First load defaults to
+CMB62 (most-watched). Added harmless deep-link params ?org=&std= (and ?tip=N for
+deterministic tooltip renders). "Size of the prize" kept, now synced to the
+selected standard. Renders: screenshots/perorg_v2_national.png (National default)
+and perorg_v2_provider_cmb31_tip.png (RRK on CMB31 with tooltip). NOT DEPLOYED —
+paused for planning review as usual.
+
+## 2026-06-10 — INVESTIGATION (no build): per-org breakdown data for the planned cancer/route/modality filter (Code)
+Scoping the follow-on per-org filter (cancer × route × modality). Two findings:
+(Q1) CONFIRMED — the per-org JSON shipped to the front end carries ONLY the 'all'
+slice. build_site_data._org_payload filters breakdown_type=='all'; national.json
+same. The tidy store (data/processed/tidy.parquet, 1.147M rows) keeps everything:
+all 27.8k / cancer 308k / route 48.6k / modality 68.6k / combination 694k. So the
+breakdown rows exist upstream but are NOT in the site JSON today.
+(Q2) Payload if a per-org file carried the full breakdown dimension: measured by
+building it for real orgs — median provider ≈166KB raw / 22KB gz (~193 series),
+largest ≈219KB raw / 37KB gz (~211 series), tiny orgs <1KB. ALL 201 providers =
+23MB raw / 3.3MB gz. CONCLUSION: shipping every org's breakdowns up front (3.3MB
+gz) is unreasonable and pointless (one org viewed at a time); but a single org's
+breakdown file at 20–40KB gz is trivial to fetch on demand. Since the page already
+loads one org JSON per selection, the natural design is LOAD-ON-DEMAND: keep the
+lean 'all'-only file for fast first paint, add a separate per-org breakdown file
+(e.g. org/<CODE>.breakdown.json) fetched only when a filter is opened. This DOES
+need a small pipeline addition (emit the breakdown file) — not free front-end.
+CRITICAL CAVEAT for the filter spec: the source does NOT support full 3-way
+crossing. Every 'combination' row is at most PAIRWISE (665.9k of 666k are 2-part,
+e.g. "Lung | Urgent Suspected Cancer"); there are ZERO cancer×route×modality
+3-way cells. NHS publishes single dimensions + selected pairwise combos only. So
+"fully crossable cancer AND route AND modality together" is NOT achievable from
+this data — the spec should assume single-dimension filters + whatever specific
+pairwise combos NHS ships, not an arbitrary Cartesian cross. (FDS28 also has no
+route or modality at all — cancer only.)
+
 ## 2026-06-10 — DEPLOYED (first watched run); live at drjmartins.github.io/cancer-waiting-times (Code)
 Public repo drjmartins/cancer-waiting-times, GitHub Pages via Actions. All four
 post-deploy checks pass: (1) Actions run green and the Pages site loads (200 for

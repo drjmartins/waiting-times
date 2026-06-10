@@ -26,16 +26,54 @@
   label{display:block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:5px}
   select,input[type=search]{font:inherit;font-size:15px;padding:8px 10px;
-    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:320px}
+    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:360px}
+  .orgname{font-size:13px;color:var(--ink-soft);margin:2px 0 0}
+  .orgname b{color:var(--ink)}
   .note{background:#fff7e8;border:1px solid #f0dcae;border-left:3px solid var(--target);
-    padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0 26px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-  @media(max-width:860px){.grid{grid-template-columns:1fr}select,input[type=search]{min-width:0;width:100%}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 16px 10px}
-  .card h3{margin:0 0 2px;font-size:16px}
-  .card .meta{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);margin-bottom:8px}
-  .latest{font-size:13px;color:var(--ink-soft);margin:4px 0 0}
-  .latest b{font-size:22px;color:var(--ink);font-family:inherit}
+    padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0 22px}
+
+  /* Three summary cards = the standard switcher */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0 0 22px}
+  @media(max-width:780px){.cards{grid-template-columns:1fr}}
+  .scard{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:13px 15px 11px;cursor:pointer;position:relative;
+    transition:border-color .12s,box-shadow .12s;border-top:3px solid var(--line)}
+  .scard:hover{border-color:#bcccd1}
+  .scard.active{border-top-color:var(--org);box-shadow:0 1px 0 var(--org) inset, 0 2px 10px rgba(15,125,140,.10)}
+  .scard h3{margin:0;font-size:14.5px;letter-spacing:-.005em}
+  .scard .stdcode{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)}
+  .scard .figure{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px}
+  .scard .figure b{font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1;
+    color:var(--ink);font-family:inherit}
+  .scard .figure .vs{font-size:11px;color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace}
+  .scard .figure .vs.meets{color:var(--good)} .scard .figure .vs.under{color:var(--target)}
+  .scard .spark{margin-top:6px}
+  .scard .mon{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--ink-soft);margin-top:3px}
+
+  /* Big chart panel */
+  .bigpanel{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:16px 18px 12px;position:relative}
+  .bigpanel .ttl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 6px}
+  .bigpanel .ttl h2{margin:0;font-size:18px;letter-spacing:-.01em}
+  .bigpanel .ttl .tag{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-family:ui-monospace,Menlo,monospace;
+    font-size:11px;color:var(--ink-soft);margin:2px 0 4px}
+  .legend i{display:inline-block;width:20px;height:0;vertical-align:middle;margin-right:5px}
+  .chartbox{position:relative}
+  .chartbox svg{display:block;width:100%;height:auto}
+  .pt{cursor:pointer}
+  /* Anchored tooltip */
+  .tip{position:absolute;z-index:5;transform:translate(-50%,-118%);pointer-events:none;
+    background:var(--ink);color:#fff;border-radius:6px;padding:7px 10px;
+    font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:1.45;
+    white-space:nowrap;box-shadow:0 3px 12px rgba(17,32,43,.25);display:none}
+  .tip .pct{font-size:14px;font-weight:600}
+  .tip .st{text-transform:uppercase;letter-spacing:.06em}
+  .tip .prov{color:#f0c870} .tip .fin{color:#9be0b4}
+  .tip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);
+    border:5px solid transparent;border-top-color:var(--ink)}
+
   .prize{margin-top:30px;background:var(--panel);border:1px solid var(--line);
     border-radius:8px;padding:20px 22px}
   .prize h2{margin:0 0 4px;font-size:20px}
@@ -46,9 +84,6 @@
   .result{flex:1;min-width:240px;border-left:2px solid var(--org);padding-left:18px}
   .result .big{font-size:38px;font-weight:600;letter-spacing:-.02em;color:var(--org);line-height:1}
   .result .cap{font-size:13.5px;color:var(--ink-soft);margin-top:6px;max-width:42ch}
-  .pill{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;
-    text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:10px;border:1px solid currentColor}
-  .prov{color:#9a7a1e} .fin{color:var(--good)}
   footer{margin-top:42px;border-top:1px solid var(--line);padding-top:16px;
     font-size:12.5px;color:var(--ink-soft)}
   a{color:var(--org)}
@@ -68,14 +103,22 @@
   <div class="controls">
     <div>
       <label for="orgpick">Organisation</label>
-      <input list="orglist" id="orgpick" type="search" placeholder="Type a trust or ICB name or code">
-      <datalist id="orglist"></datalist>
+      <select id="orgpick"></select>
+      <div class="orgname" id="orgname"></div>
     </div>
   </div>
 
   <div class="note" id="breaknote">Loading&hellip;</div>
 
-  <div class="grid" id="charts"></div>
+  <!-- Three summary cards: latest figure + sparkline; clicking one switches the big chart. -->
+  <div class="cards" id="cards"></div>
+
+  <!-- One large time-series chart for the selected standard. -->
+  <div class="bigpanel">
+    <div class="ttl"><h2 id="bigttl"></h2><span class="tag" id="bigtag"></span></div>
+    <div class="legend" id="legend"></div>
+    <div class="chartbox" id="chartbox"></div>
+  </div>
 
   <section class="prize" id="prize" style="display:none">
     <h2>Size of the prize</h2>
@@ -102,13 +145,18 @@
 
 <script>
 const DATA = "data/";
-let META=null, NATIONAL=null, CURRENT=null;
+const NATIONAL_CODE = "__NATIONAL__";
+const DEFAULT_STD = "CMB62";            // 62-day combined is the most-watched
+let META=null, NATIONAL=null, CURRENT=null, CURRENT_STD=DEFAULT_STD;
 
+const ABBR=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmt = p => (p*100).toFixed(1)+"%";
-const monthLabel = m => {const[y,mm]=m.split("-");return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mm-1]+" "+y.slice(2);};
+const monthLabel = m => {const[y,mm]=m.split("-");return ABBR[+mm-1]+" "+y.slice(2);};
+const tipMonth   = m => {const[y,mm]=m.split("-");return ABBR[+mm-1]+" "+y;};
 const _MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const fullMonth = m => {const[y,mm]=m.split("-");return _MN[+mm-1]+" "+y;};
 const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+_MN[+m-1]+" "+y;};
+
 function footerHTML(META){
   const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
   return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
@@ -121,88 +169,240 @@ async function init(){
   document.getElementById("foot").innerHTML = footerHTML(META);
   NATIONAL = await (await fetch(DATA+"national.json")).json();
   const idx = await (await fetch(DATA+"index.json")).json();
-  const dl = document.getElementById("orglist");
-  idx.forEach(o=>{const opt=document.createElement("option");
-    opt.value = `${o.name} (${o.code})`; opt.dataset.code=o.code; dl.appendChild(opt);});
   window._idx = idx;
+  buildPicker(idx);
   document.getElementById("breaknote").innerHTML =
     "&#9888; "+META.note+" This explorer defaults to data from "+META.comparability_break+" onward.";
   document.getElementById("orgpick").addEventListener("change", onPick);
-  // default to the first provider
-  const first = idx.find(o=>o.level==="provider") || idx[0];
-  document.getElementById("orgpick").value = `${first.name} (${first.code})`;
-  loadOrg(first.code);
+
+  // Deep-link / render hooks: ?org=CODE keeps the selection, ?std=CMB31 the standard.
+  const qs = new URLSearchParams(location.search);
+  const qStd = (qs.get("std")||"").toUpperCase();
+  if(META.standards[qStd]) CURRENT_STD = qStd;
+  const qOrg = qs.get("org");
+
+  if(qOrg && qOrg!==NATIONAL_CODE && idx.some(o=>o.code===qOrg)){
+    document.getElementById("orgpick").value = qOrg;
+    loadOrg(qOrg);
+  } else {
+    // Default anchor: National (the single all-England line).
+    document.getElementById("orgpick").value = NATIONAL_CODE;
+    loadNational();
+  }
+}
+
+// Grouped picker: National pinned on top, then Providers, then Commissioners.
+function buildPicker(idx){
+  const sel = document.getElementById("orgpick");
+  sel.innerHTML="";
+  const gN=document.createElement("optgroup"); gN.label="National";
+  gN.appendChild(new Option("England — all-England", NATIONAL_CODE));
+  sel.appendChild(gN);
+  const mk=(label,level)=>{
+    const og=document.createElement("optgroup"); og.label=label;
+    idx.filter(o=>o.level===level)
+       .sort((a,b)=>a.name.localeCompare(b.name))
+       .forEach(o=>og.appendChild(new Option(`${o.name} (${o.code})`, o.code)));
+    sel.appendChild(og);
+  };
+  mk("Providers (trusts)","provider");
+  mk("Commissioners (ICBs)","icb");
 }
 
 function onPick(e){
-  const m = e.target.value.match(/\(([^)]+)\)\s*$/);
-  if(!m) return;
-  const o = window._idx.find(x=>x.code===m[1]);
-  if(o) loadOrg(o.code);
+  const code=e.target.value;
+  if(code===NATIONAL_CODE) loadNational();
+  else loadOrg(code);
 }
 
+function loadNational(){
+  // national.json carries only {standards}; wrap it with identifying fields.
+  CURRENT = Object.assign({code:NATIONAL_CODE, name:"England", level:"national",
+    region:"England", isNational:true}, NATIONAL);
+  render();
+}
 async function loadOrg(code){
   CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
-  renderCharts();
+  CURRENT.isNational=false;
+  render();
+}
+
+function render(){
+  // If the org we switched to lacks the kept standard, fall back sensibly.
+  if(!CURRENT.standards[CURRENT_STD])
+    CURRENT_STD = META.standards[DEFAULT_STD] && CURRENT.standards[DEFAULT_STD]
+      ? DEFAULT_STD : Object.keys(CURRENT.standards)[0];
+  document.getElementById("orgname").innerHTML = CURRENT.isNational
+    ? `<b>England</b> &middot; all-England aggregate`
+    : `<b>${CURRENT.name}</b> &middot; ${CURRENT.level==="icb"?"Commissioner (ICB)":"Provider (trust)"}${CURRENT.region&&CURRENT.region!=="England"?" &middot; "+CURRENT.region:""}`;
+  renderCards();
+  renderBig();
   setupPrize();
 }
 
-function renderCharts(){
-  const host = document.getElementById("charts");
-  host.innerHTML="";
+/* ---- summary cards (the switcher) ---- */
+function renderCards(){
+  const host=document.getElementById("cards"); host.innerHTML="";
   for(const std of Object.keys(META.standards)){
-    const s = CURRENT.standards[std]; if(!s) continue;
-    const nat = NATIONAL.standards[std];
-    const last = s.performance.length-1;
-    const card = document.createElement("div"); card.className="card";
-    const statusPill = s.data_status[last]==="final"
-      ? '<span class="pill fin">final</span>' : '<span class="pill prov">provisional</span>';
-    card.innerHTML =
-      `<h3>${s.label.split("(")[0].trim()}</h3>
-       <div class="meta">${std} &middot; target ${fmt(s.target)} ${statusPill}</div>
-       ${chartSVG(s, nat)}
-       <p class="latest"><b>${fmt(s.performance[last])}</b> &nbsp;${monthLabel(s.months[last])}
-         &middot; ${s.within_target[last].toLocaleString()} of ${s.total[last].toLocaleString()}</p>`;
+    const s=CURRENT.standards[std]; if(!s) continue;
+    const last=s.performance.length-1;
+    const cur=s.performance[last];
+    const meets = cur>=s.target;
+    const card=document.createElement("div");
+    card.className="scard"+(std===CURRENT_STD?" active":"");
+    card.tabIndex=0; card.dataset.std=std;
+    card.innerHTML=
+      `<div class="stdcode">${std}</div>
+       <h3>${s.label.split("(")[0].trim()}</h3>
+       <div class="figure"><b>${fmt(cur)}</b>
+         <span class="vs ${meets?'meets':'under'}">${meets?'&#10003; meets':'&#9660; below'} ${fmt(s.target)} target</span></div>
+       <div class="spark">${sparkSVG(s)}</div>
+       <div class="mon">latest ${tipMonth(s.months[last])} &middot; ${s.data_status[last]}</div>`;
+    const pick=()=>{ if(CURRENT_STD===std) return; CURRENT_STD=std; renderCards(); renderBig(); };
+    card.addEventListener("click",pick);
+    card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});
     host.appendChild(card);
   }
 }
 
-function chartSVG(s, nat){
-  const W=440,H=170,P={l:34,r:10,t:12,b:22};
-  const xs = s.months, n=xs.length;
-  const x = i => P.l + (i/(n-1))*(W-P.l-P.r);
-  const y = v => P.t + (1-v)*(H-P.t-P.b);
-  const path = arr => arr.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
-  // gridlines at 25/50/75/100
-  let g="";
-  [0.25,0.5,0.75,1].forEach(v=>{g+=`<line x1="${P.l}" y1="${y(v)}" x2="${W-P.r}" y2="${y(v)}" stroke="var(--grid)"/>`+
-    `<text x="2" y="${y(v)+3}" font-size="9" fill="var(--ink-soft)">${v*100}</text>`;});
-  // target line
-  const ty=y(s.target);
-  const tline=`<line x1="${P.l}" y1="${ty}" x2="${W-P.r}" y2="${ty}" stroke="var(--target)" stroke-dasharray="4 3" stroke-width="1.4"/>`;
-  // national comparison (align by shared months length)
-  let natpath="";
-  if(nat){const m=Math.min(nat.performance.length,n);
-    const np=nat.performance.slice(nat.performance.length-m);
-    natpath=`<path d="${path(np)}" fill="none" stroke="var(--nat)" stroke-width="1.4" stroke-dasharray="2 2"/>`;}
-  const labels=[xs[0],xs[n-1]].map((m,i)=>`<text x="${i?W-P.r:P.l}" y="${H-6}" font-size="9" fill="var(--ink-soft)" text-anchor="${i?'end':'start'}">${monthLabel(m)}</text>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${tline}${natpath}
-    <path d="${path(s.performance)}" fill="none" stroke="var(--org)" stroke-width="2.2"/>
-    ${labels}</svg>`;
+// Small recent-trend sparkline (last ~15 months). Amber dashed target rule sits
+// clearly inside the plot (extra headroom), and the latest-point dot turns amber
+// when below target so a rising-but-still-short trend can't read as healthy.
+function sparkSVG(s){
+  const W=190,H=42,P=3;
+  const k=Math.min(15,s.performance.length);
+  const vals=s.performance.slice(-k);
+  const meets=vals[vals.length-1]>=s.target;
+  let lo=Math.min(...vals,s.target), hi=Math.max(...vals,s.target);
+  const pad=(hi-lo)*0.22||0.02; lo-=pad; hi+=pad;  // headroom: keep target off the edge
+  const x=i=>P+(i/(k-1))*(W-2*P);
+  const y=v=>P+(1-(v-lo)/(hi-lo))*(H-2*P);
+  const d=vals.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  const ty=y(s.target).toFixed(1);
+  const last=vals.length-1;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
+    <line x1="${P}" y1="${ty}" x2="${W-P}" y2="${ty}" stroke="var(--target)" stroke-dasharray="3 2" stroke-width="1.1"/>
+    <path d="${d}" fill="none" stroke="var(--org)" stroke-width="1.8"/>
+    <circle cx="${x(last).toFixed(1)}" cy="${y(vals[last]).toFixed(1)}" r="2.6" fill="${meets?'var(--org)':'var(--target)'}"/>
+  </svg>`;
 }
 
+/* ---- big chart ---- */
+function renderBig(){
+  const s=CURRENT.standards[CURRENT_STD];
+  const nat=NATIONAL.standards[CURRENT_STD];
+  document.getElementById("bigttl").textContent=s.label;
+  const last=s.performance.length-1;
+  document.getElementById("bigtag").innerHTML=
+    `${CURRENT_STD} &middot; target ${fmt(s.target)} &middot; ${CURRENT.isNational?"England":CURRENT.name}`;
+  const showNat=!CURRENT.isNational && nat;
+  document.getElementById("legend").innerHTML=
+    `<span><i style="border-top:2.4px solid var(--org)"></i>${CURRENT.isNational?"England":"this organisation"}</span>`+
+    (showNat?`<span><i style="border-top:1.6px dashed var(--nat)"></i>England</span>`:``)+
+    `<span><i style="border-top:1.6px dashed var(--target)"></i>target</span>`+
+    `<span><i style="border-top:2.4px dashed var(--org);opacity:.6"></i>provisional</span>`;
+  document.getElementById("chartbox").innerHTML = bigSVG(s, showNat?nat:null) +
+    `<div class="tip" id="tip"></div>`;
+  attachTips(s);
+
+  // Render hook: ?tip=N opens the tooltip on point N (from the end if negative).
+  const t=+(new URLSearchParams(location.search).get("tip"));
+  if(!Number.isNaN(t) && location.search.includes("tip=")){
+    const i=t<0?s.performance.length+t:t;
+    showTip(i, s);
+  }
+}
+
+const BG={W:920,H:380,P:{l:46,r:16,t:16,b:30}};
+function bigScales(s, nat){
+  const xs=s.months, n=xs.length;
+  const vals=s.performance.concat([s.target]);
+  if(nat){const m=Math.min(nat.performance.length,n); vals.push(...nat.performance.slice(-m));}
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  const pad=(hi-lo)*0.10||0.02; lo=Math.max(0,lo-pad); hi=Math.min(1,hi+pad);
+  const {W,H,P}=BG;
+  const x=i=>P.l+(i/(n-1))*(W-P.l-P.r);
+  const y=v=>P.t+(1-(v-lo)/(hi-lo))*(H-P.t-P.b);
+  return {xs,n,lo,hi,x,y};
+}
+function bigSVG(s, nat){
+  const {W,H,P}=BG;
+  const sc=bigScales(s,nat); const {xs,n,lo,hi,x,y}=sc;
+  // y gridlines: ~5 ticks on nice 5%/10% steps
+  const span=hi-lo; const step=span>0.5?0.1:0.05;
+  let g="";
+  for(let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step){
+    g+=`<line x1="${P.l}" y1="${y(v).toFixed(1)}" x2="${W-P.r}" y2="${y(v).toFixed(1)}" stroke="var(--grid)"/>`+
+       `<text x="${P.l-6}" y="${(y(v)+3).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--ink-soft)">${Math.round(v*100)}%</text>`;
+  }
+  // target line
+  const ty=y(s.target);
+  const tline=`<line x1="${P.l}" y1="${ty.toFixed(1)}" x2="${W-P.r}" y2="${ty.toFixed(1)}" stroke="var(--target)" stroke-dasharray="5 4" stroke-width="1.4"/>`+
+    `<text x="${W-P.r}" y="${(ty-5).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--target)">target ${fmt(s.target)}</text>`;
+  // national overlay (faint), aligned by trailing months
+  let natpath="";
+  if(nat){const m=Math.min(nat.performance.length,n);
+    const np=nat.performance.slice(-m);
+    const off=n-m;
+    const d=np.map((v,i)=>(i?"L":"M")+x(i+off).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+    natpath=`<path d="${d}" fill="none" stroke="var(--nat)" stroke-width="1.6" stroke-dasharray="3 3"/>`;}
+  // org series: solid up to last finalised point, dashed/lighter for provisional tail
+  let lastFin=-1; s.data_status.forEach((d,i)=>{if(d==="final")lastFin=i;});
+  if(lastFin<0) lastFin=0;
+  const seg=(a,b)=>{let d=""; for(let i=a;i<=b;i++) d+=(i===a?"M":"L")+x(i).toFixed(1)+" "+y(s.performance[i]).toFixed(1)+" "; return d.trim();};
+  const solid=`<path d="${seg(0,lastFin)}" fill="none" stroke="var(--org)" stroke-width="2.4"/>`;
+  const prov = lastFin<n-1
+    ? `<path d="${seg(lastFin,n-1)}" fill="none" stroke="var(--org)" stroke-width="2.4" stroke-dasharray="5 4" opacity="0.6"/>` : "";
+  // x labels: every ~6 months + last
+  let xl="";
+  for(let i=0;i<n;i+=6) xl+=`<text x="${x(i).toFixed(1)}" y="${H-8}" font-size="10" text-anchor="middle" fill="var(--ink-soft)">${monthLabel(xs[i])}</text>`;
+  xl+=`<text x="${x(n-1).toFixed(1)}" y="${H-8}" font-size="10" text-anchor="end" fill="var(--ink-soft)">${monthLabel(xs[n-1])}</text>`;
+  // hover points
+  let pts="";
+  for(let i=0;i<n;i++){
+    const prv=s.data_status[i]!=="final";
+    pts+=`<circle class="pt" data-i="${i}" cx="${x(i).toFixed(1)}" cy="${y(s.performance[i]).toFixed(1)}" r="3.2" `+
+      (prv?`fill="#fff" stroke="var(--org)" stroke-width="1.6" opacity="0.85"`:`fill="var(--org)"`)+`/>`+
+      `<circle class="pt hit" data-i="${i}" cx="${x(i).toFixed(1)}" cy="${y(s.performance[i]).toFixed(1)}" r="11" fill="transparent"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${natpath}${tline}${solid}${prov}${xl}${pts}</svg>`;
+}
+
+function attachTips(s){
+  const box=document.getElementById("chartbox");
+  box.querySelectorAll(".pt").forEach(c=>{
+    c.addEventListener("mouseenter",()=>showTip(+c.dataset.i, s));
+  });
+  box.addEventListener("mouseleave",hideTip);
+}
+function showTip(i, s){
+  if(i<0||i>=s.performance.length) return;
+  const tip=document.getElementById("tip"); if(!tip) return;
+  const sc=bigScales(s, !CURRENT.isNational?NATIONAL.standards[CURRENT_STD]:null);
+  const fin=s.data_status[i]==="final";
+  tip.innerHTML=
+    `${tipMonth(s.months[i])} &middot; <span class="pct">${fmt(s.performance[i])}</span><br>`+
+    `${(+s.within_target[i]).toLocaleString()} of ${(+s.total[i]).toLocaleString()} `+
+    `&middot; <span class="st ${fin?'fin':'prov'}">${fin?'final':'provisional'}</span>`;
+  tip.style.left=(sc.x(i)/BG.W*100)+"%";
+  tip.style.top =(sc.y(s.performance[i])/BG.H*100)+"%";
+  tip.style.display="block";
+}
+function hideTip(){const t=document.getElementById("tip"); if(t)t.style.display="none";}
+
+/* ---- size-of-the-prize (unchanged behaviour) ---- */
 function setupPrize(){
   const box=document.getElementById("prize"); box.style.display="block";
   const sel=document.getElementById("std"); sel.innerHTML="";
   Object.keys(CURRENT.standards).forEach(std=>{
     const o=document.createElement("option");o.value=std;
     o.textContent=CURRENT.standards[std].label.split("(")[0].trim();sel.appendChild(o);});
+  sel.value=CURRENT.standards[CURRENT_STD]?CURRENT_STD:sel.value;
   sel.onchange=recalcInit; recalcInit();
 }
 function recalcInit(){
   const std=document.getElementById("std").value;
   const s=CURRENT.standards[std];
-  const last=s.performance.length-1;
   const tgt=document.getElementById("tgt");
   tgt.value=Math.round(s.target*100);
   tgt.oninput=()=>recalc(std);
@@ -211,14 +411,14 @@ function recalcInit(){
 function recalc(std){
   const s=CURRENT.standards[std];
   const last=s.performance.length-1;
-  const cur=s.performance[last], denom=s.total[last];
+  const cur=s.performance[last], denom=+s.total[last];
   const target=(+document.getElementById("tgt").value)/100;
   document.getElementById("tgtval").textContent=fmt(target);
   const extra=Math.round(denom*(target-cur));
   const big=document.getElementById("prizebig");
   const cap=document.getElementById("prizecap");
   if(extra>0){big.textContent="+"+extra.toLocaleString();big.style.color="var(--org)";
-    cap.textContent=`more patients per month would be seen within the ${std} standard, at ${fmt(target)} vs the current ${fmt(cur)} (based on ${denom.toLocaleString()} in scope in ${monthLabel(s.months[last])}).`;}
+    cap.textContent=`more patients per month would be seen within the ${std} standard, at ${fmt(target)} vs the current ${fmt(cur)} (based on ${denom.toLocaleString()} in scope in ${tipMonth(s.months[last])}).`;}
   else{big.textContent="0";big.style.color="var(--good)";
     cap.textContent=`Current performance (${fmt(cur)}) already meets or exceeds ${fmt(target)}.`;}
 }

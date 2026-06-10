@@ -42,6 +42,13 @@ _Last updated: 2026-06-10 (Claude Code session)._
    comparison view scoped to that trust. Both are planning-session calls.
 
 ## Known things to keep an eye on
+- **NHS "provider flat files" decommissioned 11 Jun 2026 — WATCH the first run
+  on/after that date.** Pre-deploy check (10 Jun) confirmed the pipeline pulls
+  the SURVIVING source (Combined Provider+Commissioner ICB-based CSVs); discover
+  finds exactly the 5 combined links and normalise's column mapping holds against
+  the live header. The decommission removes a different file set we never used.
+  Residual: verified against the pre-decommission page — confirm the first
+  scheduled/manual run after 11 Jun is green. See `DECISIONS.md`.
 - FDS28 funnel has very high φ (~80) — verified not degenerate (15 trusts beyond
   95%, 4 beyond 99.8%), so adjustment isn't masking all outliers. Re-check if NHS
   data shifts. See `DECISIONS.md`.
