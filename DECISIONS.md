@@ -6,6 +6,30 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — Per-org page visual refinements (v4) built; PAUSED before deploy (Code, from per-org-visual-v4-spec.md)
+Front-end only (site/index.html), no pipeline/data change. Five changes:
+(1) ORG SELECTOR replaced by three type buttons (National | Providers |
+Commissioners) + a dependent dropdown below. National hides the dropdown (it's
+just England); Providers/Commissioners show it and DEFAULT to the first org
+alphabetically so the chart never goes blank. Default load stays National. Active
+button marked. (2) Both dropdowns (org + breakdown) are now custom in-DOM
+dropdowns with a type-to-filter SEARCH box (substring on name/code for orgs;
+across all dim values for breakdowns); Enter picks the first match, Esc closes,
+click still works. The native <select> org picker is gone (native selects can't
+substring-filter). (3) SIZE-OF-THE-PRIZE standard selector REMOVED; the panel now
+follows the active standard (cards + chart + prize all switch together via the
+card click), shows a "Standard: … · CMBxx" readout, keeps the target slider, stays
+all-cancers. (4) LEGEND entries now render a marker dot + line in each series'
+exact style (England comparison + target have no dot, matching the chart; org,
+provisional, low-reliability do). (5) LOW-RELIABILITY (n<10) markers + dashed
+segments recoloured grey -> MUTED/lighter org teal (--org-muted #6db0ba): clearly
+the org's own series (distinct from the grey England line) while still reading as
+de-emphasised (thinner, dashed, not as bold as the solid reliable line); legend
+swatch + note updated to match. Renders: v4_a_national, v4_b_provider (via
+buttons), v4_c_search (org dropdown filtering "manchester"), v4_d_thin (muted-teal
+low-reliability next to England), v4_e_prize (no selector, follows CMB31),
+v4_f_breakdown_search. JS node --check clean. NOT DEPLOYED — paused for review.
+
 ## 2026-06-10 — Per-org breakdown FILTERING built (v3); PAUSED before deploy (Code, from per-org-filtering-spec.md)
 Pipeline + front end. PIPELINE: build_site_data._breakdown_payload emits a NEW
 org/<CODE>.breakdown.json per org (+ national.breakdown.json) carrying every
