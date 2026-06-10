@@ -45,12 +45,22 @@ _Last updated: 2026-06-10 (Claude Code session)._
 4. Daily cron registered; the no-op path rebuilds + deploys cleanly (and, since
    the CI fix, without making a commit).
 
-## Considered but NOT doing
-- **Breakdown filter as a shared page-level control above the three cards.**
-  Declined: available breakdowns differ by standard (FDS28 = cancer only; 31/62-
-  day add route/modality + pairwise combos), so a single shared selector can't
-  apply cleanly to all three at once. The breakdown filter stays on the big chart,
-  scoped to the active standard. See `DECISIONS.md`.
+## Built, PAUSED before deploy (awaiting planning review) 🟡
+- **Cancer-type aggregation (NHS's ten groups) + shared group filter above the
+  cards (v5).** PART A pipeline: `pipeline/cancer_groups.py` rolls raw Cancer_Type
+  labels into NHS England's ten tumour-site groups (sourced from NHS's own label
+  hierarchy + CWT Monitoring Dataset Guidance v10.0; the only inferred mappings are
+  the four FDS28-only sites with no dashboard group → Other). Added as a
+  `cancer_group` dim in the per-org breakdown files ALONGSIDE the raw dims. Gate
+  PASSED: the ten groups reconcile EXACTLY to the all-cancers total for all 27,816
+  org-month-standard cells across FDS28/CMB31/CMB62 (max |Δ|=0). PART B front end:
+  a shared searchable "Cancer group" selector above the three cards drives all
+  three cards + the big chart + size-of-the-prize together; persists across
+  standard/org switches; default All cancers; muted-teal low-reliability treatment
+  on thin group sparklines. 25 tests pass. Renders v5_a…v5_e. NOT DEPLOYED. One
+  open call for planning: shared-group vs big-chart granular filter are currently
+  mutually-exclusive lenses (see `DECISIONS.md`). This SUPERSEDES the earlier
+  decline (the aggregation is what makes a single shared selector apply cleanly).
 
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The
@@ -61,7 +71,12 @@ _Last updated: 2026-06-10 (Claude Code session)._
    daily refresh meanwhile (a bad layout fails the run rather than shipping).
 2. **NEXT TASK — data cleaning.** To be scoped in the planning session before any
    build. Not started.
-3. **Parked.** (a) "Compare this trust" cross-link from the per-org page into the
+3. **Cancer-group filter polish (known, non-blocking; logged at deploy).** (a) Add
+   a note/tooltip on the "Other" group flagging its make-up differs across standards
+   (FDS28's Other absorbs brain/sarcoma/children's/NSS). (b) Add a "recent pooled
+   rate" label on the size-of-the-prize figure so its 3-month pooled rate isn't read
+   as contradicting the card's latest-single-month figure on thin groups.
+4. **Parked.** (a) "Compare this trust" cross-link from the per-org page into the
    comparison view (planned, not built). (b) Overdispersion ↔ study-protocol
    alignment — a methods decision for the research side (multiplicative Winsorised
    φ vs additive random-effects, Winsorisation fraction, whether to adjust).

@@ -46,6 +46,14 @@
   .note{background:#fff7e8;border:1px solid #f0dcae;border-left:3px solid var(--target);
     padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0 22px}
 
+  /* Shared cancer-group selector (drives all three cards + the big chart) */
+  .groupbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
+  .groupbar .flabel{font-family:ui-monospace,Menlo,monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)}
+  .groupbar .filterbtn{min-width:240px}
+  .groupbar .filterbtn.grouped{border-color:var(--org);color:var(--org);font-weight:600;
+    box-shadow:0 1px 6px rgba(15,125,140,.10)}
+
   /* Three summary cards = the standard switcher */
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0 0 22px}
   @media(max-width:780px){.cards{grid-template-columns:1fr}}
@@ -64,6 +72,10 @@
   .scard .figure .vs.meets{color:var(--good)} .scard .figure .vs.under{color:var(--target)}
   .scard .spark{margin-top:6px}
   .scard .mon{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--ink-soft);margin-top:3px}
+  .scard .mon .lowtag{color:#8a6d1f}                 /* n<10 caveat, matches low-reliability hue */
+  .scard.nodata{opacity:.72}
+  .scard .figure b.muted{color:var(--org-muted)}     /* thin latest figure reads as de-emphasised */
+  .scard .nogroup{font-size:13px;color:var(--ink-soft);margin:10px 0 8px}
 
   /* Big chart panel */
   .bigpanel{background:var(--panel);border:1px solid var(--line);border-radius:8px;
@@ -166,6 +178,17 @@
 
   <div class="note" id="breaknote">Loading&hellip;</div>
 
+  <!-- Shared cancer-group filter: drives all three cards AND the big chart together. -->
+  <div class="groupbar" id="groupbar">
+    <span class="flabel">Cancer group</span>
+    <div class="fdrop">
+      <button id="groupbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+        <span id="grouplabel">All cancers</span><span class="caret">&#9662;</span></button>
+      <div id="grouppanel" class="filterpanel" role="listbox" hidden></div>
+    </div>
+    <span id="grouphint" class="slicehint">NHS England&rsquo;s ten tumour-site groups &middot; applies to all three cards and the chart.</span>
+  </div>
+
   <!-- Three summary cards: latest figure + sparkline; clicking one switches the big chart. -->
   <div class="cards" id="cards"></div>
 
@@ -214,7 +237,17 @@ const DEFAULT_STD = "CMB62";            // 62-day combined is the most-watched
 const THRESH = 10;                      // pipeline RELIABILITY_THRESHOLD: denom < this = low-reliability
 let META=null, NATIONAL=null, CURRENT=null, CURRENT_STD=DEFAULT_STD;
 let CURRENT_TYPE="national";                   // national | provider | icb (org type buttons)
-let CURRENT_SLICE={type:"all",value:"All"};   // active breakdown slice
+// Active breakdown slice. The shared cancer-group selector and the big-chart
+// granular selector both write this ONE state, so they are mutually-exclusive
+// lenses (the chart never shows one thing while a selector claims another).
+// type 'cancer_group' is the page-level shared group; it PERSISTS across org /
+// standard switches (every other slice type resets to 'all' on a switch).
+let CURRENT_SLICE={type:"all",value:"All"};
+// NHS England's ten tumour-site groups (matches pipeline/cancer_groups.TEN_GROUPS,
+// the order NHS England's dashboard lists them).
+const CANCER_GROUPS=["Breast","Gynaecology","Haematology","Head & Neck","Lower GI",
+  "Lung","Other","Skin","Upper GI","Urology"];
+const isGroupSlice = () => CURRENT_SLICE.type==="cancer_group";
 let BREAKDOWN=null;                            // current org's breakdown file (lazy)
 let NATIONAL_BREAKDOWN=null;                   // national breakdown (lazy, cached)
 let ACTIVE_NAT=null;                           // national series currently overlaid (for tooltip scaling)
@@ -248,16 +281,20 @@ async function init(){
   document.getElementById("orgsearch").addEventListener("input", e=>buildOrgOptions(e.target.value));
   document.getElementById("orgsearch").addEventListener("keydown", dropSearchKey);
   document.getElementById("filterbtn").addEventListener("click", togglePanel);
-  document.addEventListener("click", e=>{ if(!e.target.closest(".fdrop")){ closePanel(); closeOrgPanel(); } });
+  document.getElementById("groupbtn").addEventListener("click", toggleGroupPanel);
+  document.addEventListener("click", e=>{ if(!e.target.closest(".fdrop")){ closePanel(); closeOrgPanel(); closeGroupPanel(); } });
 
   // Deep-link / render hooks: ?org=CODE, ?std=CMB31, ?slice=type:value, ?panel=open.
   const qs = new URLSearchParams(location.search);
   const qStd = (qs.get("std")||"").toUpperCase();
   if(META.standards[qStd]) CURRENT_STD = qStd;
   const qOrg = qs.get("org");
+  // Shared cancer group can be set before the org loads so it persists through it.
+  const qGroup = qs.get("group");
+  if(qGroup && CANCER_GROUPS.includes(qGroup)) CURRENT_SLICE={type:"cancer_group",value:qGroup};
   const qo = qOrg && qOrg!==NATIONAL_CODE && idx.find(o=>o.code===qOrg);
   if(qo) await setType(qo.level, qo.code);   // select a specific org via its type
-  else setType("national");                  // default anchor: National
+  else await setType("national");            // default anchor: National
   const qSlice = qs.get("slice");
   if(qSlice){
     const ci=qSlice.indexOf(":");
@@ -266,6 +303,7 @@ async function init(){
     setSlice(tp, val);
   }
   if(qs.get("panel")==="open") await openPanel();
+  if(qs.get("gopen")!=null) openGroupPanel();   // render hook: open the shared group dropdown
   const qOrgq=qs.get("orgq");   // render hook: open the org dropdown mid-search
   if(qOrgq!=null && CURRENT_TYPE!=="national"){
     openOrgPanel();
@@ -284,7 +322,7 @@ async function setType(type, code){
   if(type==="national"){
     drop.hidden=true;
     document.getElementById("orglabel").textContent="England — all-England";
-    loadNational();
+    await loadNational();
     return;
   }
   drop.hidden=false;
@@ -329,17 +367,26 @@ function dropSearchKey(e){
   else if(e.key==="Escape"){ closeOrgPanel(); closePanel(); }
 }
 
-function loadNational(){
+// On an org/standard switch we reset the slice — EXCEPT a shared cancer group,
+// which is a page-level selection that persists across switches (per spec).
+function resetSliceForSwitch(){ if(!isGroupSlice()) CURRENT_SLICE={type:"all",value:"All"}; }
+// When a group is active we need the breakdown file loaded before render (the
+// cards + chart read the group's series from it).
+async function ensureForGroup(){ if(isGroupSlice()) await ensureBreakdown(); }
+
+async function loadNational(){
   // national.json carries only {standards}; wrap it with identifying fields.
   CURRENT = Object.assign({code:NATIONAL_CODE, name:"England", level:"national",
     region:"England", isNational:true}, NATIONAL);
-  BREAKDOWN=null; CURRENT_SLICE={type:"all",value:"All"};
+  BREAKDOWN=null; resetSliceForSwitch();
+  await ensureForGroup();
   render();
 }
 async function loadOrg(code){
   CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
   CURRENT.isNational=false;
-  BREAKDOWN=null; CURRENT_SLICE={type:"all",value:"All"};  // breakdown is per-org; refetch lazily
+  BREAKDOWN=null; resetSliceForSwitch();   // breakdown is per-org; refetch lazily
+  await ensureForGroup();
   render();
 }
 
@@ -351,32 +398,55 @@ function render(){
   document.getElementById("orgname").innerHTML = CURRENT.isNational
     ? `<b>England</b> &middot; all-England aggregate`
     : `<b>${CURRENT.name}</b> &middot; ${CURRENT.level==="icb"?"Commissioner (ICB)":"Provider (trust)"}${CURRENT.region&&CURRENT.region!=="England"?" &middot; "+CURRENT.region:""}`;
-  closePanel(); updateFilterLabel();
+  closePanel(); updateFilterLabel(); updateGroupLabel();
   renderCards();
   renderBig();
   setupPrize();
 }
 
 /* ---- summary cards (the switcher) ---- */
+// The series a card shows: the shared cancer group's series when one is selected
+// (read from the loaded breakdown file), else the all-cancers headline. Returns
+// null when a group is selected but not published for this standard at this org.
+function cardSeries(std){
+  const base=CURRENT.standards[std]; if(!base) return undefined;
+  if(!isGroupSlice()) return base;
+  const cg = BREAKDOWN && BREAKDOWN.standards[std] && BREAKDOWN.standards[std].cancer_group;
+  const gs = cg && cg[CURRENT_SLICE.value];
+  return gs ? Object.assign({target:base.target,label:base.label}, gs) : null;
+}
 function renderCards(){
   const host=document.getElementById("cards"); host.innerHTML="";
+  const grouped=isGroupSlice();
   for(const std of Object.keys(META.standards)){
-    const s=CURRENT.standards[std]; if(!s) continue;
-    const last=s.performance.length-1;
-    const cur=s.performance[last];
-    const meets = cur>=s.target;
+    const base=CURRENT.standards[std]; if(!base) continue;   // standard absent entirely → no card
+    const s=cardSeries(std);
     const card=document.createElement("div");
-    card.className="scard"+(std===CURRENT_STD?" active":"");
     card.tabIndex=0; card.dataset.std=std;
-    card.innerHTML=
-      `<div class="stdcode">${std}</div>
-       <h3>${s.label.split("(")[0].trim()}</h3>
-       <div class="figure"><b>${fmt(cur)}</b>
-         <span class="vs ${meets?'meets':'under'}">${meets?'&#10003; meets':'&#9660; below'} ${fmt(s.target)} target</span></div>
-       <div class="spark">${sparkSVG(s)}</div>
-       <div class="mon">latest ${tipMonth(s.months[last])} &middot; ${s.data_status[last]}</div>`;
+    const title=base.label.split("(")[0].trim();
+    if(grouped && !s){
+      // Group not published for this standard at this org: keep the card (still a
+      // standard switcher) but say so rather than drawing a misleading figure.
+      card.className="scard nodata"+(std===CURRENT_STD?" active":"");
+      card.innerHTML=
+        `<div class="stdcode">${std} &middot; ${CURRENT_SLICE.value}</div>
+         <h3>${title}</h3>
+         <div class="nogroup">No <b>${CURRENT_SLICE.value}</b> figures published for this standard here.</div>`;
+    } else {
+      const last=s.performance.length-1, cur=s.performance[last], meets=cur>=s.target;
+      const lowLast=(+s.total[last])<THRESH;   // thin latest month → de-emphasise
+      card.className="scard"+(std===CURRENT_STD?" active":"");
+      card.innerHTML=
+        `<div class="stdcode">${std}${grouped?" &middot; "+CURRENT_SLICE.value:""}</div>
+         <h3>${title}</h3>
+         <div class="figure"><b class="${lowLast?'muted':''}">${fmt(cur)}</b>
+           <span class="vs ${meets?'meets':'under'}">${meets?'&#10003; meets':'&#9660; below'} ${fmt(s.target)} target</span></div>
+         <div class="spark">${sparkSVG(s)}</div>
+         <div class="mon">latest ${tipMonth(s.months[last])} &middot; ${s.data_status[last]}`+
+           (lowLast?` &middot; <span class="lowtag">n=${(+s.total[last])}, low reliability</span>`:``)+`</div>`;
+    }
     const pick=()=>{ if(CURRENT_STD===std) return; CURRENT_STD=std;
-      CURRENT_SLICE={type:"all",value:"All"}; closePanel(); updateFilterLabel();  // reshape filter to new standard
+      resetSliceForSwitch(); closePanel(); updateFilterLabel();   // keep the shared group, reshape granular filter
       renderCards(); renderBig(); setupPrize(); };  // cards + chart + prize switch together
     card.addEventListener("click",pick);
     card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});
@@ -387,22 +457,36 @@ function renderCards(){
 // Small recent-trend sparkline (last ~15 months). Amber dashed target rule sits
 // clearly inside the plot (extra headroom), and the latest-point dot turns amber
 // when below target so a rising-but-still-short trend can't read as healthy.
+// Group series at one org can be thin: months with n<THRESH are drawn in muted
+// teal + dashed (and a sub-threshold latest point as a hollow muted ring), so a
+// thin group can't read as a confident sparkline — the big chart's treatment,
+// scaled down. (s.total is present on both the all-cancers and group series.)
 function sparkSVG(s){
   const W=190,H=42,P=3;
   const k=Math.min(15,s.performance.length);
   const vals=s.performance.slice(-k);
+  const tot=(s.total||[]).slice(-k);
+  const low=i=> tot.length ? (+tot[i])<THRESH : false;
   const meets=vals[vals.length-1]>=s.target;
   let lo=Math.min(...vals,s.target), hi=Math.max(...vals,s.target);
   const pad=(hi-lo)*0.22||0.02; lo-=pad; hi+=pad;  // headroom: keep target off the edge
-  const x=i=>P+(i/(k-1))*(W-2*P);
-  const y=v=>P+(1-(v-lo)/(hi-lo))*(H-2*P);
-  const d=vals.map((v,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  const x=i=>P+(i/((k-1)||1))*(W-2*P);
+  const y=v=>P+(1-(v-lo)/((hi-lo)||1))*(H-2*P);
   const ty=y(s.target).toFixed(1);
-  const last=vals.length-1;
+  let path="";
+  for(let i=0;i<k-1;i++){
+    const seg=`M${x(i).toFixed(1)} ${y(vals[i]).toFixed(1)} L${x(i+1).toFixed(1)} ${y(vals[i+1]).toFixed(1)}`;
+    path += (low(i)||low(i+1))
+      ? `<path d="${seg}" fill="none" stroke="var(--org-muted)" stroke-width="1.4" stroke-dasharray="2 2" opacity="0.9"/>`
+      : `<path d="${seg}" fill="none" stroke="var(--org)" stroke-width="1.8"/>`;
+  }
+  const last=k-1;
+  const dot = low(last) ? `fill="#fff" stroke="var(--org-muted)" stroke-width="1.4"`
+                        : `fill="${meets?'var(--org)':'var(--target)'}"`;
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
     <line x1="${P}" y1="${ty}" x2="${W-P}" y2="${ty}" stroke="var(--target)" stroke-dasharray="3 2" stroke-width="1.1"/>
-    <path d="${d}" fill="none" stroke="var(--org)" stroke-width="1.8"/>
-    <circle cx="${x(last).toFixed(1)}" cy="${y(vals[last]).toFixed(1)}" r="2.6" fill="${meets?'var(--org)':'var(--target)'}"/>
+    ${path}
+    <circle cx="${x(last).toFixed(1)}" cy="${y(vals[last]).toFixed(1)}" r="2.8" ${dot}/>
   </svg>`;
 }
 
@@ -443,9 +527,60 @@ function activeNatSeries(){
 
 function sliceText(){ return CURRENT_SLICE.type==="all" ? "All cancers" : CURRENT_SLICE.value; }
 function updateFilterLabel(){ const e=document.getElementById("filterlabel"); if(e) e.textContent=sliceText(); }
+// The big-chart granular filter writes the SAME slice state as the shared group,
+// so picking a granular slice supersedes any active group (cards revert to all-
+// cancers, the group selector shows "All cancers" again). One lens at a time.
 function setSlice(type,value){
   CURRENT_SLICE = (type==="all"||!value) ? {type:"all",value:"All"} : {type,value};
-  updateFilterLabel(); closePanel(); renderBig();
+  updateFilterLabel(); updateGroupLabel(); closePanel(); renderCards(); renderBig();
+}
+
+/* ---- shared cancer-group selector (drives cards + big chart together) ---- */
+function groupText(){ return isGroupSlice() ? CURRENT_SLICE.value : "All cancers"; }
+function updateGroupLabel(){
+  const e=document.getElementById("grouplabel"); if(e) e.textContent=groupText();
+  const b=document.getElementById("groupbtn"); if(b) b.classList.toggle("grouped", isGroupSlice());
+}
+function toggleGroupPanel(){ const p=document.getElementById("grouppanel"); if(p && !p.hidden) closeGroupPanel(); else openGroupPanel(); }
+function openGroupPanel(){
+  const p=document.getElementById("grouppanel"); p.innerHTML="";
+  const s=document.createElement("input"); s.className="dropsearch"; s.type="search";
+  s.placeholder="Type to filter groups…"; s.autocomplete="off";
+  s.addEventListener("input",()=>renderGroupOptions(s.value));
+  s.addEventListener("keydown",groupSearchKey);
+  p.appendChild(s);
+  const opts=document.createElement("div"); opts.id="groupoptions"; p.appendChild(opts);
+  renderGroupOptions("");
+  p.hidden=false; document.getElementById("groupbtn").setAttribute("aria-expanded","true");
+  setTimeout(()=>s.focus(),0);
+}
+function closeGroupPanel(){ const p=document.getElementById("grouppanel"); if(p)p.hidden=true;
+  const b=document.getElementById("groupbtn"); if(b)b.setAttribute("aria-expanded","false"); }
+function groupSearchKey(e){
+  if(e.key==="Enter"){ const f=e.target.parentElement.querySelector(".fopt"); if(f){e.preventDefault();f.click();} }
+  else if(e.key==="Escape"){ closeGroupPanel(); }
+}
+// Searchable: "All cancers" + NHS England's ten groups (substring match).
+function renderGroupOptions(q){
+  const host=document.getElementById("groupoptions"); host.innerHTML="";
+  q=(q||"").trim().toLowerCase();
+  const match=t=>!q||t.toLowerCase().includes(q);
+  const opt=(label,val,on)=>{ const b=document.createElement("button");
+    b.className="fopt"+(on?" active":""); b.textContent=label; b.setAttribute("role","option");
+    b.onclick=()=>selectGroup(val); return b; };
+  const hdr=(t,first)=>{ const g=document.createElement("div"); g.className="fgroup"+(first?" first":""); g.textContent=t; return g; };
+  if(match("all cancers")){ host.appendChild(hdr("Overview",true)); host.appendChild(opt("All cancers",null,!isGroupSlice())); }
+  const gs=CANCER_GROUPS.filter(match);
+  if(gs.length){ host.appendChild(hdr("Cancer group",false));
+    gs.forEach(g=>host.appendChild(opt(g,g, isGroupSlice()&&CURRENT_SLICE.value===g))); }
+  if(!host.children.length) host.innerHTML='<div class="fgroup first">No matches</div>';
+}
+async function selectGroup(group){
+  closeGroupPanel();
+  CURRENT_SLICE = group ? {type:"cancer_group",value:group} : {type:"all",value:"All"};
+  updateGroupLabel(); updateFilterLabel(); closePanel();
+  if(isGroupSlice()) await ensureBreakdown();   // cards + chart read the group series from it
+  renderCards(); renderBig(); setupPrize();
 }
 function closePanel(){ const p=document.getElementById("filterpanel"); if(p)p.hidden=true;
   const b=document.getElementById("filterbtn"); if(b)b.setAttribute("aria-expanded","false"); }
@@ -503,7 +638,9 @@ function renderBig(){
   document.getElementById("bigtag").innerHTML=
     `${CURRENT_STD} &middot; target ${fmt(sAll.target)} &middot; ${CURRENT.isNational?"England":CURRENT.name}`;
   document.getElementById("slicehint").textContent =
-    sliceOn ? "Showing one published slice." : "Narrow to a cancer type, route or modality.";
+    isGroupSlice() ? `${CURRENT_SLICE.value} group · narrow further below, or change the group above.`
+    : sliceOn ? "Showing one published slice."
+    : "Narrow to a cancer type, route or modality.";
   const box=document.getElementById("chartbox");
   const low=document.getElementById("lowrel");
 
@@ -642,19 +779,23 @@ function showTip(i, s){
 }
 function hideTip(){const t=document.getElementById("tip"); if(t)t.style.display="none";}
 
-/* ---- size-of-the-prize: follows the ACTIVE standard (no selector); all-cancers ---- */
+/* ---- size-of-the-prize: follows the ACTIVE standard AND the shared cancer
+   group (so it can't show all-cancers while the cards/chart show a group). ---- */
+function prizeSeries(){ return (isGroupSlice() && cardSeries(CURRENT_STD)) || CURRENT.standards[CURRENT_STD]; }
 function setupPrize(){
   document.getElementById("prize").style.display="block";
-  const s=CURRENT.standards[CURRENT_STD]; if(!s) return;
+  const s=prizeSeries(); if(!s) return;
+  const base=CURRENT.standards[CURRENT_STD];
   document.getElementById("prizestd").innerHTML=
-    `Standard: <b>${s.label.split("(")[0].trim()}</b> &middot; ${CURRENT_STD}`;
+    `Standard: <b>${base.label.split("(")[0].trim()}</b> &middot; ${CURRENT_STD}`+
+    (isGroupSlice()&&cardSeries(CURRENT_STD)?` &middot; <b>${CURRENT_SLICE.value}</b>`:``);
   const tgt=document.getElementById("tgt");
   tgt.value=Math.round(s.target*100);
   tgt.oninput=recalc;
   recalc();
 }
 function recalc(){
-  const s=CURRENT.standards[CURRENT_STD];
+  const s=prizeSeries();
   const last=s.performance.length-1;
   const cur=s.performance[last], denom=+s.total[last];
   const target=(+document.getElementById("tgt").value)/100;

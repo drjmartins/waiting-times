@@ -97,10 +97,13 @@ def test_breakdown_payload_nests_dims_excludes_all_keeps_fractional():
     ]
     pay = b._breakdown_payload(pd.DataFrame(rows))
     cmb = pay["standards"]["CMB62"]
-    assert set(cmb) == {"cancer", "route", "combination"}      # 'all' is NOT a breakdown dim
+    # 'all' is NOT a breakdown dim; 'cancer_group' is derived from the cancer rows.
+    assert set(cmb) == {"cancer", "route", "combination", "cancer_group"}
     assert cmb["cancer"]["Lung"]["months"] == ["2025-07", "2025-08"]   # sorted, per-value series
     assert cmb["cancer"]["Lung"]["total"] == [40, 45]
     assert cmb["combination"]["Lung | Screening"]["total"] == [2.5]    # fractional preserved, not truncated
+    # the single 'Lung' cancer type rolls up into the Lung group, same series
+    assert cmb["cancer_group"]["Lung"]["total"] == [40, 45]
 
 
 def test_sub_threshold_flag(tmp_path):

@@ -19,6 +19,7 @@ import datetime as dt
 import pandas as pd
 
 from . import config
+from . import cancer_groups
 
 # Non-real placeholder orgs (e.g. the 'UNKNOWN' unallocated-commissioner bucket).
 # Hidden from the picker and comparison view, but RETAINED in the tidy store and
@@ -57,11 +58,57 @@ def _org_payload(df_org):
 BREAKDOWN_DIMS = ("cancer", "route", "modality", "combination")
 
 
+def _cancer_group_slices(cancer_rows):
+    """Aggregate raw 'cancer' breakdown rows into NHS England's ten tumour-site
+    groups for one (org, standard). Per (group, month) we SUM the numerators and
+    SUM the denominators across the constituent cancer types, THEN compute
+    performance from the totals — never average the per-type percentages
+    (mis-weights types of different sizes). Returns slices keyed by group name,
+    same series shape as the raw dims. Empty groups (no constituent rows for this
+    org/standard) are omitted, so the front end can treat an absent group as
+    'not published here' rather than a flat-zero line."""
+    if cancer_rows.empty:
+        return {}
+    rows = cancer_rows.copy()
+    rows["group"] = rows["breakdown_value"].map(cancer_groups.group_for)
+
+    # Build-time double-count guard: a parent label and its children must never
+    # share a (month) cell, or the group denominator would double. Cheap insurance
+    # against a future NHS vintage shifting granularity mid-series.
+    for _m, mg in rows.groupby("month"):
+        cancer_groups.assert_no_double_count(mg["breakdown_value"].tolist())
+
+    agg = (rows.groupby(["group", "month"], as_index=False)
+               .agg(within=("within_target", "sum"),
+                    total=("total", "sum"),
+                    # within a (month, org, standard) all cancer rows come from one
+                    # source file → one status; 'min' keeps provisional if ever mixed.
+                    data_status=("data_status", "min")))
+    agg["performance"] = (agg["within"] / agg["total"]).round(4)
+
+    slices = {}
+    for grp in cancer_groups.TEN_GROUPS:
+        g = agg[agg["group"] == grp].sort_values("month")
+        if g.empty:
+            continue
+        slices[grp] = {
+            "months": g["month"].tolist(),
+            "performance": g["performance"].tolist(),
+            "within_target": [_num(v) for v in g["within"]],
+            "total": [_num(v) for v in g["total"]],
+            "data_status": g["data_status"].tolist(),
+        }
+    return slices
+
+
 def _breakdown_payload(df_org):
-    """Per-org breakdown series (cancer / route / modality + published pairwise
-    combinations) for every standard. Same series shape as the all-slice so the
-    front end renders a breakdown with no new chart code. Shipped as a separate
-    org/<CODE>.breakdown.json fetched ONLY when the user opens a filter."""
+    """Per-org breakdown series for every standard. Carries the raw granular
+    dimensions (cancer / route / modality + published pairwise combinations) AND
+    a new 'cancer_group' dimension: NHS England's ten tumour-site groups, summed
+    up from the raw cancer types (kept ALONGSIDE the granular cancer dim, not as
+    a replacement). Same series shape throughout so the front end renders any of
+    them with no new chart code. Shipped as a separate org/<CODE>.breakdown.json
+    fetched ONLY when the user opens a filter / picks a group."""
     out = {"standards": {}}
     for std in config.STANDARDS:
         srows = df_org[df_org["standard"] == std]
@@ -82,6 +129,10 @@ def _breakdown_payload(df_org):
                 }
             if slices:
                 dims[bt] = slices
+        # NHS ten-group rollup, derived from the raw cancer rows.
+        group_slices = _cancer_group_slices(srows[srows["breakdown_type"] == "cancer"])
+        if group_slices:
+            dims["cancer_group"] = group_slices
         if dims:
             out["standards"][std] = dims
     return out

@@ -6,6 +6,66 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — Cancer-type aggregation into NHS's ten groups + shared group filter; BUILT, PAUSED before deploy (Code, from cancer-aggregation-v5-spec.md)
+REVISITS the idea declined below: a shared breakdown filter above the three cards.
+Now viable because we aggregate raw cancer types into NHS England's ten tumour-site
+groups (Breast, Gynaecology, Haematology, Head & Neck, Lower GI, Lung, Other, Skin,
+Upper GI, Urology) that exist across ALL three standards, so one selector applies
+consistently. PART A (pipeline): new pipeline/cancer_groups.py — canonical raw-label
+-> group lookup, EXHAUSTIVE (group_for raises on any unmapped value; tests assert
+every store label maps). MAPPING SOURCE: NHS England's OWN published labels in the
+Combined CWT file already encode the hierarchy — CMB31/CMB62 top-level labels ARE the
+group names; sub-breakdowns are parent-prefixed ('Haematological - Lymphoma' -> Haem,
+'Urological - Prostate' -> Urology); CMB62 splits the "rare cancers" (acute leukaemia,
+testicular) out and the CWT Monitoring Dataset Guidance v10.0 §5.5/§6 names acute
+leukaemia as a haematological malignancy + testicular under urology, so they roll
+back. NOT improvised. The FOUR FDS28-only labels with no dashboard group (brain/CNS,
+sarcoma, children's, non-specific symptoms) + 'Missing or Invalid' map to Other BY
+ELIMINATION (NHS's ten-group CMB reporting has no line for them, so they sit in CMB
+"Other") — the only inferred (not label-read) assignments; FLAGGED here and in the
+report. Aggregation SUMS numerators + denominators per (month,org,standard,group)
+then computes performance (never averages %). Built as a new 'cancer_group' dim in
+_breakdown_payload ALONGSIDE the raw cancer/route/modality dims (not a replacement);
++~3-4KB gz/org, load-on-demand as before. VALIDATION (the gate): all ten groups
+construct in FDS28 AND CMB31 AND CMB62; parent+child NEVER co-occur in a cell (so
+summing can't double-count; a build-time + test guard fails loudly if a future NHS
+vintage breaks that); RECONCILIATION is EXACT — the ten groups' summed denominators
+(and numerators) equal the all-cancers headline for all 27,816 (month,org,standard)
+cells, max |Δ| = 0.00, across all three standards. No group failed → Part B was
+cleared. PART B (front end, site/index.html): a shared "Cancer group" searchable
+dropdown ABOVE the three cards (All cancers default + the ten groups). Modelled as a
+'cancer_group' slice in the SINGLE CURRENT_SLICE state, so the shared group and the
+big-chart granular filter are MUTUALLY-EXCLUSIVE lenses (the chart is never out of
+sync with a selector). The group PERSISTS across standard + org switches (only a
+group slice survives a switch; granular slices reset to All, as before) — picking a
+granular slice supersedes the group (cards revert to All). Cards + sparklines + big
+chart + size-of-the-prize all follow the group together. Thin group series get the
+existing muted-teal/dashed low-reliability treatment (n<10) on the sparklines (+ a
+"n=…, low reliability" caveat and a de-emphasised latest figure) and on the big chart.
+DECISION TO CONFIRM AT PLANNING (spec point B4): I made the shared group and the
+big-chart granular filter mutually-exclusive (one lens at a time) rather than nesting
+granular within the group — cleanest, never incoherent, but the spec flagged this as
+a "bring to planning if fiddly" call. Renders: v5_a_all_national (All default),
+v5_b_lung_national (Lung — all three cards + chart + prize updated), v5_c_groupopen
+(searchable group dropdown), v5_d_thin_barts (Barts Head&Neck CMB62 — muted-teal thin
+sparkline + card caveat + big-chart treatment), v5_e_thin_tip. 25 tests pass (was 16;
++9). JS node-parse clean. NOT DEPLOYED — paused for planning review.
+CAVEAT noted: the "Other" group's COMPOSITION differs by standard (FDS28's Other also
+absorbs brain/CNS/sarcoma/children's/NSS, which have no dashboard group); each
+standard still reconciles to its own all-cancers total, so the filter is sound, but
+cross-standard "Other" is not a like-for-like cohort.
+REVIEW OUTCOME (planning, 2026-06-10): APPROVED + DEPLOYED (watched). Mutually-
+exclusive group/granular lenses CONFIRMED as the right call (keep it). Two MINOR
+polish follow-ups logged as KNOWN ITEMS for a later pass (NOT blockers):
+ (1) "Other" group make-up differs across standards (per the caveat above) — add a
+     small note/tooltip on the Other option flagging it isn't a like-for-like cohort
+     across FDS28/CMB31/CMB62.
+ (2) Size-of-the-prize uses the rolling 3-month POOLED rate while the card above
+     shows the latest SINGLE month, so on a thin group they can look contradictory
+     (e.g. Barts Head & Neck CMB62: card 50.0% latest vs prize-panel ~84% pooled).
+     Both correct by design — add a brief "recent pooled rate" label on the prize
+     figure to prevent the apparent contradiction.
+
 ## 2026-06-10 — DECLINED: breakdown filter as a shared page-level control above the cards (planning session + Code)
 Considered moving the breakdown filter above the three summary cards as a single
 shared, page-level selector applying to all standards at once. NOT doing it: the
