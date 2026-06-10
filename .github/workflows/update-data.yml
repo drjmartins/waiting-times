@@ -15,8 +15,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # Action versions kept on Node 24-capable majors (bumped ahead of the
+      # 16 Jun 2026 Node 20 removal so a runner change can't break the refresh).
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with: { python-version: "3.12" }
       - run: pip install -r requirements.txt
       - name: Run tests
@@ -28,17 +30,26 @@ jobs:
       - name: Fetch new data and rebuild site
         run: python -m pipeline.run
       - name: Commit refreshed data + manifest
+        # Only commit when something OTHER than meta.json's built_at changed.
+        # build_at churns every run, so committing unconditionally created a
+        # daily no-op "Auto update CWT data" commit that every manual deploy then
+        # had to rebase over. The freshly-built site/ (incl. meta.json) still
+        # deploys from the working tree either way — we just don't churn git.
         run: |
           git config user.name "cwt-bot"
           git config user.email "cwt-bot@users.noreply.github.com"
           git add data/manifest.json data/processed site/data
-          git commit -m "Auto update CWT data" || echo "No changes to commit"
-          git push
-      - uses: actions/upload-pages-artifact@v3
+          if git diff --cached --quiet -- . ':(exclude)site/data/meta.json'; then
+            echo "No data change (only meta.json built_at) — skipping no-op commit."
+          else
+            git commit -m "Auto update CWT data"
+            git push
+          fi
+      - uses: actions/upload-pages-artifact@v5
         with: { path: site }
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment: { name: github-pages }
     steps:
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
