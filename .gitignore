@@ -9,6 +9,12 @@ data/processed/tidy_synthetic.parquet
 # and rebuilt every run into the site/ Pages artefact; not stored in git.
 site/data/downloads/
 
+# Load-on-demand per-org breakdown files (~43MB across all orgs). Rebuilt every
+# run from the committed store into the Pages artefact, same as downloads/; the
+# lean all-slice org/<CODE>.json stays committed for fast first paint.
+site/data/org/*.breakdown.json
+site/data/national.breakdown.json
+
 # Local dev verification screenshots (not part of the site or pipeline)
 screenshots/
 

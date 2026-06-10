@@ -6,6 +6,46 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-10 — Per-org breakdown FILTERING built (v3); PAUSED before deploy (Code, from per-org-filtering-spec.md)
+Pipeline + front end. PIPELINE: build_site_data._breakdown_payload emits a NEW
+org/<CODE>.breakdown.json per org (+ national.breakdown.json) carrying every
+breakdown dim that exists (cancer/route/modality/combination) per standard, same
+series shape as the all-slice. ~147KB raw / 20-37KB gz per org; 37.9MB raw total
+— so GITIGNORED and rebuilt every run into the Pages artefact (same pattern as
+downloads/); the lean all-slice org/<CODE>.json stays committed for fast first
+paint. FRONT END: a custom in-DOM dropdown (not native <select>, so options are
+reviewable + groupable) near the chart, default "All cancers". Fetched LOAD-ON-
+DEMAND only when the filter is first opened (or a ?slice= deep link). Options
+reshape per standard via dimsForStandard(): FDS28 = cancer only; CMB31/62 = cancer
++ route + modality + published pairwise combos (each combo a labelled option, no
+two-dropdown Cartesian implication). Selecting a slice redraws only the big chart;
+National comparison line MATCHES the slice (England lung vs org lung), aligned by
+MONTH (robust to slices that skip months) and HIDDEN if no matching national slice
+rather than falling back to all-cancers. Sub-threshold months (denom<10) SHOWN but
+flagged: open grey markers AND the connecting LINE segments touching a sub-
+threshold month are greyed + dashed (post-review fix — fragility must reach the
+line, not just the dots, so a thin slice's 0%/100% bounces don't read as a real
+collapse; same principle as the funnel carrying its own uncertainty). Drawn per-
+segment, so an all-final above-threshold series is still a solid line. Empty slice
+→ "No data published for this breakdown at this organisation." Switching standard/
+org resets to All cancers and reshapes. Summary cards + size-of-the-prize STAY all-
+cancers (per spec). Added a _breakdown_payload guard test (16 pass). Renders:
+filt_a_lung.png (RRK CMB62 Lung + matched national + tooltip), filt_b_fds28_panel
+.png (FDS28 cancer-only options), filt_c_thin.png (Acute leukaemia thin slice — now
+greyed/dashed line + open markers + note). DEPLOYED (watched) after planning
+approval; pause after.
+
+## 2026-06-10 — CI: actions bumped to Node 24-capable majors + daily no-op commit removed; DEPLOYED (Code)
+Two CI-resilience fixes ahead of the 16 Jun 2026 Node 20 removal (which would land
+right next to the 11 Jun decommission). (1) Bumped checkout v4->v6, setup-python
+v5->v6, upload-pages-artifact v3->v5, deploy-pages v4->v5; verified a dispatched
+run green on all four with no Node 20 deprecation annotation. (2) The commit step
+now skips when ONLY meta.json's built_at changed (git diff --cached with an exclude
+pathspec), so no-op daily runs no longer create an "Auto update CWT data" commit
+that every manual deploy had to rebase over — the freshly-built site/ (incl. fresh
+meta.json) still deploys from the working tree. Verified: a no-op dispatched run
+left origin/master HEAD unchanged. This is the only item this cycle that shipped.
+
 ## 2026-06-10 — PRE-DEPLOY decommission check PASSED; pipeline pulls the SURVIVING source (Code)
 The 11-Jun-2026 decommission targets the OLD "provider flat files" — NOT the
 source this pipeline uses. Verified live against england.nhs.uk today:

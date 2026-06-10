@@ -51,6 +51,42 @@ def _org_payload(df_org):
     return out
 
 
+# Breakdown dimensions exported in the load-on-demand per-org breakdown file.
+# The file carries every dimension that exists in the source; which ones are
+# *offered* per standard is a front-end concern (FDS28 surfaces cancer only).
+BREAKDOWN_DIMS = ("cancer", "route", "modality", "combination")
+
+
+def _breakdown_payload(df_org):
+    """Per-org breakdown series (cancer / route / modality + published pairwise
+    combinations) for every standard. Same series shape as the all-slice so the
+    front end renders a breakdown with no new chart code. Shipped as a separate
+    org/<CODE>.breakdown.json fetched ONLY when the user opens a filter."""
+    out = {"standards": {}}
+    for std in config.STANDARDS:
+        srows = df_org[df_org["standard"] == std]
+        dims = {}
+        for bt in BREAKDOWN_DIMS:
+            rows = srows[srows["breakdown_type"] == bt]
+            if rows.empty:
+                continue
+            slices = {}
+            for bv, g in rows.groupby("breakdown_value"):
+                g = g.sort_values("month")
+                slices[str(bv)] = {
+                    "months": g["month"].tolist(),
+                    "performance": g["performance"].tolist(),
+                    "within_target": [_num(v) for v in g["within_target"]],
+                    "total": [_num(v) for v in g["total"]],
+                    "data_status": g["data_status"].tolist(),
+                }
+            if slices:
+                dims[bt] = slices
+        if dims:
+            out["standards"][std] = dims
+    return out
+
+
 _MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -237,6 +273,9 @@ def build(df, out_dir=config.SITE_DATA_DIR):
         with open(os.path.join(out_dir, "org", f"{code}.json"), "w") as f:
             json.dump(payload, f, separators=(",", ":"))
         if level != "national":
+            # Load-on-demand breakdown file (gitignored, rebuilt every run).
+            with open(os.path.join(out_dir, "org", f"{code}.breakdown.json"), "w") as f:
+                json.dump(_breakdown_payload(g), f, separators=(",", ":"))
             index.append({"code": code, "name": name, "level": level, "region": region})
     index.sort(key=lambda r: r["name"])
     with open(os.path.join(out_dir, "index.json"), "w") as f:
@@ -249,6 +288,9 @@ def build(df, out_dir=config.SITE_DATA_DIR):
         national_payload = _org_payload(nat)
         with open(os.path.join(out_dir, "national.json"), "w") as f:
             json.dump(national_payload, f, separators=(",", ":"))
+        # National breakdown (for the slice-matched comparison line, on demand).
+        with open(os.path.join(out_dir, "national.breakdown.json"), "w") as f:
+            json.dump(_breakdown_payload(nat), f, separators=(",", ":"))
 
     # Trust comparison datasets (funnel / percentile) + targeted downloads
     comparison = _build_comparison(df, out_dir)

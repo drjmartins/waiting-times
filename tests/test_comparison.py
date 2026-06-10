@@ -84,6 +84,25 @@ def test_measure_json_has_overdispersion_and_no_bogus_zero(tmp_path):
     assert d["overdispersion"]["phi"] >= 1.0 and d["overdispersion"]["winsorised"] is True
 
 
+def test_breakdown_payload_nests_dims_excludes_all_keeps_fractional():
+    # One org, CMB62 with an all-slice + cancer + route + a pairwise combo, plus a
+    # thin fractional total (NHS small-number rounding) that must survive.
+    rows = [
+        _row("2025-07", "RAA", 70, 100),                       # all-slice -> excluded
+        {**_row("2025-07", "RAA", 30, 40), "breakdown_type": "cancer", "breakdown_value": "Lung"},
+        {**_row("2025-08", "RAA", 33, 45), "breakdown_type": "cancer", "breakdown_value": "Lung"},
+        {**_row("2025-07", "RAA", 5, 8), "breakdown_type": "route", "breakdown_value": "Screening"},
+        {**_row("2025-07", "RAA", 1, 2.5), "breakdown_type": "combination",
+         "breakdown_value": "Lung | Screening"},
+    ]
+    pay = b._breakdown_payload(pd.DataFrame(rows))
+    cmb = pay["standards"]["CMB62"]
+    assert set(cmb) == {"cancer", "route", "combination"}      # 'all' is NOT a breakdown dim
+    assert cmb["cancer"]["Lung"]["months"] == ["2025-07", "2025-08"]   # sorted, per-value series
+    assert cmb["cancer"]["Lung"]["total"] == [40, 45]
+    assert cmb["combination"]["Lung | Screening"]["total"] == [2.5]    # fractional preserved, not truncated
+
+
 def test_sub_threshold_flag(tmp_path):
     df = pd.DataFrame([
         _row("2025-07", "BIG", 80, 100),
