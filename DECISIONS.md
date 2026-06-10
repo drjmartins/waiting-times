@@ -54,17 +54,22 @@ CAVEAT noted: the "Other" group's COMPOSITION differs by standard (FDS28's Other
 absorbs brain/CNS/sarcoma/children's/NSS, which have no dashboard group); each
 standard still reconciles to its own all-cancers total, so the filter is sound, but
 cross-standard "Other" is not a like-for-like cohort.
-REVIEW OUTCOME (planning, 2026-06-10): APPROVED + DEPLOYED (watched). Mutually-
-exclusive group/granular lenses CONFIRMED as the right call (keep it). Two MINOR
-polish follow-ups logged as KNOWN ITEMS for a later pass (NOT blockers):
- (1) "Other" group make-up differs across standards (per the caveat above) — add a
-     small note/tooltip on the Other option flagging it isn't a like-for-like cohort
-     across FDS28/CMB31/CMB62.
- (2) Size-of-the-prize uses the rolling 3-month POOLED rate while the card above
-     shows the latest SINGLE month, so on a thin group they can look contradictory
-     (e.g. Barts Head & Neck CMB62: card 50.0% latest vs prize-panel ~84% pooled).
-     Both correct by design — add a brief "recent pooled rate" label on the prize
-     figure to prevent the apparent contradiction.
+REVIEW OUTCOME (planning, 2026-06-10): APPROVED. Mutually-exclusive group/granular
+lenses CONFIRMED as the right call (keep it). v5 first deployed green (run
+27310060320). Two MINOR polish items then FOLDED IN and shipped in a second watched
+run:
+ (1) DONE — "Other" group: grouphint now shows a caveat when Other is selected
+     (FDS28's Other also absorbs brain/CNS, sarcoma, children's, NSS — not a
+     like-for-like cohort across standards) + a hover tooltip on the Other option.
+ (2) Re-scoped after checking the code: the request assumed the per-org prize uses a
+     rolling 3-month POOLED rate (and that the Barts H&N "84%" contradicted the card's
+     50%). It does NOT — the per-org prize uses the LATEST SINGLE month, and after the
+     prize-follows-group fix it already MATCHES the card (both 50.0%); the 84.1% was
+     the ALL-CANCERS figure, i.e. pre-fix behaviour. (Rolling-3-month pooling is the
+     COMPARISON view, not this prize.) So a "pooled rate" label would be FALSE. Shipped
+     an ACCURATE basis label instead: "Based on the latest month (…) — the same rate
+     shown on the card above[, for the <group> group]", plus a thin-month volatility
+     warning when n<10. Renders: v5_f_other_note, v5_g_thin_prizebasis, v5_h_other_open.
 
 ## 2026-06-10 — DECLINED: breakdown filter as a shared page-level control above the cards (planning session + Code)
 Considered moving the breakdown filter above the three summary cards as a single

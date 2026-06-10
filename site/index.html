@@ -139,6 +139,8 @@
   .result{flex:1;min-width:240px;border-left:2px solid var(--org);padding-left:18px}
   .result .big{font-size:38px;font-weight:600;letter-spacing:-.02em;color:var(--org);line-height:1}
   .result .cap{font-size:13.5px;color:var(--ink-soft);margin-top:6px;max-width:42ch}
+  .result .basis{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);
+    margin-top:8px;max-width:44ch;line-height:1.5}
   footer{margin-top:42px;border-top:1px solid var(--line);padding-top:16px;
     font-size:12.5px;color:var(--ink-soft)}
   a{color:var(--org)}
@@ -223,6 +225,7 @@
       <div class="result">
         <div class="big" id="prizebig">&ndash;</div>
         <div class="cap" id="prizecap"></div>
+        <div class="basis" id="prizebasis"></div>
       </div>
     </div>
   </section>
@@ -537,9 +540,16 @@ function setSlice(type,value){
 
 /* ---- shared cancer-group selector (drives cards + big chart together) ---- */
 function groupText(){ return isGroupSlice() ? CURRENT_SLICE.value : "All cancers"; }
+const OTHER_NOTE="&lsquo;Other&rsquo; is a catch-all and its make-up differs by standard: "+
+  "FDS28&rsquo;s Other also absorbs brain/CNS, sarcoma, children&rsquo;s and non-specific-symptom "+
+  "referrals (which have no group of their own), so it is not a like-for-like cohort across the three standards.";
 function updateGroupLabel(){
   const e=document.getElementById("grouplabel"); if(e) e.textContent=groupText();
   const b=document.getElementById("groupbtn"); if(b) b.classList.toggle("grouped", isGroupSlice());
+  const h=document.getElementById("grouphint");
+  if(h) h.innerHTML = (isGroupSlice() && CURRENT_SLICE.value==="Other")
+    ? "&#9888; "+OTHER_NOTE
+    : "NHS England&rsquo;s ten tumour-site groups &middot; applies to all three cards and the chart.";
 }
 function toggleGroupPanel(){ const p=document.getElementById("grouppanel"); if(p && !p.hidden) closeGroupPanel(); else openGroupPanel(); }
 function openGroupPanel(){
@@ -572,7 +582,9 @@ function renderGroupOptions(q){
   if(match("all cancers")){ host.appendChild(hdr("Overview",true)); host.appendChild(opt("All cancers",null,!isGroupSlice())); }
   const gs=CANCER_GROUPS.filter(match);
   if(gs.length){ host.appendChild(hdr("Cancer group",false));
-    gs.forEach(g=>host.appendChild(opt(g,g, isGroupSlice()&&CURRENT_SLICE.value===g))); }
+    gs.forEach(g=>{ const o=opt(g,g, isGroupSlice()&&CURRENT_SLICE.value===g);
+      if(g==="Other") o.title=OTHER_NOTE.replace(/&[a-z]+;/g, m=>({"&lsquo;":"‘","&rsquo;":"’"}[m]||""));
+      host.appendChild(o); }); }
   if(!host.children.length) host.innerHTML='<div class="fgroup first">No matches</div>';
 }
 async function selectGroup(group){
@@ -800,6 +812,14 @@ function recalc(){
   const cur=s.performance[last], denom=+s.total[last];
   const target=(+document.getElementById("tgt").value)/100;
   document.getElementById("tgtval").textContent=fmt(target);
+  // Clarify the rate basis: this is the LATEST single month (the same figure on
+  // the card above), not a pooled/averaged rate — so a thin group's noisy latest
+  // month can't read as contradicting the card.
+  const lowLast=(+s.total[last])<THRESH;
+  document.getElementById("prizebasis").innerHTML=
+    `Based on the latest month (${tipMonth(s.months[last])}) — the same rate shown on the ${CURRENT_STD} card above`+
+    (isGroupSlice()?`, for the ${CURRENT_SLICE.value} group`:``)+
+    (lowLast?`. &#9888; Only ${(+s.total[last])} patients that month, so this estimate is volatile.`:`.`);
   const extra=Math.round(denom*(target-cur));
   const big=document.getElementById("prizebig");
   const cap=document.getElementById("prizecap");
