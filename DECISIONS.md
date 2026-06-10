@@ -70,6 +70,11 @@ run:
      an ACCURATE basis label instead: "Based on the latest month (…) — the same rate
      shown on the card above[, for the <group> group]", plus a thin-month volatility
      warning when n<10. Renders: v5_f_other_note, v5_g_thin_prizebasis, v5_h_other_open.
+     RESOLVED (planning, 2026-06-10): keep the per-org prize on LATEST-MONTH basis —
+     it matches the card, and thin-group fragility is handled by the low-reliability
+     flag (the n<10 caveat + volatility warning), NOT by smoothing/pooling. No further
+     change. Both polish items shipped + live (run 27310406923, green; verified on the
+     live site). v5 fully DEPLOYED.
 
 ## 2026-06-10 — DECLINED: breakdown filter as a shared page-level control above the cards (planning session + Code)
 Considered moving the breakdown filter above the three summary cards as a single
