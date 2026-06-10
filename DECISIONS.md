@@ -6,7 +6,16 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
-## 2026-06-10 — Per-org page visual refinements (v4) built; PAUSED before deploy (Code, from per-org-visual-v4-spec.md)
+## 2026-06-10 — DECLINED: breakdown filter as a shared page-level control above the cards (planning session + Code)
+Considered moving the breakdown filter above the three summary cards as a single
+shared, page-level selector applying to all standards at once. NOT doing it: the
+available breakdown dimensions differ BY STANDARD (FDS28 = cancer only; 31-day /
+62-day add route, modality + published pairwise combos), so one shared selector
+can't apply cleanly across all three — it would offer slices that don't exist for
+FDS28. The breakdown filter STAYS on the big chart, scoped to the active standard
+(reshaping as the standard changes). Cards + size-of-the-prize remain all-cancers.
+
+## 2026-06-10 — Per-org page visual refinements (v4) SHIPPED + verified live (Code, from per-org-visual-v4-spec.md)
 Front-end only (site/index.html), no pipeline/data change. Five changes:
 (1) ORG SELECTOR replaced by three type buttons (National | Providers |
 Commissioners) + a dependent dropdown below. National hides the dropdown (it's
