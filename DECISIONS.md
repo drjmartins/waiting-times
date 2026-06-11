@@ -6,6 +6,62 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-11 — Item 1 BUILT: "Size of the prize" removed from per-org page (Code)
+User wants it gone (not hidden). Removed the whole `<section class="prize">`, its
+CSS block (`.prize/.prizegrid/.slider/.result/...`), the JS (`prizeSeries/setupPrize/
+recalc`), and all three call sites. No pipeline/data change needed: the prize read
+only core series fields (target/performance/total/months) that the cards + chart
+already use — nothing in the data build existed solely to feed it. Re-rendered
+national page (screenshots/item1_prize_removed_national.png), no JS breakage.
+NOT yet deployed — awaiting user confirm of the render; recommend a standalone
+deploy since item 2 is investigate-only and item 3 is unspecced.
+
+## 2026-06-11 — INVESTIGATION (no build): context-aware / two-level breakdown dropdown — feasibility from the data (Code)
+User wants the breakdown dropdown to (a) filter to the SELECTED cancer group's
+sub-breakdowns, and (b) add a SECOND dropdown for a further (modality) level.
+Inspected the actual breakdown files. Findings:
+
+- **Combination cells are PAIRWISE only — confirmed again, now classified.** Across
+  every standard the `combination` dim contains exactly two shapes and NOTHING else:
+  `cancer × route` and `route × modality`. There are ZERO `cancer × modality` cells
+  and ZERO three-way `cancer × route × modality` cells. (CMB62: 82 combos = 66
+  cancer×route + 16 route×modality. CMB31: 40 = 32 cancer×route + 8 route×modality.)
+
+- **Level 1 → 2 (cancer group → route/stage) IS published.** Each cancer publishes
+  cancer×route combos: CMB62 routes = {Breast Symptomatic, Consultant Upgrade,
+  Screening, Urgent Suspected Cancer} (most cancers carry all four; a few rare ones
+  carry a subset — e.g. Acute leukaemia/Testicular have only Consultant Upgrade +
+  Urgent Suspected Cancer). CMB31 routes = {First Treatment, Subsequent} for every
+  cancer. FDS28 has NO route/modality dims; its combos are cancer × referral STAGE
+  (Urgent Suspected Cancer / National Screening Programme / Breast Symptomatic
+  cancer-not-suspected) — so FDS28 supports level 1→2 but has NO second level.
+
+- **The user's "sub-sub" (Breast Symptomatic → Anti-cancer drug regimen/Other/
+  Radiotherapy/Surgery) is a CONFLATION.** "Breast Symptomatic" is a referral ROUTE
+  (it pairs with EVERY cancer, incl. "Lung | Breast Symptomatic"), not the Breast
+  cancer group. The modality split under it ("Breast Symptomatic | Surgery" etc.)
+  exists ONLY as a route×modality slice that is ALL-CANCERS — never scoped to a
+  cancer group. So the modality level is publishable as a standalone route→modality
+  drilldown, but NOT as cancer-group → route → modality. The latter is the forbidden
+  three-way (zero cells). So the literal two-level-under-a-selected-group design is
+  NOT achievable for the modality level; only the route level can be group-aware.
+
+- **Hierarchy differs by standard:** CMB31/CMB62 = cancer→route (+ all-cancers
+  route→modality available, but un-nestable under a group). FDS28 = cancer→stage,
+  no modality, so no second level there. So the second dropdown can only ever appear
+  for CMB31/CMB62 and only in an all-cancers route→modality context.
+
+- **Data readiness:** group→route is NOT yet directly in the files. The cancer×route
+  combos are keyed on the 18 RAW cancer labels, but the front-end's selector uses the
+  10 ROLLUP groups. The 1:1 groups (Breast, Gynaecology, Head & Neck, Lower GI, Lung,
+  Skin) could read a single raw combo, but the COMPOSITE groups (Haematology = 4–5
+  raw labels; Upper GI = 3; Urology = 4; Other = catch-all) need their raw cancer×route
+  combos AGGREGATED (sum numerator+denominator across members, same reconciliation
+  pattern as the existing cancer_group rollup). That is a PIPELINE change: precompute
+  a `cancer_group × route` combination. route×modality (all-cancers) is already in the
+  files as-is. Conclusion: feasible but needs a pipeline step for group-aware routes;
+  the modality second level cannot be made group-aware at all.
+
 ## 2026-06-10 — Cancer-type aggregation into NHS's ten groups + shared group filter; BUILT, PAUSED before deploy (Code, from cancer-aggregation-v5-spec.md)
 REVISITS the idea declined below: a shared breakdown filter above the three cards.
 Now viable because we aggregate raw cancer types into NHS England's ten tumour-site

@@ -126,21 +126,6 @@
   .lowrel[hidden]{display:none}
   .emptyslice{padding:40px 10px;text-align:center;color:var(--ink-soft);font-size:14px}
 
-  .prize{margin-top:30px;background:var(--panel);border:1px solid var(--line);
-    border-radius:8px;padding:20px 22px}
-  .prize h2{margin:0 0 4px;font-size:20px}
-  .prize p.lede{margin:0 0 16px;color:var(--ink-soft);font-size:14px;max-width:60ch}
-  .prize .prizestd{font-family:ui-monospace,Menlo,monospace;font-size:11px;text-transform:uppercase;
-    letter-spacing:.1em;color:var(--ink-soft);margin-bottom:12px}
-  .prize .prizestd b{color:var(--ink);font-family:inherit}
-  .prizegrid{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
-  .slider label{margin-bottom:10px}
-  .slider input{width:260px}
-  .result{flex:1;min-width:240px;border-left:2px solid var(--org);padding-left:18px}
-  .result .big{font-size:38px;font-weight:600;letter-spacing:-.02em;color:var(--org);line-height:1}
-  .result .cap{font-size:13.5px;color:var(--ink-soft);margin-top:6px;max-width:42ch}
-  .result .basis{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-soft);
-    margin-top:8px;max-width:44ch;line-height:1.5}
   footer{margin-top:42px;border-top:1px solid var(--line);padding-top:16px;
     font-size:12.5px;color:var(--ink-soft)}
   a{color:var(--org)}
@@ -210,25 +195,6 @@
     <div class="chartbox" id="chartbox"></div>
     <div id="lowrel" class="lowrel" hidden></div>
   </div>
-
-  <section class="prize" id="prize" style="display:none">
-    <h2>Size of the prize</h2>
-    <p class="lede">If this organisation reached a higher proportion treated within the
-      standard, how many more patients per month would that represent? This is an
-      arithmetic gap based on recent activity, not a modelled clinical outcome.</p>
-    <div class="prizegrid">
-      <div class="slider">
-        <div class="prizestd" id="prizestd"></div>
-        <label for="tgt">Target performance: <span id="tgtval"></span></label>
-        <input type="range" id="tgt" min="50" max="100" step="1">
-      </div>
-      <div class="result">
-        <div class="big" id="prizebig">&ndash;</div>
-        <div class="cap" id="prizecap"></div>
-        <div class="basis" id="prizebasis"></div>
-      </div>
-    </div>
-  </section>
 
   <footer id="foot"></footer>
 </div>
@@ -404,7 +370,6 @@ function render(){
   closePanel(); updateFilterLabel(); updateGroupLabel();
   renderCards();
   renderBig();
-  setupPrize();
 }
 
 /* ---- summary cards (the switcher) ---- */
@@ -450,7 +415,7 @@ function renderCards(){
     }
     const pick=()=>{ if(CURRENT_STD===std) return; CURRENT_STD=std;
       resetSliceForSwitch(); closePanel(); updateFilterLabel();   // keep the shared group, reshape granular filter
-      renderCards(); renderBig(); setupPrize(); };  // cards + chart + prize switch together
+      renderCards(); renderBig(); };  // cards + chart switch together
     card.addEventListener("click",pick);
     card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});
     host.appendChild(card);
@@ -592,7 +557,7 @@ async function selectGroup(group){
   CURRENT_SLICE = group ? {type:"cancer_group",value:group} : {type:"all",value:"All"};
   updateGroupLabel(); updateFilterLabel(); closePanel();
   if(isGroupSlice()) await ensureBreakdown();   // cards + chart read the group series from it
-  renderCards(); renderBig(); setupPrize();
+  renderCards(); renderBig();
 }
 function closePanel(){ const p=document.getElementById("filterpanel"); if(p)p.hidden=true;
   const b=document.getElementById("filterbtn"); if(b)b.setAttribute("aria-expanded","false"); }
@@ -791,43 +756,6 @@ function showTip(i, s){
 }
 function hideTip(){const t=document.getElementById("tip"); if(t)t.style.display="none";}
 
-/* ---- size-of-the-prize: follows the ACTIVE standard AND the shared cancer
-   group (so it can't show all-cancers while the cards/chart show a group). ---- */
-function prizeSeries(){ return (isGroupSlice() && cardSeries(CURRENT_STD)) || CURRENT.standards[CURRENT_STD]; }
-function setupPrize(){
-  document.getElementById("prize").style.display="block";
-  const s=prizeSeries(); if(!s) return;
-  const base=CURRENT.standards[CURRENT_STD];
-  document.getElementById("prizestd").innerHTML=
-    `Standard: <b>${base.label.split("(")[0].trim()}</b> &middot; ${CURRENT_STD}`+
-    (isGroupSlice()&&cardSeries(CURRENT_STD)?` &middot; <b>${CURRENT_SLICE.value}</b>`:``);
-  const tgt=document.getElementById("tgt");
-  tgt.value=Math.round(s.target*100);
-  tgt.oninput=recalc;
-  recalc();
-}
-function recalc(){
-  const s=prizeSeries();
-  const last=s.performance.length-1;
-  const cur=s.performance[last], denom=+s.total[last];
-  const target=(+document.getElementById("tgt").value)/100;
-  document.getElementById("tgtval").textContent=fmt(target);
-  // Clarify the rate basis: this is the LATEST single month (the same figure on
-  // the card above), not a pooled/averaged rate — so a thin group's noisy latest
-  // month can't read as contradicting the card.
-  const lowLast=(+s.total[last])<THRESH;
-  document.getElementById("prizebasis").innerHTML=
-    `Based on the latest month (${tipMonth(s.months[last])}) — the same rate shown on the ${CURRENT_STD} card above`+
-    (isGroupSlice()?`, for the ${CURRENT_SLICE.value} group`:``)+
-    (lowLast?`. &#9888; Only ${(+s.total[last])} patients that month, so this estimate is volatile.`:`.`);
-  const extra=Math.round(denom*(target-cur));
-  const big=document.getElementById("prizebig");
-  const cap=document.getElementById("prizecap");
-  if(extra>0){big.textContent="+"+extra.toLocaleString();big.style.color="var(--org)";
-    cap.textContent=`more patients per month would be seen within the ${CURRENT_STD} standard, at ${fmt(target)} vs the current ${fmt(cur)} (based on ${denom.toLocaleString()} in scope in ${tipMonth(s.months[last])}).`;}
-  else{big.textContent="0";big.style.color="var(--good)";
-    cap.textContent=`Current performance (${fmt(cur)}) already meets or exceeds ${fmt(target)}.`;}
-}
 init();
 </script>
 </body>
