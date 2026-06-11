@@ -63,6 +63,24 @@ _Last updated: 2026-06-10 (Claude Code session)._
   pooled-rate concern was a premise error — the per-org prize uses the latest single
   month and already matches the card; see `DECISIONS.md`). 25 tests pass.
 
+### Item 1 — "Size of the prize" removed (2026-06-11) — DEPLOYED ✅
+User wanted it gone, not hidden. Section + CSS + JS + call sites removed; no data
+change (it read only core series fields). Deployed standalone (run 27339479076,
+green) and verified live (zero prize refs).
+
+### Items 2 & 3 — v6 context-aware breakdown dropdowns — DEPLOYED ✅
+Group-aware **Referral route** dropdown + all-cancers-only **Treatment modality**
+dropdown, built on the ≥1% activity bar (route characterisation showed routes are
+partly cancer-specific — see `DECISIONS.md`). New `cancer_group_route` pipeline dim
+(ten groups × route, composite groups aggregated, ≥1% per-org filter, fail-loud
+reconciliation guard + store test). Front end uses a composite GROUP/ROUTE/MOD
+state; spec's hide-and-reset transitions implemented. 30 tests pass; all 5 review
+cases + transition + invalid-route reset rendered (screenshots/v6_a..f). Two
+interpretation calls were accepted by the user as-is: raw cancer-subtype +
+bare-modality breakdown options dropped (the ten-groups + route model is enough —
+see deferred item below); FDS28 keeps its "no breakdowns published" line rather than
+gaining a stage dropdown.
+
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The
    pre-deploy check confirmed the pipeline pulls the surviving Combined (ICB-based)
@@ -72,7 +90,13 @@ _Last updated: 2026-06-10 (Claude Code session)._
    daily refresh meanwhile (a bad layout fails the run rather than shipping).
 2. **NEXT TASK — data cleaning.** To be scoped in the planning session before any
    build. Not started.
-3. **Parked.** (a) "Compare this trust" cross-link from the per-org page into the
+3. **Deferred (v6).** Cancer sub-type breakdown control. The v6 dropdown narrows
+   cancer to NHS's ten groups (+ group-aware route); the finer raw cancer-subtype
+   level (e.g. 'Haematological - Lymphoma') is no longer pickable in the UI. The
+   data STILL RETAINS the sub-type level (the `cancer` dim in the breakdown files),
+   so a sub-type control can be added later if anyone misses it — a deferral, not a
+   data loss.
+4. **Parked.** (a) "Compare this trust" cross-link from the per-org page into the
    comparison view (planned, not built). (b) Overdispersion ↔ study-protocol
    alignment — a methods decision for the research side (multiplicative Winsorised
    φ vs additive random-effects, Winsorisation fraction, whether to adjust).

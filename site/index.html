@@ -104,6 +104,8 @@
   .filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 8px}
   .filterbar .flabel{font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)}
+  .fgrp{display:inline-flex;align-items:center;gap:8px}
+  .fgrp[hidden]{display:none}
   .fdrop{position:relative}
   .filterbtn{font:inherit;font-size:14px;padding:6px 12px;border:1px solid var(--line);
     border-radius:5px;background:#fff;cursor:pointer;color:var(--ink);min-width:200px;text-align:left}
@@ -183,12 +185,22 @@
   <div class="bigpanel">
     <div class="ttl"><h2 id="bigttl"></h2><span class="tag" id="bigtag"></span></div>
     <div class="filterbar">
-      <span class="flabel">Breakdown</span>
-      <div class="fdrop">
-        <button id="filterbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
-          <span id="filterlabel">All cancers</span><span class="caret">&#9662;</span></button>
-        <div id="filterpanel" class="filterpanel" role="listbox" hidden></div>
-      </div>
+      <span class="fgrp" id="routewrap">
+        <span class="flabel">Referral route</span>
+        <div class="fdrop">
+          <button id="filterbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="filterlabel">All routes</span><span class="caret">&#9662;</span></button>
+          <div id="filterpanel" class="filterpanel" role="listbox" hidden></div>
+        </div>
+      </span>
+      <span class="fgrp" id="modwrap" hidden>
+        <span class="flabel">Treatment modality</span>
+        <div class="fdrop">
+          <button id="modbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="modlabel">All modalities</span><span class="caret">&#9662;</span></button>
+          <div id="modpanel" class="filterpanel" role="listbox" hidden></div>
+        </div>
+      </span>
       <span id="slicehint" class="slicehint"></span>
     </div>
     <div class="legend" id="legend"></div>
@@ -206,17 +218,28 @@ const DEFAULT_STD = "CMB62";            // 62-day combined is the most-watched
 const THRESH = 10;                      // pipeline RELIABILITY_THRESHOLD: denom < this = low-reliability
 let META=null, NATIONAL=null, CURRENT=null, CURRENT_STD=DEFAULT_STD;
 let CURRENT_TYPE="national";                   // national | provider | icb (org type buttons)
-// Active breakdown slice. The shared cancer-group selector and the big-chart
-// granular selector both write this ONE state, so they are mutually-exclusive
-// lenses (the chart never shows one thing while a selector claims another).
-// type 'cancer_group' is the page-level shared group; it PERSISTS across org /
-// standard switches (every other slice type resets to 'all' on a switch).
-let CURRENT_SLICE={type:"all",value:"All"};
+// Composite breakdown state (v6). Three independent axes:
+//   GROUP  — null = All cancers, else one of the ten tumour-site groups. The
+//            page-level shared selector; drives the cards + chart and PERSISTS
+//            across org / standard switches.
+//   ROUTE  — null = All routes, else a referral route. Group-aware: when a group
+//            is selected the route list narrows to that group's real routes.
+//   MOD    — null = All modalities, else a treatment modality. ALL-CANCERS ONLY
+//            (CMB31/CMB62) and only beneath a selected route — the cancer x route
+//            x modality three-way isn't published, so modality can't nest under a
+//            group. Selecting a group hides AND resets it (see selectGroup).
+let GROUP=null, ROUTE=null, MOD=null;
 // NHS England's ten tumour-site groups (matches pipeline/cancer_groups.TEN_GROUPS,
 // the order NHS England's dashboard lists them).
 const CANCER_GROUPS=["Breast","Gynaecology","Haematology","Head & Neck","Lower GI",
   "Lung","Other","Skin","Upper GI","Urology"];
-const isGroupSlice = () => CURRENT_SLICE.type==="cancer_group";
+const isGroupSlice = () => GROUP!==null;
+// Is any narrowing beyond all-cancers active (for chart titles / tags)?
+const sliceOnNow = () => GROUP!==null || ROUTE!==null || MOD!==null;
+function sliceLabel(){
+  const parts=[]; if(GROUP!==null)parts.push(GROUP); if(ROUTE!==null)parts.push(ROUTE);
+  if(MOD!==null)parts.push(MOD); return parts.join(" · ");
+}
 let BREAKDOWN=null;                            // current org's breakdown file (lazy)
 let NATIONAL_BREAKDOWN=null;                   // national breakdown (lazy, cached)
 let ACTIVE_NAT=null;                           // national series currently overlaid (for tooltip scaling)
@@ -250,8 +273,9 @@ async function init(){
   document.getElementById("orgsearch").addEventListener("input", e=>buildOrgOptions(e.target.value));
   document.getElementById("orgsearch").addEventListener("keydown", dropSearchKey);
   document.getElementById("filterbtn").addEventListener("click", togglePanel);
+  document.getElementById("modbtn").addEventListener("click", toggleModPanel);
   document.getElementById("groupbtn").addEventListener("click", toggleGroupPanel);
-  document.addEventListener("click", e=>{ if(!e.target.closest(".fdrop")){ closePanel(); closeOrgPanel(); closeGroupPanel(); } });
+  document.addEventListener("click", e=>{ if(!e.target.closest(".fdrop")){ closePanel(); closeModPanel(); closeOrgPanel(); closeGroupPanel(); } });
 
   // Deep-link / render hooks: ?org=CODE, ?std=CMB31, ?slice=type:value, ?panel=open.
   const qs = new URLSearchParams(location.search);
@@ -260,18 +284,20 @@ async function init(){
   const qOrg = qs.get("org");
   // Shared cancer group can be set before the org loads so it persists through it.
   const qGroup = qs.get("group");
-  if(qGroup && CANCER_GROUPS.includes(qGroup)) CURRENT_SLICE={type:"cancer_group",value:qGroup};
+  if(qGroup && CANCER_GROUPS.includes(qGroup)) GROUP=qGroup;
   const qo = qOrg && qOrg!==NATIONAL_CODE && idx.find(o=>o.code===qOrg);
   if(qo) await setType(qo.level, qo.code);   // select a specific org via its type
   else await setType("national");            // default anchor: National
-  const qSlice = qs.get("slice");
-  if(qSlice){
-    const ci=qSlice.indexOf(":");
-    const tp=ci<0?qSlice:qSlice.slice(0,ci), val=ci<0?"":decodeURIComponent(qSlice.slice(ci+1));
+  // Deep-link / render hooks for the breakdown axes: ?route=, ?mod=.
+  const qRoute = qs.get("route"), qMod = qs.get("mod");
+  if(qRoute!=null || qMod!=null){
     await ensureBreakdown();
-    setSlice(tp, val);
+    if(qRoute!=null && routesForContext(CURRENT_STD).includes(qRoute)) ROUTE=qRoute;
+    if(qMod!=null && modalityApplicable() && modsForRoute(CURRENT_STD,ROUTE).includes(qMod)) MOD=qMod;
+    syncBreakdownUI(); renderCards(); renderBig();
   }
   if(qs.get("panel")==="open") await openPanel();
+  if(qs.get("modpanel")==="open") await openModPanel();
   if(qs.get("gopen")!=null) openGroupPanel();   // render hook: open the shared group dropdown
   const qOrgq=qs.get("orgq");   // render hook: open the org dropdown mid-search
   if(qOrgq!=null && CURRENT_TYPE!=="national"){
@@ -333,12 +359,13 @@ function closeOrgPanel(){ const p=document.getElementById("orgpanel"); if(p)p.hi
 // Shared keyboard handler for in-panel search inputs: Enter picks first match, Esc closes.
 function dropSearchKey(e){
   if(e.key==="Enter"){ const f=e.target.parentElement.querySelector(".fopt"); if(f){e.preventDefault();f.click();} }
-  else if(e.key==="Escape"){ closeOrgPanel(); closePanel(); }
+  else if(e.key==="Escape"){ closeOrgPanel(); closePanel(); closeModPanel(); }
 }
 
-// On an org/standard switch we reset the slice — EXCEPT a shared cancer group,
-// which is a page-level selection that persists across switches (per spec).
-function resetSliceForSwitch(){ if(!isGroupSlice()) CURRENT_SLICE={type:"all",value:"All"}; }
+// On an org/standard switch the shared cancer GROUP persists (page-level), but
+// the route/modality narrowing resets: route values differ by standard, and a
+// freshly-loaded org's breakdown may not publish the previously-picked slice.
+function resetSliceForSwitch(){ ROUTE=null; MOD=null; }
 // When a group is active we need the breakdown file loaded before render (the
 // cards + chart read the group's series from it).
 async function ensureForGroup(){ if(isGroupSlice()) await ensureBreakdown(); }
@@ -367,9 +394,9 @@ function render(){
   document.getElementById("orgname").innerHTML = CURRENT.isNational
     ? `<b>England</b> &middot; all-England aggregate`
     : `<b>${CURRENT.name}</b> &middot; ${CURRENT.level==="icb"?"Commissioner (ICB)":"Provider (trust)"}${CURRENT.region&&CURRENT.region!=="England"?" &middot; "+CURRENT.region:""}`;
-  closePanel(); updateFilterLabel(); updateGroupLabel();
+  closePanel(); closeModPanel(); updateGroupLabel();
   renderCards();
-  renderBig();
+  renderBig();   // calls syncBreakdownUI() to sync the route/modality controls
 }
 
 /* ---- summary cards (the switcher) ---- */
@@ -378,9 +405,9 @@ function render(){
 // null when a group is selected but not published for this standard at this org.
 function cardSeries(std){
   const base=CURRENT.standards[std]; if(!base) return undefined;
-  if(!isGroupSlice()) return base;
+  if(!isGroupSlice()) return base;          // cards follow the GROUP only (route/mod narrow the big chart, not the cards)
   const cg = BREAKDOWN && BREAKDOWN.standards[std] && BREAKDOWN.standards[std].cancer_group;
-  const gs = cg && cg[CURRENT_SLICE.value];
+  const gs = cg && cg[GROUP];
   return gs ? Object.assign({target:base.target,label:base.label}, gs) : null;
 }
 function renderCards(){
@@ -397,15 +424,15 @@ function renderCards(){
       // standard switcher) but say so rather than drawing a misleading figure.
       card.className="scard nodata"+(std===CURRENT_STD?" active":"");
       card.innerHTML=
-        `<div class="stdcode">${std} &middot; ${CURRENT_SLICE.value}</div>
+        `<div class="stdcode">${std} &middot; ${GROUP}</div>
          <h3>${title}</h3>
-         <div class="nogroup">No <b>${CURRENT_SLICE.value}</b> figures published for this standard here.</div>`;
+         <div class="nogroup">No <b>${GROUP}</b> figures published for this standard here.</div>`;
     } else {
       const last=s.performance.length-1, cur=s.performance[last], meets=cur>=s.target;
       const lowLast=(+s.total[last])<THRESH;   // thin latest month → de-emphasise
       card.className="scard"+(std===CURRENT_STD?" active":"");
       card.innerHTML=
-        `<div class="stdcode">${std}${grouped?" &middot; "+CURRENT_SLICE.value:""}</div>
+        `<div class="stdcode">${std}${grouped?" &middot; "+GROUP:""}</div>
          <h3>${title}</h3>
          <div class="figure"><b class="${lowLast?'muted':''}">${fmt(cur)}</b>
            <span class="vs ${meets?'meets':'under'}">${meets?'&#10003; meets':'&#9660; below'} ${fmt(s.target)} target</span></div>
@@ -414,8 +441,8 @@ function renderCards(){
            (lowLast?` &middot; <span class="lowtag">n=${(+s.total[last])}, low reliability</span>`:``)+`</div>`;
     }
     const pick=()=>{ if(CURRENT_STD===std) return; CURRENT_STD=std;
-      resetSliceForSwitch(); closePanel(); updateFilterLabel();   // keep the shared group, reshape granular filter
-      renderCards(); renderBig(); };  // cards + chart switch together
+      resetSliceForSwitch(); closePanel(); closeModPanel();   // keep the shared group, reset route/modality
+      renderCards(); renderBig(); };  // cards + chart switch together (renderBig re-syncs the controls)
     card.addEventListener("click",pick);
     card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}});
     host.appendChild(card);
@@ -458,53 +485,92 @@ function sparkSVG(s){
   </svg>`;
 }
 
-/* ---- breakdown filtering ---- */
-// FDS28 publishes cancer only; 31/62-day add route, modality + published pairwise
-// combos. The UI reshapes per standard rather than greying-out unavailable dims.
-function dimsForStandard(std){ return std==="FDS28" ? ["cancer"] : ["cancer","route","modality","combination"]; }
-const DIM_LABEL={cancer:"Cancer type",route:"Referral route / stage",
-  modality:"Treatment modality",combination:"Published combinations"};
-
+/* ---- breakdown filtering (v6: group-aware route + all-cancers-only modality) ---- */
 async function loadNationalBreakdown(){
   if(!NATIONAL_BREAKDOWN) NATIONAL_BREAKDOWN = await (await fetch(DATA+"national.breakdown.json")).json();
   return NATIONAL_BREAKDOWN;
 }
-// Load-on-demand: only called when the user first opens the filter (or a deep link).
+// Load-on-demand: only called when the user first opens a filter, picks a group, or a deep link.
 async function ensureBreakdown(){
   await loadNationalBreakdown();
   if(CURRENT.isNational){ BREAKDOWN = NATIONAL_BREAKDOWN; return; }
   if(!BREAKDOWN) BREAKDOWN = await (await fetch(DATA+"org/"+CURRENT.code+".breakdown.json")).json();
 }
-function lookupSlice(bdata, std, slice){
-  if(!bdata || slice.type==="all") return null;
-  const d=bdata.standards[std];
-  return (d && d[slice.type] && d[slice.type][slice.value]) || null;
+
+// The routes offered for the current GROUP + standard, read from the loaded
+// breakdown: a group's activity-filtered routes (cancer_group_route) when a group
+// is selected, else the all-cancers route dim. Empty when none are published
+// (e.g. FDS28, which has no route dim).
+function routesForContext(std){
+  const dim = BREAKDOWN && BREAKDOWN.standards[std]; if(!dim) return [];
+  if(GROUP!==null){ const m=dim.cancer_group_route && dim.cancer_group_route[GROUP]; return m?Object.keys(m):[]; }
+  return dim.route ? Object.keys(dim.route) : [];
 }
-// Active org-side series for the current standard + slice (null if the slice is absent here).
-function activeOrgSeries(){
-  const s=CURRENT.standards[CURRENT_STD]; if(!s) return null;
-  if(CURRENT_SLICE.type==="all") return s;
-  const sl=lookupSlice(BREAKDOWN, CURRENT_STD, CURRENT_SLICE);
-  return sl ? Object.assign({target:s.target,label:s.label}, sl) : null;
+// Modalities published for an all-cancers route (route x modality combos exist).
+function modsForRoute(std, route){
+  const dim = BREAKDOWN && BREAKDOWN.standards[std];
+  if(!dim || !dim.modality || !dim.combination || route===null) return [];
+  return Object.keys(dim.modality).filter(m => (route+" | "+m) in dim.combination);
 }
-// National comparison must MATCH the selected slice (like-for-like); null => hide it.
-function activeNatSeries(){
-  if(CURRENT_SLICE.type==="all") return NATIONAL.standards[CURRENT_STD]||null;
-  return lookupSlice(NATIONAL_BREAKDOWN, CURRENT_STD, CURRENT_SLICE);
+// Modality dropdown shows ONLY in the all-cancers view, on CMB31/CMB62, beneath a
+// selected route that has a published modality level (the three-way doesn't exist,
+// so it can never nest under a group).
+function modalityApplicable(){
+  return GROUP===null && CURRENT_STD!=="FDS28" && ROUTE!==null && modsForRoute(CURRENT_STD,ROUTE).length>0;
 }
 
-function sliceText(){ return CURRENT_SLICE.type==="all" ? "All cancers" : CURRENT_SLICE.value; }
-function updateFilterLabel(){ const e=document.getElementById("filterlabel"); if(e) e.textContent=sliceText(); }
-// The big-chart granular filter writes the SAME slice state as the shared group,
-// so picking a granular slice supersedes any active group (cards revert to all-
-// cancers, the group selector shows "All cancers" again). One lens at a time.
-function setSlice(type,value){
-  CURRENT_SLICE = (type==="all"||!value) ? {type:"all",value:"All"} : {type,value};
-  updateFilterLabel(); updateGroupLabel(); closePanel(); renderCards(); renderBig();
+// Resolve the big-chart series for a (headline {standards}, breakdown file, std),
+// composing GROUP -> ROUTE -> MOD. Returns null when the composed slice isn't
+// published there (the chart then shows an explain-empty state / hides the line).
+function resolveSeries(allStd, bdata, std){
+  const base = allStd && allStd[std]; if(!base) return null;
+  const dim = bdata && bdata.standards && bdata.standards[std];
+  const wrap = s => s ? Object.assign({target:base.target,label:base.label}, s) : null;
+  if(GROUP!==null){
+    if(ROUTE!==null){ const gr=dim&&dim.cancer_group_route&&dim.cancer_group_route[GROUP]; return wrap(gr&&gr[ROUTE]); }
+    const g=dim&&dim.cancer_group&&dim.cancer_group[GROUP]; return wrap(g);
+  }
+  if(ROUTE!==null && MOD!==null){ const c=dim&&dim.combination; return wrap(c&&c[ROUTE+" | "+MOD]); }
+  if(ROUTE!==null){ const r=dim&&dim.route; return wrap(r&&r[ROUTE]); }
+  return base;
+}
+function activeOrgSeries(){ return resolveSeries(CURRENT.standards, BREAKDOWN, CURRENT_STD); }
+// National comparison must MATCH the active slice (like-for-like); null => hide it.
+function activeNatSeries(){
+  if(!sliceOnNow()) return NATIONAL.standards[CURRENT_STD]||null;
+  return resolveSeries(NATIONAL.standards, NATIONAL_BREAKDOWN, CURRENT_STD);
+}
+
+// Keep the two breakdown controls (route + conditional modality) in sync with
+// GROUP/ROUTE/MOD + the standard. Called from renderBig, so the UI never drifts.
+function syncBreakdownUI(){
+  const std=CURRENT_STD;
+  const hasRoutes = std!=="FDS28";   // CMB31/CMB62 publish routes; FDS28 does not
+  document.getElementById("routewrap").hidden = !hasRoutes;
+  document.getElementById("filterlabel").textContent = ROUTE===null ? "All routes" : ROUTE;
+  const showMod = modalityApplicable();
+  document.getElementById("modwrap").hidden = !showMod;
+  if(showMod) document.getElementById("modlabel").textContent = MOD===null ? "All modalities" : MOD;
+  const hint=document.getElementById("slicehint");
+  hint.textContent =
+    std==="FDS28" ? "Route and treatment-modality breakdowns aren't published for the 28-day standard."
+    : GROUP!==null ? `${GROUP} group · narrow by referral route, or change the group above.`
+    : ROUTE!==null ? "Pick a treatment modality to narrow this route further."
+    : "Narrow by referral route, then treatment modality.";
+}
+
+// --- route dropdown (level 1, group-aware) ---
+function selectRoute(route){           // route=null => All routes
+  ROUTE = route; MOD = null;           // a route change starts modality fresh (it's a within-route narrowing)
+  closePanel(); renderBig();           // cards follow the GROUP only; renderBig re-syncs both controls
+}
+// --- modality dropdown (level 2, all-cancers only) ---
+function selectMod(mod){               // mod=null => All modalities
+  MOD = mod; closeModPanel(); renderBig();
 }
 
 /* ---- shared cancer-group selector (drives cards + big chart together) ---- */
-function groupText(){ return isGroupSlice() ? CURRENT_SLICE.value : "All cancers"; }
+function groupText(){ return isGroupSlice() ? GROUP : "All cancers"; }
 const OTHER_NOTE="&lsquo;Other&rsquo; is a catch-all and its make-up differs by standard: "+
   "FDS28&rsquo;s Other also absorbs brain/CNS, sarcoma, children&rsquo;s and non-specific-symptom "+
   "referrals (which have no group of their own), so it is not a like-for-like cohort across the three standards.";
@@ -512,7 +578,7 @@ function updateGroupLabel(){
   const e=document.getElementById("grouplabel"); if(e) e.textContent=groupText();
   const b=document.getElementById("groupbtn"); if(b) b.classList.toggle("grouped", isGroupSlice());
   const h=document.getElementById("grouphint");
-  if(h) h.innerHTML = (isGroupSlice() && CURRENT_SLICE.value==="Other")
+  if(h) h.innerHTML = (isGroupSlice() && GROUP==="Other")
     ? "&#9888; "+OTHER_NOTE
     : "NHS England&rsquo;s ten tumour-site groups &middot; applies to all three cards and the chart.";
 }
@@ -547,18 +613,32 @@ function renderGroupOptions(q){
   if(match("all cancers")){ host.appendChild(hdr("Overview",true)); host.appendChild(opt("All cancers",null,!isGroupSlice())); }
   const gs=CANCER_GROUPS.filter(match);
   if(gs.length){ host.appendChild(hdr("Cancer group",false));
-    gs.forEach(g=>{ const o=opt(g,g, isGroupSlice()&&CURRENT_SLICE.value===g);
+    gs.forEach(g=>{ const o=opt(g,g, isGroupSlice()&&GROUP===g);
       if(g==="Other") o.title=OTHER_NOTE.replace(/&[a-z]+;/g, m=>({"&lsquo;":"‘","&rsquo;":"’"}[m]||""));
       host.appendChild(o); }); }
   if(!host.children.length) host.innerHTML='<div class="fgroup first">No matches</div>';
 }
 async function selectGroup(group){
   closeGroupPanel();
-  CURRENT_SLICE = group ? {type:"cancer_group",value:group} : {type:"all",value:"All"};
-  updateGroupLabel(); updateFilterLabel(); closePanel();
+  GROUP = group;            // null = All cancers
+  MOD = null;               // modality can't nest under a group (no three-way); always reset + hide (spec)
   if(isGroupSlice()) await ensureBreakdown();   // cards + chart read the group series from it
-  renderCards(); renderBig();
+  // Keep the chosen route only if it still applies to the new context, else reset.
+  if(ROUTE!==null && !routesForContext(CURRENT_STD).includes(ROUTE)) ROUTE=null;
+  updateGroupLabel(); closePanel(); closeModPanel();
+  renderCards(); renderBig();   // renderBig re-syncs the route/modality controls
 }
+
+// A searchable in-panel input (shared shape across the route + modality dropdowns).
+function mkSearch(placeholder, oninput){
+  const s=document.createElement("input"); s.className="dropsearch"; s.type="search";
+  s.placeholder=placeholder; s.autocomplete="off";
+  s.addEventListener("input",()=>oninput(s.value));
+  s.addEventListener("keydown",dropSearchKey);
+  return s;
+}
+
+/* ---- route dropdown (level 1) ---- */
 function closePanel(){ const p=document.getElementById("filterpanel"); if(p)p.hidden=true;
   const b=document.getElementById("filterbtn"); if(b)b.setAttribute("aria-expanded","false"); }
 async function togglePanel(){
@@ -568,56 +648,76 @@ async function togglePanel(){
 }
 async function openPanel(){
   const p=document.getElementById("filterpanel");
-  p.innerHTML='<div class="fgroup first">Loading breakdowns&hellip;</div>'; p.hidden=false;
+  p.innerHTML='<div class="fgroup first">Loading routes&hellip;</div>'; p.hidden=false;
   document.getElementById("filterbtn").setAttribute("aria-expanded","true");
   await ensureBreakdown();
-  buildPanel();
+  buildRoutePanel();
 }
-function buildPanel(){
+function buildRoutePanel(){
   const p=document.getElementById("filterpanel"); p.innerHTML="";
-  const s=document.createElement("input"); s.className="dropsearch"; s.type="search";
-  s.placeholder="Type to filter breakdowns…"; s.autocomplete="off";
-  s.addEventListener("input",()=>renderFilterOptions(s.value));
-  s.addEventListener("keydown",dropSearchKey);
-  p.appendChild(s);
+  const s=mkSearch("Type to filter routes…", v=>renderRouteOptions(v)); p.appendChild(s);
   const opts=document.createElement("div"); opts.id="filteroptions"; p.appendChild(opts);
-  renderFilterOptions("");
+  renderRouteOptions("");
   setTimeout(()=>s.focus(),0);
 }
-// Searchable: substring match across "All cancers" + every dim value for the std.
-function renderFilterOptions(q){
+function fopt(label,on,onclick){ const b=document.createElement("button");
+  b.className="fopt"+(on?" active":""); b.textContent=label; b.setAttribute("role","option");
+  b.onclick=onclick; return b; }
+function fhdr(t,first){ const g=document.createElement("div"); g.className="fgroup"+(first?" first":""); g.textContent=t; return g; }
+// Group-aware: all-cancers route dim, or the selected group's activity-filtered routes.
+function renderRouteOptions(q){
   const host=document.getElementById("filteroptions"); host.innerHTML="";
-  q=(q||"").trim().toLowerCase();
-  const std=CURRENT_STD, match=t=>!q || t.toLowerCase().includes(q);
-  const opt=(label,type,value)=>{ const b=document.createElement("button");
-    const on=(type==="all"&&CURRENT_SLICE.type==="all")||(CURRENT_SLICE.type===type&&CURRENT_SLICE.value===value);
-    b.className="fopt"+(on?" active":""); b.textContent=label; b.setAttribute("role","option");
-    b.onclick=()=>setSlice(type,value); return b; };
-  const hdr=(t,first)=>{ const g=document.createElement("div"); g.className="fgroup"+(first?" first":""); g.textContent=t; return g; };
-  let first=true;
-  if(match("all cancers")){ host.appendChild(hdr("Overview",true)); host.appendChild(opt("All cancers","all","All")); first=false; }
-  const bd=BREAKDOWN && BREAKDOWN.standards[std];
-  for(const dim of dimsForStandard(std)){
-    const vals=bd&&bd[dim]; if(!vals) continue;
-    const keys=Object.keys(vals).filter(match).sort((a,b)=>a.localeCompare(b)); if(!keys.length) continue;
-    host.appendChild(hdr(DIM_LABEL[dim],first)); first=false;
-    keys.forEach(k=>host.appendChild(opt(k,dim,k)));
-  }
+  q=(q||"").trim().toLowerCase(); const match=t=>!q||t.toLowerCase().includes(q);
+  if(match("all routes")){ host.appendChild(fhdr("Overview",true));
+    host.appendChild(fopt("All routes",ROUTE===null,()=>selectRoute(null))); }
+  const routes=routesForContext(CURRENT_STD).filter(match).sort((a,b)=>a.localeCompare(b));
+  if(routes.length){ host.appendChild(fhdr(GROUP!==null?GROUP+" routes":"Referral route / stage",false));
+    routes.forEach(r=>host.appendChild(fopt(r,ROUTE===r,()=>selectRoute(r)))); }
+  if(!host.children.length) host.innerHTML='<div class="fgroup first">No matches</div>';
+}
+
+/* ---- modality dropdown (level 2, all-cancers only) ---- */
+function closeModPanel(){ const p=document.getElementById("modpanel"); if(p)p.hidden=true;
+  const b=document.getElementById("modbtn"); if(b)b.setAttribute("aria-expanded","false"); }
+async function toggleModPanel(){
+  const p=document.getElementById("modpanel");
+  if(p && !p.hidden){ closeModPanel(); return; }
+  await openModPanel();
+}
+async function openModPanel(){
+  const p=document.getElementById("modpanel");
+  p.innerHTML='<div class="fgroup first">Loading modalities&hellip;</div>'; p.hidden=false;
+  document.getElementById("modbtn").setAttribute("aria-expanded","true");
+  await ensureBreakdown();
+  buildModPanel();
+}
+function buildModPanel(){
+  const p=document.getElementById("modpanel"); p.innerHTML="";
+  const s=mkSearch("Type to filter modalities…", v=>renderModOptions(v)); p.appendChild(s);
+  const opts=document.createElement("div"); opts.id="modoptions"; p.appendChild(opts);
+  renderModOptions("");
+  setTimeout(()=>s.focus(),0);
+}
+function renderModOptions(q){
+  const host=document.getElementById("modoptions"); host.innerHTML="";
+  q=(q||"").trim().toLowerCase(); const match=t=>!q||t.toLowerCase().includes(q);
+  if(match("all modalities")){ host.appendChild(fhdr("Overview",true));
+    host.appendChild(fopt("All modalities",MOD===null,()=>selectMod(null))); }
+  const mods=modsForRoute(CURRENT_STD,ROUTE).filter(match).sort((a,b)=>a.localeCompare(b));
+  if(mods.length){ host.appendChild(fhdr("Treatment modality · "+ROUTE,false));
+    mods.forEach(m=>host.appendChild(fopt(m,MOD===m,()=>selectMod(m)))); }
   if(!host.children.length) host.innerHTML='<div class="fgroup first">No matches</div>';
 }
 
 /* ---- big chart ---- */
 function renderBig(){
+  syncBreakdownUI();   // keep the route/modality controls + hint in lockstep with state
   const sAll=CURRENT.standards[CURRENT_STD];
   const org=activeOrgSeries();
-  const sliceOn = CURRENT_SLICE.type!=="all";
-  document.getElementById("bigttl").textContent = sAll.label + (sliceOn? " — "+CURRENT_SLICE.value : "");
+  const sliceOn = sliceOnNow();
+  document.getElementById("bigttl").textContent = sAll.label + (sliceOn? " — "+sliceLabel() : "");
   document.getElementById("bigtag").innerHTML=
     `${CURRENT_STD} &middot; target ${fmt(sAll.target)} &middot; ${CURRENT.isNational?"England":CURRENT.name}`;
-  document.getElementById("slicehint").textContent =
-    isGroupSlice() ? `${CURRENT_SLICE.value} group · narrow further below, or change the group above.`
-    : sliceOn ? "Showing one published slice."
-    : "Narrow to a cancer type, route or modality.";
   const box=document.getElementById("chartbox");
   const low=document.getElementById("lowrel");
 
@@ -628,7 +728,7 @@ function renderBig(){
   }
   const nat=activeNatSeries();
   ACTIVE_NAT = (!CURRENT.isNational && nat && nat.performance && nat.performance.length) ? nat : null;
-  const sliceTag = sliceOn ? " &middot; "+CURRENT_SLICE.value : "";
+  const sliceTag = sliceOn ? " &middot; "+sliceLabel() : "";
   const hasLow = org.total.some(v=>(+v)<THRESH);
   // Legend swatches mirror the chart EXACTLY: line style + marker dot where the
   // series carries markers (the England comparison line and target rule have none).

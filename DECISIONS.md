@@ -6,6 +6,92 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-11 — v6 APPROVED & DEPLOYED; both flags accepted (Code)
+User approved the v6 build after reviewing the renders (Breast shows all four real
+routes incl. Breast Symptomatic + Screening; Skin correctly omits both; modality
+2nd dropdown, hide-reset transition, and FDS28 "no breakdowns" line all read well).
+Both flagged interpretation calls accepted as-is:
+1. Cancer SUB-TYPE granularity removal is fine — ten-groups + route is sufficient.
+   Logged as a KNOWN DEFERRED ITEM (STATUS open item 3), NOT a loss: the `cancer`
+   dim still carries the sub-type level in the breakdown files, so a sub-type
+   control can be added later if anyone misses it.
+2. FDS28 with no stage dropdown stays — the explanatory line handles it cleanly;
+   not worth the extra build.
+
+## 2026-06-11 — Items 2 & 3 BUILT (v6 context-aware breakdown dropdowns); built, then deployed (Code, from breakdown-hierarchy-v6-spec.md)
+Built on the confirmed >=1% activity bar. Pipeline + front end done, 30 tests pass.
+
+PIPELINE: new `cancer_group_route` dim in the breakdown files — ten groups x route,
+built from the cancer x route combos, composite groups (Haem/Upper GI/Urology/Other)
+aggregated by summing num+denom (same rollup as `cancer_group`). A (group, route)
+slice is emitted only when its cumulative denom is >= 1% of the group's route
+activity, PER ORG (so a small trust shows fewer routes). Verified: Breast keeps all
+four routes incl. Breast Symptomatic; Skin/Urology drop Screening + Breast
+Symptomatic; Lung/Lower GI keep Screening, drop Breast Symptomatic. FDS28 has no
+route dim -> no cancer_group_route. Reconciliation: build-time fail-loud guard
+catches the corrupting direction (routes EXCEEDING group total = double-count) so it
+survives minimal unit fixtures; EXACT equality asserted as a store-level test
+(routes partition the group total exactly, per org-group-month, max|delta|<0.6).
+
+FRONT END: replaced the single freeform "Breakdown" dropdown with a composite
+GROUP/ROUTE/MOD model + two controls — a group-aware **Referral route** dropdown
+(all standards with routes; lists the group's real routes when a group is selected,
+all-cancers routes otherwise) and a **Treatment modality** dropdown that appears
+ONLY in all-cancers + CMB31/CMB62 + a route with a published modality level. Cards
+follow the GROUP only; route/modality narrow the big chart. State transitions per
+spec: selecting a group resets+hides modality (route kept iff valid for the new
+group, else reset to All routes); returning to all-cancers reappears modality at
+default; FDS28 shows neither control (hint explains). Searchable dropdowns + low-
+reliability treatment preserved. Reviewed all 5 cases + transition pair + invalid-
+route reset (screenshots/v6_a..f).
+
+TWO INTERPRETATION CALLS FLAGGED FOR REVIEW (chose, did not guess silently):
+1. The v6 dropdown is now ROUTE+MODALITY only. The old freeform breakdown let you
+   pick a RAW cancer SUBTYPE (finer than the 10 groups, e.g. 'Haematological -
+   Lymphoma') and a bare all-cancers modality / arbitrary combination. Those are
+   GONE — cancer is the 10-group selector; modality is reachable only beneath a
+   route. Matches the spec's "the breakdown dropdown becomes the route dropdown",
+   but it removes sub-group cancer granularity. Restore a cancer-subtype control if
+   that granularity is wanted.
+2. FDS28 gets NO level-1 stage dropdown. The spec wanted FDS28 "referral-stage
+   options", but FDS28 has no standalone route/stage dim — stages live only inside
+   per-cancer combos (cancer x stage). Supporting FDS28 group->stage is doable
+   (treat those combos as the route source, same activity bar) but wasn't in the 5
+   review cases; left out for now. Confirm if you want FDS28 group->stage too.
+
+## 2026-06-11 — Item 1 DEPLOYED (standalone): prize removal live & verified (Code)
+Committed (778f73f) + pushed; ran update-data.yml via workflow_dispatch (run
+27339479076) — green (tests + build + deploy). Live HTML at
+https://drjmartins.github.io/cancer-waiting-times/ returns 200 with ZERO prize
+references. Done.
+
+## 2026-06-11 — CORRECTION to the breakdown-hierarchy investigation; v6 build PAUSED (Code)
+User challenged my claim that "Breast Symptomatic" is a cancer-agnostic route. They
+were RIGHT — I read cell EXISTENCE, not activity. Verified against real num/denom:
+- **Routes are PARTLY cancer-specific.** "Lung | Breast Symptomatic" exists but is
+  8 patients across 8 months (all sub-threshold) — miscoding noise, not a pathway.
+- **CMB62 route applicability (summed denom; share of group; reliable months):**
+  - *Breast Symptomatic* — BREAST ONLY (5,584; 2.8%; 48mo). Every other group
+    0.0–0.1%, 0 reliable months. Breast-specific.
+  - *Screening* — only the screening-programme cancers: Breast (35%), Lower GI
+    (14%), Lung (4.7%), Gynaecology (3.5%). Trace/noise for Haematology (0.5%),
+    Urology, zero for Head & Neck / Skin / Upper GI / Other.
+  - *Consultant Upgrade* & *Urgent Suspected Cancer* — genuinely universal (all 10
+    groups, 18–82%, 48+ reliable months).
+- **CMB31:** First Treatment + Subsequent — both universal across all groups.
+- **FDS28:** identical pattern, even cleaner (non-applicable cells are genuine
+  ZEROS, not noise): Breast-Symptomatic-not-suspected = Breast only; National
+  Screening Programme = Breast/Lower GI/Gynae/Lung(+Other); Urgent Suspected
+  Cancer = all groups.
+**Spec impact:** the v6 route dropdown must be driven by REAL per-(group,route)
+activity, NOT a fixed route list — else it would offer e.g. "Breast Symptomatic"
+under Lung (n=8) and "Screening" under Skin (n=0). Must filter PER ORG (per-org
+files are sparser still). Build approach: emit a (group,route) slice only when it
+clears an activity bar (mirrors the existing empty-cancer_group omission); front
+end lists whatever slices are present. Proposed bar: ≥1% of the group's route
+activity (cleanly keeps Breast-only Breast-Symptomatic + the 4 screening cancers,
+drops the noise) — AWAITING user confirm before resuming the build.
+
 ## 2026-06-11 — Item 1 BUILT: "Size of the prize" removed from per-org page (Code)
 User wants it gone (not hidden). Removed the whole `<section class="prize">`, its
 CSS block (`.prize/.prizegrid/.slider/.result/...`), the JS (`prizeSeries/setupPrize/

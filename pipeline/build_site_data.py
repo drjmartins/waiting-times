@@ -57,6 +57,15 @@ def _org_payload(df_org):
 # *offered* per standard is a front-end concern (FDS28 surfaces cancer only).
 BREAKDOWN_DIMS = ("cancer", "route", "modality", "combination")
 
+# Fraction-of-group-activity bar below which a (cancer_group, route) slice is
+# treated as not-applicable noise and omitted. The data separates cleanly: a
+# route that genuinely applies to a group is 3-82% of that group's activity,
+# whereas a cancer-specific route appearing under the wrong group (e.g. Breast
+# Symptomatic under Lung, or Screening under Skin) is 0.0-0.1% — structural
+# miscoding, ~1 patient/month. 1% sits squarely in that gap. See DECISIONS.md
+# (2026-06-11 route-characterisation finding).
+GROUP_ROUTE_ACTIVITY_BAR = 0.01
+
 
 def _cancer_group_slices(cancer_rows):
     """Aggregate raw 'cancer' breakdown rows into NHS England's ten tumour-site
@@ -101,6 +110,88 @@ def _cancer_group_slices(cancer_rows):
     return slices
 
 
+def _cancer_group_route_slices(srows, route_values, cancer_values):
+    """For one (org, standard): roll the cancer x route combination rows up into
+    NHS's ten tumour-site groups x route. Per (group, route, month) SUM numerators
+    and denominators across the group's constituent cancer types, THEN compute
+    performance from the totals (never average per-type percentages). Returns
+    {group: {route: <series>, ...}, ...} — the shape the group-aware route dropdown
+    consumes (v6).
+
+    Routes are PARTLY cancer-specific (Breast Symptomatic -> Breast only; Screening
+    -> the screening-programme cancers), and the source ships near-zero noise cells
+    for the impossible cross-tabs. So a (group, route) slice is emitted ONLY when
+    its cumulative denominator clears GROUP_ROUTE_ACTIVITY_BAR of the group's total
+    route activity, computed PER ORG — a small trust legitimately surfaces fewer
+    routes than the national picture, and the front end just lists what is present.
+
+    Reconciliation guard (fail-loud, protects the daily CI refresh): for every
+    (group, month) the routes must sum to that group's cancer total — verified
+    exact in the real source — so a future NHS vintage that breaks the route
+    partition fails the run rather than shipping a wrong denominator."""
+    if not route_values:
+        return {}
+    comb = srows[srows["breakdown_type"] == "combination"]
+    if comb.empty:
+        return {}
+    split = comb["breakdown_value"].str.split("|", n=1, expand=True)
+    if split.shape[1] < 2:
+        return {}
+    rows = comb.assign(_a=split[0].str.strip(), _b=split[1].str.strip())
+    rows = rows[rows["_a"].isin(cancer_values) & rows["_b"].isin(route_values)]
+    if rows.empty:
+        return {}
+    rows = rows.assign(group=rows["_a"].map(cancer_groups.group_for))
+
+    agg = (rows.groupby(["group", "_b", "month"], as_index=False)
+               .agg(within=("within_target", "sum"),
+                    total=("total", "sum"),
+                    data_status=("data_status", "min")))
+
+    # Reconciliation guard (fail-loud, protects the daily refresh, which rebuilds
+    # newly-fetched data AFTER the pre-fetch test gate). We assert the SAFETY-
+    # CRITICAL direction: a group's routes must never EXCEED its cancer total
+    # (inflation / double-counting → a wrong, overstated denominator). Real NHS
+    # data partitions EXACTLY (routes == total; asserted in tests against the
+    # store); an under-count (routes < total) only ever means a route is missing
+    # and degrades gracefully (one fewer option), so it isn't a build-stopper and
+    # keeps minimal unit fixtures — which carry partial combos — valid.
+    canc = srows[srows["breakdown_type"] == "cancer"].copy()
+    canc["group"] = canc["breakdown_value"].map(cancer_groups.group_for)
+    grp_tot = canc.groupby(["group", "month"])["total"].sum()
+    rte_tot = agg.groupby(["group", "month"])["total"].sum()
+    over = rte_tot.subtract(grp_tot, fill_value=0)        # routes minus group total
+    if (over > 0.6).any():
+        bad = over[over > 0.6]
+        raise AssertionError(
+            "cancer_group x route EXCEEDS the group cancer total (double-count?) "
+            f"(max over {over.max()}): {bad.head().to_dict()}")
+
+    agg["performance"] = (agg["within"] / agg["total"]).round(4)
+    out = {}
+    for grp in cancer_groups.TEN_GROUPS:
+        g = agg[agg["group"] == grp]
+        denom = g["total"].sum()
+        if denom <= 0:
+            continue
+        bar = GROUP_ROUTE_ACTIVITY_BAR * denom
+        routes = {}
+        for rv, rg in g.groupby("_b"):
+            if rg["total"].sum() < bar:
+                continue                       # cancer-specific route under the wrong group: drop the noise
+            rg = rg.sort_values("month")
+            routes[str(rv)] = {
+                "months": rg["month"].tolist(),
+                "performance": rg["performance"].tolist(),
+                "within_target": [_num(v) for v in rg["within"]],
+                "total": [_num(v) for v in rg["total"]],
+                "data_status": rg["data_status"].tolist(),
+            }
+        if routes:
+            out[grp] = routes
+    return out
+
+
 def _breakdown_payload(df_org):
     """Per-org breakdown series for every standard. Carries the raw granular
     dimensions (cancer / route / modality + published pairwise combinations) AND
@@ -133,6 +224,15 @@ def _breakdown_payload(df_org):
         group_slices = _cancer_group_slices(srows[srows["breakdown_type"] == "cancer"])
         if group_slices:
             dims["cancer_group"] = group_slices
+        # Group-aware routes (v6): ten groups x route, activity-filtered so a group
+        # only offers the routes that genuinely apply to it. Built from the
+        # cancer x route combos; absent for FDS28 (no route dim).
+        group_route = _cancer_group_route_slices(
+            srows,
+            set(dims.get("route", {}).keys()),
+            set(dims.get("cancer", {}).keys()))
+        if group_route:
+            dims["cancer_group_route"] = group_route
         if dims:
             out["standards"][std] = dims
     return out

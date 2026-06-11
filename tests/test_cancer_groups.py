@@ -91,6 +91,98 @@ def test_group_omitted_when_no_constituents():
     assert set(groups) == {"Lung"}            # only groups with data appear
 
 
+def _comb(month, value, within, total, std="CMB62"):
+    return {**_crow(month, value, within, total, std=std),
+            "breakdown_type": "combination", "breakdown_value": value}
+
+
+def _route(month, value, within, total, std="CMB62"):
+    return {**_crow(month, value, within, total, std=std),
+            "breakdown_type": "route", "breakdown_value": value}
+
+
+def test_cancer_group_route_activity_bar_drops_noise():
+    # Breast group, total 200. Urgent Suspected Cancer = 199 (99.5%) is real; the
+    # cancer-specific 'Breast Symptomatic' appearing here at 1 (0.5%) is the kind
+    # of structural-noise cell the >=1% bar exists to drop.
+    rows = pd.DataFrame([
+        _crow("2025-07", "Breast", 150, 200),
+        _route("2025-07", "Urgent Suspected Cancer", 149, 199),
+        _route("2025-07", "Breast Symptomatic", 1, 1),
+        _comb("2025-07", "Breast | Urgent Suspected Cancer", 149, 199),
+        _comb("2025-07", "Breast | Breast Symptomatic", 1, 1),
+    ])
+    cgr = b._breakdown_payload(rows)["standards"]["CMB62"]["cancer_group_route"]
+    assert set(cgr["Breast"]) == {"Urgent Suspected Cancer"}     # 0.5% route dropped as noise
+    assert cgr["Breast"]["Urgent Suspected Cancer"]["total"] == [199]
+
+
+def test_cancer_group_route_guard_fails_on_inflation():
+    # Routes summing to MORE than the group's cancer total (a double-count) must
+    # fail the build loudly rather than ship an overstated denominator.
+    rows = pd.DataFrame([
+        _crow("2025-07", "Breast", 40, 50),                      # group total 50
+        _route("2025-07", "Urgent Suspected Cancer", 40, 60),    # route dim present
+        _comb("2025-07", "Breast | Urgent Suspected Cancer", 40, 60),   # 60 > 50
+    ])
+    with pytest.raises(AssertionError):
+        b._breakdown_payload(rows)
+
+
+def test_fds28_has_no_cancer_group_route():
+    # FDS28 has no route dim, so it gets no group-aware route slices.
+    rows = pd.DataFrame([_crow("2025-07", "Suspected breast cancer", 5, 8, std="FDS28")])
+    fds = b._breakdown_payload(rows)["standards"]["FDS28"]
+    assert "cancer_group_route" not in fds
+
+
+def _group_route_totals(df, std):
+    """National summed denominator per (group, route) from the cancer x route combos."""
+    d = df[df["standard"] == std]
+    routes = set(d.loc[d["breakdown_type"] == "route", "breakdown_value"])
+    cancers = set(d.loc[d["breakdown_type"] == "cancer", "breakdown_value"])
+    comb = d[d["breakdown_type"] == "combination"].copy()
+    parts = comb["breakdown_value"].str.split("|", n=1, expand=True)
+    comb["a"], comb["b"] = parts[0].str.strip(), parts[1].str.strip()
+    cxr = comb[comb["a"].isin(cancers) & comb["b"].isin(routes)].copy()
+    cxr["group"] = cxr["a"].map(cg.group_for)
+    return cxr, routes
+
+
+@_store_only
+def test_cancer_group_route_partition_reconciles_in_store():
+    # The cancer x route combos partition the group's cancer total EXACTLY, per
+    # (org, group, month) — the property the build's group-aware routes rely on.
+    df = pd.read_parquet(STORE)
+    for std in ("CMB31", "CMB62"):
+        cxr, _ = _group_route_totals(df, std)
+        rt = cxr.groupby(["org_code", "group", "month"])["total"].sum()
+        canc = df[(df["standard"] == std) & (df["breakdown_type"] == "cancer")].copy()
+        canc["group"] = canc["breakdown_value"].map(cg.group_for)
+        gt = canc.groupby(["org_code", "group", "month"])["total"].sum()
+        j = gt.to_frame("g").join(rt.to_frame("r"), how="left")
+        assert j["r"].notna().all(), (std, "group-month with cancer data lacks a route partition")
+        assert (j["g"] - j["r"]).abs().max() < 0.6, std
+
+
+@_store_only
+def test_cancer_group_route_activity_separation_real():
+    # The >=1% bar is safe only because the data separates starkly: a route that
+    # applies to a group is well above 1% of its activity, the noise cells far below.
+    df = pd.read_parquet(STORE)
+    cxr, _ = _group_route_totals(df, "CMB62")
+    tot = cxr.groupby(["group", "b"])["total"].sum()
+    grp = cxr.groupby("group")["total"].sum()
+    share = lambda g, r: (tot.get((g, r), 0) / grp[g])
+    # Breast Symptomatic is breast-specific: real for Breast, noise under Skin/Urology.
+    assert share("Breast", "Breast Symptomatic") >= 0.01
+    assert share("Skin", "Breast Symptomatic") < 0.01
+    assert share("Urology", "Breast Symptomatic") < 0.01
+    # Screening is a screening-programme route: real for Lower GI, noise under Skin.
+    assert share("Lower GI", "Screening") >= 0.01
+    assert share("Skin", "Screening") < 0.01
+
+
 @_store_only
 def test_real_store_every_label_maps():
     df = pd.read_parquet(STORE)
