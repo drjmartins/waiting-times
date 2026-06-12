@@ -6,6 +6,60 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-12 — v7 Parts 1 & 2 BUILT (labelling/copy + data items); Part 3 INVESTIGATED, not cut (Code, from v7-labelling-and-org-hiding-spec.md)
+Built, tests green (32, +2), re-rendered, NOT deployed (paused for review as usual).
+
+PART 1 — front-end labelling (site/index.html, pure front-end):
+ - Title -> "NHS Cancer Waiting Times Dashboard" (h1 + <title>); subtitle ->
+   "England · Performance against NHS Cancer Waiting Time Targets".
+ - Provider picker GROUPED "NHS Trust" / "Other" (trusts first); commissioner
+   picker grouped "ICB" / "Other" (ICBs first). Client-side classify off the org
+   NAME, mirroring a pipeline rule. DATA CLASSIFIES CLEANLY (flag resolved): 173
+   trusts vs 28 other providers (private/community/LLP), 42 ICBs vs 8 commissioning
+   hubs — zero ambiguous cases. (Two trusts needed name-form handling: "NHS FT"
+   abbrev + "NATIONAL HEALTH SERVICE TRUST" spelled out.)
+ - Bylines: dropped the "Provider (trust)" / "Commissioner (ICB)" prefix — now
+   name + region only (e.g. "AIREDALE NHS FOUNDATION TRUST · North East and Yorkshire").
+ - Removed the "NHS England's ten tumour-site groups…" helper text by the group
+   dropdown (the hint now shows composition / caveats only).
+ - Moved the Oct-2023 comparability banner to BELOW the chart.
+
+PART 2 — data items (pipeline + front-end):
+ - EXCLUDE Missing/Invalid from "Other". cancer_groups: maps "Missing or Invalid"
+   to a sentinel EXCLUDED_GROUP (not Other), so the rollup (iterates TEN_GROUPS)
+   drops it; group_for stays exhaustive (new labels still fail loud). CONSEQUENCE
+   confirmed-acceptable: ten groups no longer sum exactly to all-cancers — but the
+   gap is FDS28-ONLY (Missing/Invalid is FDS28-only, ~0.28% of FDS activity; ZERO
+   in CMB31/CMB62, which still reconcile exactly). Reconciliation TEST relaxed to
+   one-directional: groups must never EXCEED the total (corrupting double-count
+   direction, still exact) but may fall SHORT by exactly the Missing/Invalid count.
+ - COMPOSITION description for composite groups only (Haematology, Upper GI,
+   Urology, Other) — sourced from cancer_groups._COMPOSITION (labels tied to
+   GROUP_OF via assert_composition_consistent(), a build-time drift guard) and
+   emitted into meta.json.group_composition. Front-end shows "Aggregates …" in the
+   group hint; the six 1:1 groups show nothing. Other shows its make-up + the
+   cross-standard caveat, and (per item 9) does NOT list Missing/Invalid.
+ - Oct-2023 vertical dashed "standards changed" marker on CMB31 + CMB62 charts
+   only (read from meta.comparability_break); NOT on FDS28. Verified present on
+   CMB31/CMB62, absent on FDS28.
+ Renders: screenshots/v7_a..h (national; Airedale byline; Haematology + Upper GI
+ composition; Other caveat; grouped provider dropdown; CMB31/CMB62 marker; FDS28
+ no-marker).
+
+PART 3 — org hiding: INVESTIGATED ONLY (reported below, no cut made). The data
+separates cleanly but the right RULE DIFFERS BY ORG TYPE:
+ - PROVIDERS: rule (a) "never clears n>=10 in any standard/month over 48 months"
+   hides 53 of 201, and it coincides with a NATURAL GAP — the 53 hidden top out at
+   max 9 patients/month; the next (kept) org jumps to 12.5+. These produce only
+   empty/greyed charts (incl. CSH Surrey, the example). Clean, principled cut.
+ - COMMISSIONERS: rule (a) hides ZERO (all 50 clear n>=10). But there's a ~10x
+   activity gap: the 8 commissioning hubs (H&J + National) peak at max 287 / rec-3
+   869, while the smallest REAL ICB starts at max 2822 / rec-3 11,737. A volume
+   threshold (e.g. max single-month < ~1000, or recent-3 pooled < ~2000) isolates
+   exactly those 8 — and they're the SAME 8 that fall in the picker's "Other" group.
+ AWAITING the user's choice of rule per type; hiding will be SELECTION-ONLY (data
+ stays in the store; org reachable by direct ?org= link). A follow-up applies it.
+
 ## 2026-06-11 — v6 APPROVED & DEPLOYED; both flags accepted (Code)
 User approved the v6 build after reviewing the renders (Breast shows all four real
 routes incl. Breast Symptomatic + Screening; Skin correctly omits both; modality

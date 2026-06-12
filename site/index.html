@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cancer Waiting Times Explorer</title>
+<title>NHS Cancer Waiting Times Dashboard</title>
 <style>
   :root{
     /* Clinical chart-paper palette: cool slate ink, a single signal-amber for
@@ -137,8 +137,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>Cancer Waiting Times Explorer</h1>
-    <div class="sub">England &middot; provider &amp; ICB performance against the three standards</div>
+    <h1>NHS Cancer Waiting Times Dashboard</h1>
+    <div class="sub">England &middot; Performance against NHS Cancer Waiting Time Targets</div>
     <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:8px">
       <a href="compare.html" style="color:var(--org);text-decoration:none">Compare trusts &rarr;</a>
     </div>
@@ -165,8 +165,6 @@
     </div>
   </div>
 
-  <div class="note" id="breaknote">Loading&hellip;</div>
-
   <!-- Shared cancer-group filter: drives all three cards AND the big chart together. -->
   <div class="groupbar" id="groupbar">
     <span class="flabel">Cancer group</span>
@@ -175,7 +173,7 @@
         <span id="grouplabel">All cancers</span><span class="caret">&#9662;</span></button>
       <div id="grouppanel" class="filterpanel" role="listbox" hidden></div>
     </div>
-    <span id="grouphint" class="slicehint">NHS England&rsquo;s ten tumour-site groups &middot; applies to all three cards and the chart.</span>
+    <span id="grouphint" class="slicehint"></span>
   </div>
 
   <!-- Three summary cards: latest figure + sparkline; clicking one switches the big chart. -->
@@ -207,6 +205,10 @@
     <div class="chartbox" id="chartbox"></div>
     <div id="lowrel" class="lowrel" hidden></div>
   </div>
+
+  <!-- Oct-2023 comparability banner: sits BELOW the chart (the dashed in-chart
+       marker on CMB31/CMB62 flags the break point itself). -->
+  <div class="note" id="breaknote">Loading&hellip;</div>
 
   <footer id="foot"></footer>
 </div>
@@ -255,8 +257,9 @@ const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+
 function footerHTML(META){
   const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
   return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
-    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
-    `The 31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable and are shown separately.`;
+    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.`;
+  // (The Oct-2023 comparability note now lives in the amber banner below the chart
+  //  + the in-chart marker, so the old third footer line would be redundant.)
 }
 
 async function init(){
@@ -322,25 +325,53 @@ async function setType(type, code){
   }
   drop.hidden=false;
   const list=orgListFor(type);
-  const pick=(code && list.find(o=>o.code===code)) || list[0];
+  // A direct ?org= link may target a HIDDEN org (negligible activity, out of the
+  // picker but still reachable): resolve `code` against the FULL index, falling
+  // back to the first visible org so the chart never blanks.
+  const full=window._idx.filter(o=>o.level===type);
+  const pick=(code && full.find(o=>o.code===code)) || list[0];
   if(!pick) return;
   document.getElementById("orglabel").textContent=`${pick.name} (${pick.code})`;
   buildOrgOptions("");
   await loadOrg(pick.code);
 }
+// Picker list: orgs of this type EXCLUDING negligible-activity ones flagged
+// hidden in index.json (computed each build). Hidden orgs stay direct-linkable
+// (see setType) — they're just out of the picker and default lists.
 function orgListFor(type){
-  return window._idx.filter(o=>o.level===type).sort((a,b)=>a.name.localeCompare(b.name));
+  return window._idx.filter(o=>o.level===type && !o.hidden).sort((a,b)=>a.name.localeCompare(b.name));
 }
-// Searchable option list: substring match on name OR code.
+// Classify an org for the grouped picker. Mirrors pipeline-side reasoning off the
+// org NAME: a provider is an "NHS Trust" if its name carries TRUST + NHS (or the
+// spelled-out / abbreviated forms), else "Other" (private/community/LLP etc.);
+// a commissioner is an "ICB" if its name says "INTEGRATED CARE BOARD", else
+// "Other" (the specialised/national commissioning hubs). The data classifies
+// cleanly: 173 trusts vs 28 other providers, 42 ICBs vs 8 hubs, no ambiguous cases.
+function orgGroupOf(o){
+  const u=(o.name||"").toUpperCase();
+  if(o.level==="icb") return u.includes("INTEGRATED CARE BOARD") ? "ICB" : "Other";
+  const isTrust=(u.includes("TRUST") && (u.includes("NHS")||u.includes("NATIONAL HEALTH SERVICE"))) || u.includes("NHS FT");
+  return isTrust ? "NHS Trust" : "Other";
+}
+// Searchable, GROUPED option list (NHS Trust / ICB first, then Other). Substring
+// match on name OR code, applied within each group.
 function buildOrgOptions(q){
   const host=document.getElementById("orgoptions"); host.innerHTML="";
   q=(q||"").trim().toLowerCase();
   const list=orgListFor(CURRENT_TYPE).filter(o=> !q || o.name.toLowerCase().includes(q) || o.code.toLowerCase().includes(q));
   if(!list.length){ host.innerHTML='<div class="fgroup first">No matches</div>'; return; }
-  list.forEach(o=>{ const b=document.createElement("button");
-    b.className="fopt"+(CURRENT && CURRENT.code===o.code ? " active":"");
-    b.setAttribute("role","option"); b.textContent=`${o.name} (${o.code})`;
-    b.onclick=()=>selectOrg(o); host.appendChild(b); });
+  const order = CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Other"];
+  let first=true;
+  for(const grp of order){
+    const items=list.filter(o=>orgGroupOf(o)===grp);
+    if(!items.length) continue;
+    const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=grp;
+    host.appendChild(h); first=false;
+    items.forEach(o=>{ const b=document.createElement("button");
+      b.className="fopt"+(CURRENT && CURRENT.code===o.code ? " active":"");
+      b.setAttribute("role","option"); b.textContent=`${o.name} (${o.code})`;
+      b.onclick=()=>selectOrg(o); host.appendChild(b); });
+  }
 }
 function selectOrg(o){
   document.getElementById("orglabel").textContent=`${o.name} (${o.code})`;
@@ -391,9 +422,11 @@ function render(){
   if(!CURRENT.standards[CURRENT_STD])
     CURRENT_STD = META.standards[DEFAULT_STD] && CURRENT.standards[DEFAULT_STD]
       ? DEFAULT_STD : Object.keys(CURRENT.standards)[0];
+  // Byline: org name + region only — no "Provider (trust)" / "Commissioner (ICB)"
+  // prefix (the grouped picker already conveys the type).
   document.getElementById("orgname").innerHTML = CURRENT.isNational
     ? `<b>England</b> &middot; all-England aggregate`
-    : `<b>${CURRENT.name}</b> &middot; ${CURRENT.level==="icb"?"Commissioner (ICB)":"Provider (trust)"}${CURRENT.region&&CURRENT.region!=="England"?" &middot; "+CURRENT.region:""}`;
+    : `<b>${CURRENT.name}</b>${CURRENT.region&&CURRENT.region!=="England"?" &middot; "+CURRENT.region:""}`;
   closePanel(); closeModPanel(); updateGroupLabel();
   renderCards();
   renderBig();   // calls syncBreakdownUI() to sync the route/modality controls
@@ -574,13 +607,25 @@ function groupText(){ return isGroupSlice() ? GROUP : "All cancers"; }
 const OTHER_NOTE="&lsquo;Other&rsquo; is a catch-all and its make-up differs by standard: "+
   "FDS28&rsquo;s Other also absorbs brain/CNS, sarcoma, children&rsquo;s and non-specific-symptom "+
   "referrals (which have no group of their own), so it is not a like-for-like cohort across the three standards.";
+const OTHER_CAVEAT="These sites appear only under the 28-day standard, so &lsquo;Other&rsquo; is "+
+  "not a like-for-like cohort across the three standards.";
+// Composition description for the COMPOSITE groups only, sourced from meta.json
+// (built from cancer_groups.py so it can't drift from the actual mapping). The
+// six 1:1 groups and All cancers show nothing.
+function compositionFor(group){
+  return (META && META.group_composition && META.group_composition[group]) || "";
+}
 function updateGroupLabel(){
   const e=document.getElementById("grouplabel"); if(e) e.textContent=groupText();
   const b=document.getElementById("groupbtn"); if(b) b.classList.toggle("grouped", isGroupSlice());
-  const h=document.getElementById("grouphint");
-  if(h) h.innerHTML = (isGroupSlice() && GROUP==="Other")
-    ? "&#9888; "+OTHER_NOTE
-    : "NHS England&rsquo;s ten tumour-site groups &middot; applies to all three cards and the chart.";
+  const h=document.getElementById("grouphint"); if(!h) return;
+  const comp = isGroupSlice() ? compositionFor(GROUP) : "";
+  if(isGroupSlice() && GROUP==="Other")
+    h.innerHTML = "&#9888; Aggregates "+comp+". "+OTHER_CAVEAT;   // composite + cross-standard caveat
+  else if(comp)
+    h.innerHTML = "Aggregates "+comp+".";                         // composite group make-up
+  else
+    h.innerHTML = "";                                             // 1:1 group / All cancers: no helper text
 }
 function toggleGroupPanel(){ const p=document.getElementById("grouppanel"); if(p && !p.hidden) closeGroupPanel(); else openGroupPanel(); }
 function openGroupPanel(){
@@ -784,6 +829,18 @@ function bigSVG(s, nat){
     g+=`<line x1="${P.l}" y1="${y(v).toFixed(1)}" x2="${W-P.r}" y2="${y(v).toFixed(1)}" stroke="var(--grid)"/>`+
        `<text x="${P.l-6}" y="${(y(v)+3).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--ink-soft)">${Math.round(v*100)}%</text>`;
   }
+  // Oct-2023 standards-change marker: a vertical dashed rule at the comparability
+  // break, on CMB31/CMB62 only (FDS28 has no break). Complements the banner below
+  // the chart by marking exactly where the series stops being comparable.
+  let mark="";
+  if(CURRENT_STD!=="FDS28" && META && META.comparability_break){
+    const mi=xs.indexOf(META.comparability_break);
+    if(mi>=0){
+      const mx=x(mi).toFixed(1);
+      mark=`<line x1="${mx}" y1="${P.t}" x2="${mx}" y2="${(H-P.b).toFixed(1)}" stroke="var(--ink-soft)" stroke-dasharray="4 3" stroke-width="1" opacity="0.7"/>`+
+        `<text x="${(+mx+4).toFixed(1)}" y="${P.t+9}" font-size="9.5" text-anchor="start" fill="var(--ink-soft)">standards changed</text>`;
+    }
+  }
   // target line
   const ty=y(s.target);
   const tline=`<line x1="${P.l}" y1="${ty.toFixed(1)}" x2="${W-P.r}" y2="${ty.toFixed(1)}" stroke="var(--target)" stroke-dasharray="5 4" stroke-width="1.4"/>`+
@@ -831,7 +888,7 @@ function bigSVG(s, nat){
     pts+=`<circle class="pt" data-i="${i}" cx="${cx}" cy="${cy}" r="${low?3.4:3.2}" ${mk}/>`+
       `<circle class="pt hit" data-i="${i}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${natpath}${tline}${line}${xl}${pts}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${mark}${natpath}${tline}${line}${xl}${pts}</svg>`;
 }
 
 function attachTips(s){

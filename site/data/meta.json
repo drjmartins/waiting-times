@@ -1,7 +1,12 @@
 {
-  "built_at": "2026-06-10T08:50:38.119621Z",
+  "built_at": "2026-06-12T09:05:18.317039Z",
   "comparability_break": "2023-10",
-  "n_orgs": 251,
+  "n_orgs": 190,
+  "n_orgs_total": 251,
+  "hidden_from_picker": {
+    "providers": 53,
+    "commissioners": 8
+  },
   "months": [
     "2022-04",
     "2022-05",
@@ -74,5 +79,11 @@
     "cwt_headline_all_cancers.csv",
     "cwt_tidy_full.csv.gz"
   ],
+  "group_composition": {
+    "Haematology": "lymphoma, acute leukaemia, other haematological malignancies",
+    "Upper GI": "oesophagus & stomach, hepatobiliary",
+    "Urology": "prostate, testicular, other urological",
+    "Other": "brain/CNS, sarcoma, children's cancer, non-specific symptoms"
+  },
   "note": "31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable."
 }

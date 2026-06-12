@@ -32,6 +32,36 @@ def _is_placeholder(code, name):
             or str(name).strip().upper() in PLACEHOLDER_NAMES)
 
 
+def _negligible_orgs(df):
+    """Codes to HIDE from the picker / default lists (selection-only: the per-org
+    files are still written, the org stays in the store + downloads, and a direct
+    ?org= link still resolves and renders with the usual low-reliability flags).
+
+    Computed DYNAMICALLY from the current data each build — not a frozen list — so
+    an org that crosses the bar (or a brand-new org) appears automatically and a
+    dormant one drops. Rules (confirmed against the activity distribution, see
+    DECISIONS.md 2026-06-12; the data separates cleanly):
+      * PROVIDER hidden if it NEVER clears the reliability threshold (n>=10) in any
+        standard/month — only ever empty/greyed charts;
+      * COMMISSIONER hidden if its recent-3-finalised-month pooled all-cancers
+        denominator (summed across standards) is below
+        config.PICKER_MIN_COMMISSIONER_DENOM — isolates the commissioning hubs.
+    Placeholders are already excluded elsewhere; skip them here too."""
+    allrows = df[df["breakdown_type"] == "all"]
+    recent = set(_recent_final_months(df))
+    hidden = set()
+    for (code, name, level), g in allrows.groupby(["org_code", "org_name", "org_level"]):
+        if _is_placeholder(code, name):
+            continue
+        if level == "provider":
+            if g["total"].max() < config.RELIABILITY_THRESHOLD:
+                hidden.add(code)
+        elif level == "icb":
+            if g.loc[g["month"].isin(recent), "total"].sum() < config.PICKER_MIN_COMMISSIONER_DENOM:
+                hidden.add(code)
+    return hidden
+
+
 def _org_payload(df_org):
     """Build the per-org JSON: one block per standard, 'All' breakdown only."""
     out = {"standards": {}}
@@ -411,7 +441,16 @@ def _build_downloads(df, out_dir):
 
 
 def build(df, out_dir=config.SITE_DATA_DIR):
+    # Fail loudly if a composite group's composition description has drifted from
+    # the actual cancer_groups mapping before we emit it into meta.json (v7).
+    cancer_groups.assert_composition_consistent()
     os.makedirs(os.path.join(out_dir, "org"), exist_ok=True)
+
+    # Negligible-activity orgs to hide from the picker (computed each build). They
+    # still get per-org files written and stay in index.json flagged hidden=true,
+    # so direct ?org= links resolve; the front end just filters them out of the
+    # picker / default lists.
+    hidden = _negligible_orgs(df)
 
     # Per-org files + index
     index = []
@@ -427,10 +466,18 @@ def build(df, out_dir=config.SITE_DATA_DIR):
             # Load-on-demand breakdown file (gitignored, rebuilt every run).
             with open(os.path.join(out_dir, "org", f"{code}.breakdown.json"), "w") as f:
                 json.dump(_breakdown_payload(g), f, separators=(",", ":"))
-            index.append({"code": code, "name": name, "level": level, "region": region})
+            entry = {"code": code, "name": name, "level": level, "region": region}
+            if code in hidden:
+                entry["hidden"] = True   # negligible activity: out of the picker, still direct-linkable
+            index.append(entry)
     index.sort(key=lambda r: r["name"])
     with open(os.path.join(out_dir, "index.json"), "w") as f:
         json.dump(index, f, separators=(",", ":"))
+    n_hidden = {
+        "providers": sum(1 for e in index if e.get("hidden") and e["level"] == "provider"),
+        "commissioners": sum(1 for e in index if e.get("hidden") and e["level"] == "icb"),
+    }
+    n_selectable = sum(1 for e in index if not e.get("hidden"))
 
     # National series as its own file (comparison overlay)
     nat = df[df["org_level"] == "national"]
@@ -451,11 +498,18 @@ def build(df, out_dir=config.SITE_DATA_DIR):
     meta = {
         "built_at": dt.datetime.utcnow().isoformat() + "Z",
         "comparability_break": config.COMPARABILITY_BREAK,
-        "n_orgs": len(index),
+        "n_orgs": n_selectable,                       # selectable in the picker
+        "n_orgs_total": len(index),                   # incl. hidden (direct-linkable)
+        "hidden_from_picker": n_hidden,
         "months": sorted(df["month"].unique().tolist()),
         "standards": {k: v["label"] for k, v in config.STANDARDS.items()},
         "comparison": comparison,
         "downloads": downloads,
+        # Composite-group make-up, sourced from cancer_groups so the front-end
+        # description can't drift from the actual mapping (v7). Composite groups
+        # only; the six 1:1 groups are self-explanatory and absent here.
+        "group_composition": {g: cancer_groups.composition_text(g)
+                              for g in cancer_groups.COMPOSITE_GROUPS},
         "note": ("31-day and 62-day standards changed in October 2023; figures "
                  "before that month are not directly comparable."),
     }

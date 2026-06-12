@@ -32,11 +32,19 @@ groups. FOUR FDS28-only labels have NO dedicated group among NHS's ten
 (brain/CNS, sarcoma, children's cancer, non-specific symptoms); NHS's CMB
 reporting — which uses exactly these ten groups — carries no brain/sarcoma/
 children's/NSS line, so those cohorts sit inside CMB "Other". We therefore map
-them to Other (the spec's designated catch-all). 'Missing or Invalid' (a
-data-quality bucket, present so the groups reconcile to the all-cancers total)
-also maps to Other. These by-elimination assignments are flagged in DECISIONS.md
-and the Part A report — they are the only places we infer rather than read a
-group straight off NHS's label.
+them to Other (the spec's designated catch-all). These by-elimination
+assignments are flagged in DECISIONS.md and the Part A report — they are the
+only places we infer rather than read a group straight off NHS's label.
+
+'Missing or Invalid' (a data-quality bucket, FDS28 only) is DELIBERATELY EXCLUDED
+from the ten groups (v7): it is not a clinical category, so it maps to the
+sentinel EXCLUDED_GROUP rather than to Other. It stays in GROUP_OF so group_for
+remains exhaustive (a genuinely-new label still fails loudly), but the rollup
+iterates TEN_GROUPS and so drops it. INTENDED CONSEQUENCE: the ten groups no
+longer sum EXACTLY to the all-cancers headline — the shortfall is precisely the
+Missing/Invalid count (FDS28 only; ~0.28% of FDS activity, zero in CMB31/CMB62).
+The reconciliation test is relaxed for that one-directional gap but still guards
+the corrupting direction (groups must never EXCEED the total).
 
 DOUBLE-COUNTING SAFETY
 ----------------------
@@ -62,6 +70,74 @@ TEN_GROUPS = (
     "Upper GI",
     "Urology",
 )
+
+# Sentinel "group" for labels that are intentionally NOT part of the ten
+# tumour-site groups (currently only 'Missing or Invalid', a data-quality
+# bucket). Distinct from any real group so the rollup — which iterates
+# TEN_GROUPS — silently drops it; group_for still returns a value, so the
+# exhaustiveness guard keeps catching genuinely-new NHS labels.
+EXCLUDED_GROUP = "(excluded — data quality)"
+
+# The COMPOSITE groups: built from more than one distinct clinical sub-site, so
+# a short "what's in here" description helps. The six 1:1 groups (Breast,
+# Gynaecology, Head & Neck, Lower GI, Lung, Skin) are self-explanatory and have
+# no entry (see composition_text).
+COMPOSITE_GROUPS = ("Haematology", "Upper GI", "Urology", "Other")
+
+# Human-readable make-up of each composite group. Each item pairs a DISPLAY
+# sub-site with the raw GROUP_OF label(s) that evidence it, so the description is
+# SOURCED FROM the mapping rather than free-floating copy: the build calls
+# assert_composition_consistent(), which fails loudly if any cited label stops
+# mapping to that group (drift guard). 'Other' intentionally lists only the four
+# extra clinical sites it absorbs — not its own 'Other (a)' catch-all label, and
+# (post-v7) not 'Missing or Invalid', which is now excluded from the group.
+_COMPOSITION = {
+    "Haematology": [
+        ("lymphoma", ("Haematological - Lymphoma",)),
+        ("acute leukaemia", ("Acute leukaemia",)),
+        ("other haematological malignancies", ("Haematological - Other (a)",)),
+    ],
+    "Upper GI": [
+        ("oesophagus & stomach", ("Upper Gastrointestinal - Oesophagus & Stomach",)),
+        ("hepatobiliary", ("Upper Gastrointestinal - Hepatobiliary",)),
+    ],
+    "Urology": [
+        ("prostate", ("Urological - Prostate",)),
+        ("testicular", ("Testicular",)),
+        ("other urological", ("Urological - Other (a)",)),
+    ],
+    "Other": [
+        ("brain/CNS", ("Suspected brain/central nervous system tumours",)),
+        ("sarcoma", ("Suspected sarcoma",)),
+        ("children's cancer", ("Suspected children's cancer",)),
+        ("non-specific symptoms", ("Suspected cancer - non-specific symptoms",)),
+    ],
+}
+
+
+def composition_text(group):
+    """Human-readable constituent list for a COMPOSITE group, e.g. Haematology ->
+    'lymphoma, acute leukaemia, other haematological malignancies'. Returns "" for
+    the six self-explanatory 1:1 groups (no description shown)."""
+    items = _COMPOSITION.get(group)
+    return ", ".join(name for name, _labels in items) if items else ""
+
+
+def assert_composition_consistent():
+    """Drift guard (run at build time): every raw label cited in a composite
+    group's description must still map to that group in GROUP_OF, and every
+    composite group must be one of the ten. A mapping change that orphans a
+    description then fails the build rather than shipping a stale composition."""
+    for grp, items in _COMPOSITION.items():
+        if grp not in TEN_GROUPS:
+            raise ValueError(f"composition group {grp!r} is not one of the ten groups")
+        for name, labels in items:
+            for lab in labels:
+                if GROUP_OF.get(lab) != grp:
+                    raise ValueError(
+                        f"composition for {grp!r} cites {lab!r}, which maps to "
+                        f"{GROUP_OF.get(lab)!r} in GROUP_OF — the description has drifted "
+                        f"from the mapping; update cancer_groups._COMPOSITION.")
 
 # Parent -> set of child labels, for the double-counting guard. Only CMB labels
 # form hierarchies; both parent and children map to the same group below.
@@ -142,7 +218,10 @@ GROUP_OF = {
     "Suspected sarcoma": "Other",
     "Suspected children's cancer": "Other",
     "Suspected cancer - non-specific symptoms": "Other",
-    "Missing or Invalid": "Other",
+    # Data-quality residue (FDS28 only) — intentionally NOT one of the ten groups
+    # (v7). Mapped to the sentinel so group_for stays exhaustive but the rollup
+    # drops it; see module docstring + EXCLUDED_GROUP.
+    "Missing or Invalid": EXCLUDED_GROUP,
 }
 
 

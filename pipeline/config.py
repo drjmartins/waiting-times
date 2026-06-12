@@ -57,6 +57,20 @@ RELIABILITY_THRESHOLD = 10
 # numerators and denominators (never averaging monthly percentages).
 COMPARISON_WINDOW_MONTHS = 3
 
+# --- Picker hiding (selection-only; see build_site_data._negligible_orgs) ------
+# Negligible-activity orgs are hidden from the picker/default lists but kept in
+# the store, the downloads, and reachable by direct ?org= link (and still render
+# with the usual low-reliability flags). Computed DYNAMICALLY each build, so an
+# org crossing the bar appears automatically and a dormant one drops. Rules,
+# confirmed against the activity distribution (DECISIONS.md 2026-06-12):
+#   * a PROVIDER is hidden if it NEVER clears RELIABILITY_THRESHOLD (n>=10) in any
+#     standard/month — it produces only empty/greyed charts (clean gap: the hidden
+#     ones peak at 9 patients/month, the next kept org at 12.5);
+#   * a COMMISSIONER is hidden if its recent-3-finalised-month pooled all-cancers
+#     denominator (summed across standards) is below this bar — isolating the
+#     specialised/national commissioning hubs (<=869) from real ICBs (>=11,737).
+PICKER_MIN_COMMISSIONER_DENOM = 2000
+
 # Funnel control limits, anchored to the national distribution. z for two-sided
 # 95% (~2 SD) and 99.8% (~3 SD), per standard funnel methodology.
 FUNNEL_LIMITS = {"p95": 1.96, "p998": 3.09}

@@ -30,7 +30,9 @@ def test_ten_groups_are_canonical():
     assert cg.TEN_GROUPS == (
         "Breast", "Gynaecology", "Haematology", "Head & Neck", "Lower GI",
         "Lung", "Other", "Skin", "Upper GI", "Urology")
-    assert set(cg.GROUP_OF.values()) == set(cg.TEN_GROUPS)  # every group is reachable
+    # Every real group is reachable; the only non-group value is the sentinel for
+    # intentionally-excluded labels (Missing/Invalid, v7).
+    assert set(cg.GROUP_OF.values()) == set(cg.TEN_GROUPS) | {cg.EXCLUDED_GROUP}
 
 
 def test_group_for_known_and_hierarchy():
@@ -43,7 +45,10 @@ def test_group_for_known_and_hierarchy():
     # FDS28 sites with no dashboard group fall to the catch-all
     assert cg.group_for("Suspected brain/central nervous system tumours") == "Other"
     assert cg.group_for("Suspected sarcoma") == "Other"
-    assert cg.group_for("Missing or Invalid") == "Other"
+    # Missing/Invalid is intentionally EXCLUDED from the ten groups (v7) — mapped
+    # to the sentinel, not Other, so the rollup drops it.
+    assert cg.group_for("Missing or Invalid") == cg.EXCLUDED_GROUP
+    assert cg.EXCLUDED_GROUP not in cg.TEN_GROUPS
     assert cg.group_for("  Breast  ") == "Breast"                    # whitespace-tolerant
 
 
@@ -89,6 +94,32 @@ def test_group_omitted_when_no_constituents():
     rows = pd.DataFrame([_crow("2025-07", "Lung", 5, 8)])
     groups = b._breakdown_payload(rows)["standards"]["CMB62"]["cancer_group"]
     assert set(groups) == {"Lung"}            # only groups with data appear
+
+
+def test_missing_invalid_excluded_from_rollup():
+    # Missing/Invalid must NOT roll into Other (or any group): the ten groups
+    # then fall short of all-cancers by exactly its count (the intended v7 gap).
+    rows = pd.DataFrame([
+        _crow("2025-07", "Suspected breast cancer", 6, 8, std="FDS28"),
+        _crow("2025-07", "Missing or Invalid", 1, 100, std="FDS28"),
+    ])
+    groups = b._breakdown_payload(rows)["standards"]["FDS28"]["cancer_group"]
+    assert set(groups) == {"Breast"}                       # no 'Other', no sentinel
+    assert "Other" not in groups
+    assert groups["Breast"]["total"] == [8]                # the 100 is dropped, not absorbed
+
+
+def test_composition_text_and_drift_guard():
+    cg.assert_composition_consistent()                     # the real mapping is consistent
+    assert cg.composition_text("Haematology") == \
+        "lymphoma, acute leukaemia, other haematological malignancies"
+    # Other lists the four absorbed sites — NOT Missing/Invalid (now excluded).
+    assert cg.composition_text("Other") == \
+        "brain/CNS, sarcoma, children's cancer, non-specific symptoms"
+    assert "Missing" not in cg.composition_text("Other")
+    # The six 1:1 groups are self-explanatory: no description.
+    assert cg.composition_text("Breast") == ""
+    assert cg.composition_text("Lung") == ""
 
 
 def _comb(month, value, within, total, std="CMB62"):
@@ -193,22 +224,38 @@ def test_real_store_every_label_maps():
 
 @_store_only
 def test_real_store_reconciles_across_all_three_standards():
+    # v7: Missing/Invalid is EXCLUDED from the ten groups, so the reconciliation
+    # is now one-directional — the ten groups must never EXCEED all-cancers (the
+    # corrupting double-count direction, still guarded exactly), but may fall
+    # SHORT by exactly the Missing/Invalid count (the intended gap). CMB31/CMB62
+    # carry no Missing/Invalid, so they still reconcile exactly.
     df = pd.read_parquet(STORE)
     can = df[df["breakdown_type"] == "cancer"].copy()
     can["group"] = can["breakdown_value"].map(cg.group_for)
-    g = can.groupby(["month", "org_code", "standard"], as_index=False).agg(
+    rolled = can[can["group"].isin(cg.TEN_GROUPS)]           # what the rollup keeps
+    g = rolled.groupby(["month", "org_code", "standard"], as_index=False).agg(
         g_total=("total", "sum"), g_within=("within_target", "sum"))
     a = (df[df["breakdown_type"] == "all"]
          .groupby(["month", "org_code", "standard"], as_index=False)
          .agg(a_total=("total", "sum"), a_within=("within_target", "sum")))
+    # the excluded (Missing/Invalid) denominator per cell — the expected shortfall
+    excl = (can[can["group"] == cg.EXCLUDED_GROUP]
+            .groupby(["month", "org_code", "standard"], as_index=False)
+            .agg(x_total=("total", "sum"), x_within=("within_target", "sum")))
     m = g.merge(a, on=["month", "org_code", "standard"], how="outer", indicator=True)
-    # every cell with a headline has cancer rows and vice versa
     assert (m["_merge"] == "both").all(), m["_merge"].value_counts().to_dict()
-    # denominators (and numerators) reconcile within NHS rounding slack (<1 patient)
+    m = m.merge(excl, on=["month", "org_code", "standard"], how="left").fillna(
+        {"x_total": 0.0, "x_within": 0.0})
     for std in ("FDS28", "CMB31", "CMB62"):
         s = m[m["standard"] == std]
-        assert (s["g_total"] - s["a_total"]).abs().max() < 0.6, std
-        assert (s["g_within"] - s["a_within"]).abs().max() < 0.6, std
+        # NEVER exceed the total (the corrupting direction) — guard stays exact.
+        assert (s["g_total"] - s["a_total"]).max() < 0.6, (std, "groups exceed all-cancers")
+        assert (s["g_within"] - s["a_within"]).max() < 0.6, std
+        # groups + excluded == all-cancers (the gap is exactly Missing/Invalid).
+        assert (s["g_total"] + s["x_total"] - s["a_total"]).abs().max() < 0.6, std
+        assert (s["g_within"] + s["x_within"] - s["a_within"]).abs().max() < 0.6, std
+    # CMB31/CMB62 carry no Missing/Invalid, so their gap is zero (exact reconciliation).
+    assert m[m["standard"].isin(("CMB31", "CMB62"))]["x_total"].sum() == 0
 
 
 @_store_only
@@ -218,4 +265,7 @@ def test_real_store_all_ten_groups_present_in_each_standard():
     can["group"] = can["breakdown_value"].map(cg.group_for)
     for std in ("FDS28", "CMB31", "CMB62"):
         present = set(can.loc[can["standard"] == std, "group"])
-        assert present == set(cg.TEN_GROUPS), (std, set(cg.TEN_GROUPS) - present)
+        # All ten groups present; FDS28 also carries the excluded sentinel
+        # (Missing/Invalid), which the rollup drops.
+        assert present - {cg.EXCLUDED_GROUP} == set(cg.TEN_GROUPS), \
+            (std, set(cg.TEN_GROUPS) - present)
