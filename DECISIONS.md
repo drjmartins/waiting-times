@@ -6,6 +6,27 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-12 — v7 FULL SET APPROVED & DEPLOYED (Code)
+User reviewed + approved Parts 1 & 2 renders (all eight items right), then confirmed
+the Part 3 hiding rules. Applied the hiding (below), removed the now-redundant third
+footer line (Oct-2023 note duplicated the banner moved below the chart), re-rendered
+(screenshots/v7_i provider picker, v7_j commissioner picker, v7_k CSH Surrey direct
+link rendering with low-reliability flags), committed (7781201) + pushed, ran
+update-data.yml (run 27406241866) — GREEN (tests + fetch/rebuild + deploy). Verified
+LIVE: pages 200; title/subtitle updated; meta.group_composition present; 190
+selectable, hidden {providers:53, commissioners:8}; CSH Surrey (NTV) hidden from the
+picker but present in index.json (hidden=true) and reachable by ?org=NTV. The 53/8
+counts held identically on CI's freshly-fetched data — the dynamic rule is stable.
+ORG HIDING (Part 3) — applied, computed DYNAMICALLY each build (not a frozen list),
+SELECTION-ONLY (files still written, org in store/downloads + reachable by ?org=):
+ - providers hidden if they NEVER clear n>=10 in any standard/month (53; clean gap —
+   hidden peak at 9/mo, next kept org 12.5); rule reuses RELIABILITY_THRESHOLD.
+ - commissioners hidden if recent-3-finalised-month pooled all-cancers denom (summed
+   across standards) < config.PICKER_MIN_COMMISSIONER_DENOM=2000 (the 8 commissioning
+   hubs at <=869; smallest real ICB 11,737). index.json carries hidden=true; front
+   end filters it from picker/default lists but resolves a direct ?org= against the
+   full index.
+
 ## 2026-06-12 — v7 Parts 1 & 2 BUILT (labelling/copy + data items); Part 3 INVESTIGATED, not cut (Code, from v7-labelling-and-org-hiding-spec.md)
 Built, tests green (32, +2), re-rendered, NOT deployed (paused for review as usual).
 

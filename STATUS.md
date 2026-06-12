@@ -81,18 +81,19 @@ bare-modality breakdown options dropped (the ten-groups + route model is enough 
 see deferred item below); FDS28 keeps its "no breakdowns published" line rather than
 gaining a stage dropdown.
 
-### v7 — labelling/copy + data items BUILT; org-hiding INVESTIGATED (2026-06-12) — NOT DEPLOYED ⏸
-Parts 1 & 2 built (32 tests pass), re-rendered, paused for review. Part 1: new
-title/subtitle, grouped provider/commissioner pickers (Trust/ICB first; data
-classifies cleanly 173/28 + 42/8), byline prefixes dropped, group helper text
-removed, Oct-2023 banner moved below the chart. Part 2: Missing/Invalid excluded
-from "Other" (sentinel EXCLUDED_GROUP; gap is FDS28-only ~0.28%, CMB31/CMB62 still
-exact; reconciliation test relaxed one-directionally); composite-group composition
-descriptions sourced from cancer_groups -> meta.json; Oct-2023 dashed marker on
-CMB31/CMB62 charts only. Part 3 (org hiding) REPORTED ONLY — see DECISIONS.md
-2026-06-12: providers cut cleanly at "never n>=10" (53 hidden, natural gap 9 vs
-12.5); commissioners need a volume threshold isolating the 8 hubs (max<~1000).
-Awaiting the user's rule choice; a follow-up applies it (selection-only).
+### v7 — labelling/copy + data items + org-hiding — DEPLOYED ✅ (2026-06-12, run 27406241866)
+Full set live + verified. Part 1: new title/subtitle, grouped provider/commissioner
+pickers (Trust/ICB first; data classifies cleanly 173/28 + 42/8), byline prefixes
+dropped, group helper text removed, Oct-2023 banner moved below the chart, redundant
+third footer line removed. Part 2: Missing/Invalid excluded from "Other" (sentinel
+EXCLUDED_GROUP; gap is FDS28-only ~0.28%, CMB31/CMB62 still exact; reconciliation
+test one-directional); composite-group composition descriptions sourced from
+cancer_groups -> meta.json (drift-guarded); Oct-2023 dashed "standards changed"
+marker on CMB31/CMB62 charts only. Part 3: negligible-activity orgs hidden from the
+picker, computed DYNAMICALLY each build, SELECTION-ONLY (files written, org in
+store/downloads + reachable by ?org=) — providers that never clear n>=10 in any
+standard/month (53), commissioners with recent-3-month pooled denom < 2000 (8 hubs).
+Live: 190 selectable, CSH Surrey hidden but ?org=NTV still renders. 32 tests pass.
 
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The
