@@ -8,7 +8,9 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ## 2026-06-12 — v7.1 APPLIED & DEPLOYED (items 1–4) (Code)
 User confirmed the LAST-12-MONTH window. Applied all four, deployed together (run
-TBD-below), verified live. (1) Oct-2023 banner now CMB31/CMB62-only, hidden on FDS28.
+27423198402, green), verified LIVE (185 selectable; hidden {providers:58,
+commissioners:8}; footer note present; banner trailer gone; AQK hidden but NQT /
+Hamptons / Maidstone visible). (1) Oct-2023 banner now CMB31/CMB62-only, hidden on FDS28.
 (2) PROVIDER hiding rule switched to "no standard clears n>=10 in a single month
 within the last config.PICKER_PROVIDER_WINDOW_MONTHS (=12)" — selection-only +
 dynamic, commissioner rule unchanged. Now hides 58 providers + 8 hubs (185
