@@ -41,20 +41,26 @@ def _negligible_orgs(df):
     an org that crosses the bar (or a brand-new org) appears automatically and a
     dormant one drops. Rules (confirmed against the activity distribution, see
     DECISIONS.md 2026-06-12; the data separates cleanly):
-      * PROVIDER hidden if it NEVER clears the reliability threshold (n>=10) in any
-        standard/month — only ever empty/greyed charts;
+      * PROVIDER hidden if NO standard clears the reliability threshold (n>=10) in a
+        single month within the last config.PICKER_PROVIDER_WINDOW_MONTHS — i.e.
+        negligible RECENT activity (incl. dormant / defunct-merged codes). The
+        full-year window avoids the reporting-lag false positives a shorter window
+        would wrongly hide;
       * COMMISSIONER hidden if its recent-3-finalised-month pooled all-cancers
         denominator (summed across standards) is below
         config.PICKER_MIN_COMMISSIONER_DENOM — isolates the commissioning hubs.
     Placeholders are already excluded elsewhere; skip them here too."""
     allrows = df[df["breakdown_type"] == "all"]
     recent = set(_recent_final_months(df))
+    all_months = sorted(df["month"].unique())
+    provider_window = set(all_months[-config.PICKER_PROVIDER_WINDOW_MONTHS:])
     hidden = set()
     for (code, name, level), g in allrows.groupby(["org_code", "org_name", "org_level"]):
         if _is_placeholder(code, name):
             continue
         if level == "provider":
-            if g["total"].max() < config.RELIABILITY_THRESHOLD:
+            recent_g = g.loc[g["month"].isin(provider_window), "total"]
+            if recent_g.empty or recent_g.max() < config.RELIABILITY_THRESHOLD:
                 hidden.add(code)
         elif level == "icb":
             if g.loc[g["month"].isin(recent), "total"].sum() < config.PICKER_MIN_COMMISSIONER_DENOM:

@@ -91,9 +91,14 @@ test one-directional); composite-group composition descriptions sourced from
 cancer_groups -> meta.json (drift-guarded); Oct-2023 dashed "standards changed"
 marker on CMB31/CMB62 charts only. Part 3: negligible-activity orgs hidden from the
 picker, computed DYNAMICALLY each build, SELECTION-ONLY (files written, org in
-store/downloads + reachable by ?org=) — providers that never clear n>=10 in any
-standard/month (53), commissioners with recent-3-month pooled denom < 2000 (8 hubs).
-Live: 190 selectable, CSH Surrey hidden but ?org=NTV still renders. 32 tests pass.
+store/downloads + reachable by ?org=) — commissioners with recent-3-month pooled
+denom < 2000 (8 hubs). **v7.1 (same day):** provider rule TIGHTENED to a recent
+window — hide if no standard clears n>=10 in a single month over the LAST 12 MONTHS
+(config.PICKER_PROVIDER_WINDOW_MONTHS), catching dormant/defunct-merged codes that a
+historical-only rule missed (now 58 providers hidden, 185 selectable); banner made
+CMB31/CMB62-only (hidden on FDS28); banner's "defaults to 2023-10 onward" trailer
+removed; footer gained a transparency note about the hiding. Live: CSH Surrey + the
+dormant codes hidden, all reachable by ?org=. 32 tests pass.
 
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The

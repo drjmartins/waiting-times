@@ -6,6 +6,57 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-12 — v7.1 APPLIED & DEPLOYED (items 1–4) (Code)
+User confirmed the LAST-12-MONTH window. Applied all four, deployed together (run
+TBD-below), verified live. (1) Oct-2023 banner now CMB31/CMB62-only, hidden on FDS28.
+(2) PROVIDER hiding rule switched to "no standard clears n>=10 in a single month
+within the last config.PICKER_PROVIDER_WINDOW_MONTHS (=12)" — selection-only +
+dynamic, commissioner rule unchanged. Now hides 58 providers + 8 hubs (185
+selectable): correctly adds the dormant/defunct codes (Vernova AQK, HCRG Care
+Services NDA, and the merged Somerset RA4 / North Middlesex RAP / Mersey & West Lancs
+RVY) WITHOUT the last-3 false positives (NQT HCRG Care Ltd n=150 and Hamptons S3H9L
+n=468 stay visible — active within the year, just awaiting the latest provisional
+months). (3) Footer transparency note added explaining the hiding (12-month provider
+rule + low recent commissioner volume; data still in dataset/downloads; hidden orgs
+reachable by direct link). (4) Trailing "This explorer defaults to data from 2023-10
+onward." removed from the banner. 32 tests pass. Renders: v7_l/_m (banner FDS28 vs
+CMB62), v7_n (dropdown scroll-to-selected), v7_o (trimmed banner + footer note), v7_p
+(provider picker, tightened cut).
+
+## 2026-06-12 — v7.1 amendments: items 1 & 3 BUILT; item 2 (tighter hiding) INVESTIGATED (Code)
+ITEM 1 (built, front-end): the Oct-2023 comparability banner below the chart now
+shows ONLY on CMB31/CMB62 and is HIDDEN on FDS28 (no break on the 28-day standard) —
+toggled in renderBig (the single standard-change chokepoint). The in-chart marker was
+already CMB31/CMB62-only. Renders: v7_l_fds28_no_banner, v7_m_cmb62_banner.
+ITEM 3 (built, front-end): reopening the org dropdown on an already-selected org now
+scrolls that option into view + leaves it highlighted (it already carried .active),
+instead of starting at the top; focus(preventScroll) so the search box doesn't yank
+the panel back up. Render: v7_n_dropdown_scroll_selected (Maidstone RWF mid-list,
+scrolled-to + highlighted).
+ITEM 2 (INVESTIGATED ONLY — report below; rule NOT changed, awaiting the user's
+window choice). Some orgs survive v7's "never clears n>=10 in ANY standard/month"
+because they cleared it once HISTORICALLY but are negligible NOW:
+ - AQK Vernova CIC passes on a SINGLE point: FDS28 Apr-2022 n=114, never again
+   (0 in the last 3 months, max 0.5 in the last 12).
+ - NDA HCRG Care Services passes on CMB62 Jan/Nov-2023 (n=10.5/12.5); max 7 in the
+   last 12 months, 4.5 in the last 3.
+A RECENT-activity rule (hide if NO standard clears n>=10 within a trailing window),
+framed by activity LEVEL (the n>=10 denominator bar), not literal point-count:
+ - CURRENT all-time rule hides 53.  LAST-12-MONTH hides 58 (+5).  LAST-3-MONTH hides 60 (+7).
+ - LAST-12 is the SAFE tightening. Clean gap: dormant orgs sit at <=9 in the last
+   year, the next genuinely-active org (Walton Centre, a real small neuro trust) at 22.
+   The +5 it adds are all genuinely dormant — AQK, NDA, and three trusts with large
+   historical volume but ZERO in the last 12 months (Somerset RA4, North Middlesex
+   RAP, Mersey & West Lancs RVY = defunct/merged codes). A full quiet YEAR is needed,
+   so no single quiet quarter can trip it.
+ - LAST-3 is UNSAFE: it wrongly hides TWO genuinely-active providers — NQT HCRG Care
+   Ltd (n=150 within the last year) and S3H9L The Hamptons Hospital (n=468) — purely
+   because the latest 3 PROVISIONAL months haven't populated yet (max_l3=0). This is
+   the reporting-lag / quiet-quarter false-positive to avoid.
+RECOMMENDATION: switch the provider rule to "no standard clears n>=10 in the last 12
+months" (keep selection-only + dynamic; commissioner rule unchanged). Awaiting the
+user's window pick; a follow-up applies it.
+
 ## 2026-06-12 — v7 FULL SET APPROVED & DEPLOYED (Code)
 User reviewed + approved Parts 1 & 2 renders (all eight items right), then confirmed
 the Part 3 hiding rules. Applied the hiding (below), removed the now-redundant third

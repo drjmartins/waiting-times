@@ -257,7 +257,9 @@ const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+
 function footerHTML(META){
   const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
   return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
-    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.`;
+    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
+    // Transparency note for the picker hiding (see build_site_data._negligible_orgs).
+    `Some organisations are hidden from the selectors because they have too little recent cancer activity to give a reliable picture — for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume. Their data is still in the dataset and downloads, and a hidden organisation can still be viewed via its direct link.`;
   // (The Oct-2023 comparability note now lives in the amber banner below the chart
   //  + the in-chart marker, so the old third footer line would be redundant.)
 }
@@ -268,8 +270,7 @@ async function init(){
   NATIONAL = await (await fetch(DATA+"national.json")).json();
   const idx = await (await fetch(DATA+"index.json")).json();
   window._idx = idx;
-  document.getElementById("breaknote").innerHTML =
-    "&#9888; "+META.note+" This explorer defaults to data from "+META.comparability_break+" onward.";
+  document.getElementById("breaknote").innerHTML = "&#9888; "+META.note;
   // Org type buttons + searchable org dropdown
   document.querySelectorAll(".typebtn").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
   document.getElementById("orgbtn").addEventListener("click", toggleOrgPanel);
@@ -383,7 +384,14 @@ function openOrgPanel(){
   const p=document.getElementById("orgpanel"), s=document.getElementById("orgsearch");
   s.value=""; buildOrgOptions("");
   p.hidden=false; document.getElementById("orgbtn").setAttribute("aria-expanded","true");
-  setTimeout(()=>s.focus(),0);
+  // Reopen on an already-selected org: scroll it into view (it carries .active),
+  // rather than starting from the top of a long list. Focus without scrolling so
+  // the search box doesn't yank the panel back up.
+  setTimeout(()=>{
+    const act=p.querySelector(".fopt.active");
+    if(act) act.scrollIntoView({block:"nearest"});
+    s.focus({preventScroll:true});
+  },0);
 }
 function closeOrgPanel(){ const p=document.getElementById("orgpanel"); if(p)p.hidden=true;
   const b=document.getElementById("orgbtn"); if(b)b.setAttribute("aria-expanded","false"); }
@@ -757,6 +765,9 @@ function renderModOptions(q){
 /* ---- big chart ---- */
 function renderBig(){
   syncBreakdownUI();   // keep the route/modality controls + hint in lockstep with state
+  // Oct-2023 comparability banner applies to CMB31/CMB62 only — hide it on FDS28
+  // (the 28-day standard has no break), matching the in-chart marker.
+  document.getElementById("breaknote").hidden = (CURRENT_STD==="FDS28");
   const sAll=CURRENT.standards[CURRENT_STD];
   const org=activeOrgSeries();
   const sliceOn = sliceOnNow();

@@ -63,12 +63,19 @@ COMPARISON_WINDOW_MONTHS = 3
 # with the usual low-reliability flags). Computed DYNAMICALLY each build, so an
 # org crossing the bar appears automatically and a dormant one drops. Rules,
 # confirmed against the activity distribution (DECISIONS.md 2026-06-12):
-#   * a PROVIDER is hidden if it NEVER clears RELIABILITY_THRESHOLD (n>=10) in any
-#     standard/month — it produces only empty/greyed charts (clean gap: the hidden
-#     ones peak at 9 patients/month, the next kept org at 12.5);
+#   * a PROVIDER is hidden if NO standard clears RELIABILITY_THRESHOLD (n>=10) in a
+#     single month within the last PICKER_PROVIDER_WINDOW_MONTHS — i.e. negligible
+#     RECENT activity, so it only produces empty/greyed charts now. The 12-month
+#     window catches the genuinely dormant (incl. defunct/merged codes) while the
+#     full-year requirement avoids reporting-lag false positives a 3-month window
+#     would wrongly hide (an org active within the year but yet to report the latest
+#     provisional months). Clean gap: dormant orgs sit at <=9 over the last year,
+#     the next genuinely-active org at 22. Hides 58 providers.
 #   * a COMMISSIONER is hidden if its recent-3-finalised-month pooled all-cancers
-#     denominator (summed across standards) is below this bar — isolating the
-#     specialised/national commissioning hubs (<=869) from real ICBs (>=11,737).
+#     denominator (summed across standards) is below PICKER_MIN_COMMISSIONER_DENOM —
+#     isolating the specialised/national commissioning hubs (<=869) from real ICBs
+#     (>=11,737).
+PICKER_PROVIDER_WINDOW_MONTHS = 12
 PICKER_MIN_COMMISSIONER_DENOM = 2000
 
 # Funnel control limits, anchored to the national distribution. z for two-sided
