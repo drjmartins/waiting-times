@@ -17,7 +17,11 @@ data … published by NHS England.", incl. its link added in the prior bundle) �
 ends at "…very low recent total volume." Net: the NHS link moved from the visibility
 note up to the source attribution, where it reads as the canonical-source pointer. 32
 tests pass; JS node --check clean. Render: screenshots/footer_tidy (source link in line
-1, note ends cleanly). DEPLOY: <run id + live verification to follow>.
+1, note ends cleanly). DEPLOYED & VERIFIED LIVE: run 27544659015 (workflow_dispatch) —
+build + deploy both GREEN. Live: page 200; first line carries the source-attribution
+link (target=_blank rel=noopener) to the NHS CWT page; visibility note's trailing
+"published by NHS England" sentence GONE; "Data to ${latest}" present as a runtime
+template (month injected from META.months — dynamic, as verified).
 
 ## 2026-06-15 — COPY BUNDLE deployed: "Other" caveat + visibility-note reword (two copy changes, no logic) (Code)
 Bundled the two held copy changes into one watched deploy (agreed: not worth a
