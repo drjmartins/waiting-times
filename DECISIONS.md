@@ -6,6 +6,149 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-15 — v14 VISUAL: legend reorder (low-rel before provisional) + sparkline colour consistency; RENDERED, AWAITING REVIEW (Code)
+Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node --check
+clean. NOT DEPLOYED — held for user sign-off, then ALL THIRTEEN changes (v10+v11+v12+v13+these
+two) ship together in ONE watched deploy. Two changes:
+1. LEGEND ORDER: low-reliability now BEFORE provisional. New line is "this organisation ·
+   low reliability (n<10) · provisional | England · target" (orgGroup array reordered to
+   [org_, low_?, prov_]). Display-order only; the draw-time PRECEDENCE is unchanged and still
+   correct (provisional wins when a point is both — a separate semantic from list order).
+2. SPARKLINES brought in line with the main chart's COLOUR logic. Previously the card
+   sparklines only de-emphasised low-n months (lighter teal); provisional-but-not-low months
+   were drawn strong solid teal — inconsistent with the main chart, where provisional is also
+   lighter teal. Added a data_status check: a segment is now uncertain (lighter teal --org-muted
+   + dashed) if EITHER endpoint is low-n OR provisional; final/normal stays strong solid teal.
+   COLOUR ONLY — no circle/square markers added (sparklines carry none; too small), per the
+   user. DELIBERATELY KEPT: the latest-point dot semantics (amber when latest is below target,
+   teal when it meets, hollow muted ring when low-n) — the below-target amber cue is the dot's
+   purpose and the latest month is almost always provisional, so muting it would gut the cards'
+   at-a-glance signal; the change is scoped to the trend LINE colour as asked.
+Renders: screenshots/v14_a_airedale_hard_case(.png) + _legend_crop (legend in the new order:
+low-reliability before provisional) + _cards_crop (all three card sparklines now show strong
+solid teal for final months and lighter-teal dashed for provisional/low-n, with the amber/teal
+latest-dot cue preserved). Stress-test chart (v13) unaffected by the reorder; full page intact.
+
+## 2026-06-15 — v13 VISUAL: one-line legend + same-colour uncertain states (shape/dash only); RENDERED, AWAITING REVIEW (Code)
+Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node --check
+clean. NOT DEPLOYED — held for user sign-off, then ALL ELEVEN changes (v10+v11+v12+these two)
+ship together in ONE watched deploy. Two changes:
+1. ONE-LINE LEGEND (replaced v12's two-row layout). Single flex row, wraps gracefully on
+   narrow widths: "this organisation · provisional · low reliability (n<10) | England ·
+   target" — middot separators within groups, a "|" marking the boundary between the org
+   series + its uncertain states and the reference lines. CSS .legend back to flex-wrap row;
+   added .lgitem/.lgsep/.lgbar; dropped the v12 .lgrow/.lg-org/.lg-states/.lg-div classes.
+2. BOTH UNCERTAIN STATES NOW THE SAME LIGHTER TEAL (--org-muted), distinguished ONLY by shape
+   + dash: provisional = open CIRCLE + DASHED (6 4); low-reliability (n<10) = open SQUARE +
+   DOTTED (1.5 3). Normal/final unchanged (strong solid --org + filled circle). Both uncertain
+   lines now share stroke-width 1.8 / opacity 0.9 and the muted colour, so weight/colour no
+   longer differ — shape + dash carry the whole distinction; both read as equally de-emphasised
+   vs final. Provisional marker outline changed --org→--org-muted (low-rel was already muted).
+   Low-reliability caption "dashed"→"dotted, lighter-teal".
+   SCOPE: main chart + its legend only; the top summary-card sparklines were not in scope and
+   are unchanged (no legend there; de-emphasised summaries) — conscious, flagged here.
+VERIFIED on re-render (the stress test, a mostly-uncertain series): screenshots/
+v13_a_airedale_hard_case(.png + _crop) — Airedale Haematology Consultant Upgrade CMB62. With
+both uncertain states the same colour, circle-vs-square + dashed-vs-dotted still tell them
+apart clearly even where points are dense (mid run of dotted squares vs right-side dashed
+circles); England solid grey + target margin label + one-line legend all intact. Full page
+confirms cards/banner/footer intact.
+
+## 2026-06-15 — v12 VISUAL: target-label in margin + legend restructure + distinct markers/precedence; RENDERED, AWAITING REVIEW (Code)
+Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node --check
+clean. NOT DEPLOYED — held for user sign-off, then ALL NINE changes (v10 + v11 + these three)
+ship together in ONE watched deploy. Three changes:
+A. TARGET LABEL moved into the RIGHT MARGIN (primary option, used — it fit). BG.P.r 16→76
+   reserves a right gutter (same principle as the v11 "standards changed" header strip); the
+   "target NN.N%" label sits there level with the target line (y=ty, right-aligned to the SVG
+   edge), so it no longer covers the org/England series. Dropped the v11 faint plate (no data
+   in the margin, so none needed). Did NOT need the below-the-line or revert fallbacks.
+B. LEGEND RESTRUCTURED into an org cluster + reference row. Row 1: "this organisation" (solid
+   teal, filled marker) as PRIMARY, with "provisional" and "low reliability (n<10)" as
+   visually-subordinate states (lg-states: smaller font, opacity .62) grouped tight to it;
+   lg-org is flex-wrap:nowrap so the cluster never breaks mid-group. Thin divider (lg-div,
+   align-self:stretch over a width:max-content legend, so it spans exactly the widest row).
+   Row 2 (reference): "England" (solid grey) + "target" (dashed amber). Label kept as "this
+   organisation" (stable width), not the real org name. legendSwatch gained a 3rd arg for a
+   SQUARE marker.
+C. DISTINCT MARKERS + PRECEDENCE. Markers are now shape-distinct (legible against solid-grey
+   England even when the whole series is one state): provisional = open CIRCLE, low-reliability
+   = open SQUARE, normal-final = filled circle. Per-point state is MUTUALLY EXCLUSIVE with
+   PROVISIONAL WINNING: a point that is both provisional AND n<10 renders as provisional
+   (circle); the square means specifically "final but n<10". The line-segment precedence was
+   flipped to match (provEdge before lowEdge) so segments and markers agree. Low-reliability
+   caption reworded (open squares; "months also provisional show as provisional instead").
+   As predicted, the Airedale recent both-states points flip from low-reliability to
+   provisional styling — correct, not a regression.
+Renders: screenshots/v12_a_airedale_hard_case(.png + _crop) — the named hard case showing ALL
+of it: grouped two-row legend w/ divider, circle (provisional) vs square (low-final) markers
+with precedence applied (recent both-states = circles), "target 85.0%" in the right margin
+clear of the series; plus v10/v11 (solid-grey England, title "— Haematology", no hint,
+"standards changed" in strip). Spot-check screenshots/v12_b_spotcheck_nottingham(_crop) — RX1
+Urology Consultant Upgrade CMB62 (mixed: 40 normal-filled, 2 squares, 6 circles, with a
+comparison line): the series crosses the target line repeatedly yet "target 85.0%" stays
+legible in the margin; no new collision. Full page v12_a confirms cards/banner/footer intact.
+
+## 2026-06-15 — v11 VISUAL: hint removal + title simplification + chart-annotation declutter; RENDERED, AWAITING REVIEW (Code)
+Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node --check
+clean. NOT DEPLOYED — held for user sign-off on change #6, then the WHOLE bundle (these three
++ the v10 three: trimmed→now-removed hint, decluttered legend, solid-grey England line) ships
+in ONE watched deploy. Three changes:
+4. GROUP hint beside the referral-route box REMOVED entirely (#slicehint). Last round it was
+   trimmed to "<group> group"; now gone — redundant with the chart title. FDS28's "Route and
+   treatment-modality breakdowns aren't published for the 28-day standard." line KEPT.
+5. Chart title (#bigttl) simplified: now `<standard label> — <cancer group>`, ALWAYS showing
+   the group incl. "All cancers" (was: group omitted for All cancers, and route/modality
+   appended). Route/modality dropped from the title — they're read from their own dropdowns.
+   Reuses groupText(); removed the now-dead sliceLabel() fn and the sliceOn local.
+6. Chart annotations moved OUT of the plotted data region (they collided with the series —
+   e.g. Airedale Haematology CMB62: "standards changed" floated at ~100% where the dotted
+   series weaves, "target 85.0%" sat on the target line where the series crosses). FIX, chosen
+   so it holds for ANY chart (data position varies), not just the empty spot here:
+   - Added a header strip above the plot: BG.P.t 16→36. The y-scale maps the highest value to
+     y=P.t, so the band y<P.t is GUARANTEED empty of data on every chart. "standards changed"
+     now sits in that strip, centred over its rule (x clamped off both edges), with the rule
+     extended up to meet it. Never overlaps the series.
+   - "target NN.N%" label given a faint panel-coloured plate (rect, var(--panel), opacity 0.82,
+     rounded) behind it, right-aligned just above the target line — legible wherever the series
+     crosses, since the full-width target line has no reliably-empty spot.
+Renders: screenshots/v11_a_airedale_hard_case(.png + _crop) — the named hard case: title
+"— Haematology", no route-box hint, "standards changed" up in the strip clear of the dotted
+series, "target 85.0%" on its plate where the series crosses it; solid-grey England + decluttered
+legend (v10) also visible. Spot-check screenshots/v11_b_spotcheck_england_cmb31(_crop) —
+England 31-day all-cancers: title "— All cancers" (group shown for all-cancers), "standards
+changed" cleanly in the strip, "target 96.0%" on its plate; no new collision. Full page
+v11_a confirms cards/banner/footer intact.
+
+## 2026-06-15 — v10 VISUAL: hint trim + legend declutter + provisional/England line fix; RENDERED, AWAITING REVIEW (Code)
+Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node --check
+clean. NOT DEPLOYED — held for user sign-off on change #3 before it ships (their request).
+Three changes:
+1. GROUP-selected hint trimmed: "<group> group · narrow by referral route, or change the
+   group above." → just "<group> group" (#slicehint, line 606). FDS28's "Route and
+   treatment-modality breakdowns aren't published for the 28-day standard." line KEPT as-is.
+2. Legend decluttered to organisation-only: "England · <group> · <route>" → "England";
+   "this organisation · <group> · <route>" → "this organisation". Dropped the ${sliceTag}
+   interpolation from both the org and England legend entries (and removed its now-unused
+   const). The group/route/modality is already named in the chart title (#bigttl), so the
+   legend was redundant and wrapped onto a second line. provisional/target/low-reliability
+   legend items unchanged.
+3. PROVISIONAL-vs-ENGLAND legibility fix. Root cause: "dashed" meant BOTH "provisional"
+   (lighter teal, on the org line) AND "the England comparison line" (grey) — so on a
+   mostly-dashed org series the two dashed lines were near-indistinguishable. FIX: made the
+   England comparison line a faint SOLID grey line (stroke var(--nat), width 1.6, opacity
+   0.85; dropped stroke-dasharray="3 3") in BOTH the chart (bigSVG natpath) and the matching
+   legend swatch. "Dashed" is now reserved for the org series' own states (provisional =
+   lighter teal dashed; low-reliability n<10 = muted teal dashed). Solid grey vs dashed teal
+   separates them by both colour AND dash even on a heavily-provisional/low-n org.
+Hard case re-rendered for confirmation: Airedale (RCF) → Haematology → Consultant Upgrade,
+CMB62 — the case the user named. (Note: this slice's monthly totals are all n<10, so its line
+is low-reliability dashed teal rather than provisional dashed; the England-collision and the
+fix are identical either way.) Renders: screenshots/v10_a_hint_trimmed (trimmed hint +
+decluttered legend on the all-routes Haematology view), v10_b_legend_and_line_AFTER (hard
+case, full page), v10_b_crop_BEFORE vs v10_b_crop_AFTER (chart crops — BEFORE: grey-dashed
+England weaving through the dashed teal org line; AFTER: solid grey England clearly separable).
+
 ## 2026-06-15 — v9 VISUAL: index gap fix + "Beta" relabels across both pages; DEPLOYED (Code)
 Front-end only (site/index.html + site/compare.html), no pipeline/data change. 32 tests
 pass; JS node --check clean on both pages. Four changes:
