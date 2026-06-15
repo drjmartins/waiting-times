@@ -6,6 +6,25 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-15 — CHART-POLISH SERIES (v10–v14) SHIPPED in one deploy; VERIFIED LIVE (Code)
+All THIRTEEN front-end changes from the five v10–v14 entries below (each previously
+"RENDERED, AWAITING REVIEW") were approved and bundled into ONE commit (ab9b8fc,
+site/index.html + DECISIONS.md only — no pipeline/data change) and shipped via a single
+watched workflow_dispatch: run 27560316331 — build (3m16s: tests → fetch no-op → rebuild →
+deploy) and deploy both GREEN. The build's data-commit step was a no-op (only meta.json
+built_at would change, which CI skips), so master stayed at ab9b8fc.
+VERIFIED LIVE: index/compare/data all 200; the served index.html carries every new marker
+(one-line legend w/ "|" boundary + lgbar, "low reliability (n<10)", P.r:76 right margin,
+header-strip "standards changed", sparkline `unc` provisional-OR-low check, dotted
+low-reliability dash "1.5 3"); the removed dead sliceLabel() is gone. Headless render of the
+live Airedale Haematology Consultant Upgrade CMB62 breakdown confirms the chart renders
+correctly in production: title "— Haematology", legend order "this organisation · low
+reliability (n<10) · provisional | England · target", open-square(dotted)/open-circle(dashed)
+markers both in the lighter teal, solid-grey England line, "standards changed" in the strip,
+"target 85.0%" in the right margin, and the three card sparklines matching the chart's colour
+logic (screenshots/v14_LIVE_airedale + _crop). The five entries below remain the per-change
+build history; this entry marks them all shipped.
+
 ## 2026-06-15 — v14 VISUAL: legend reorder (low-rel before provisional) + sparkline colour consistency; RENDERED, AWAITING REVIEW (Code)
 Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node --check
 clean. NOT DEPLOYED — held for user sign-off, then ALL THIRTEEN changes (v10+v11+v12+v13+these

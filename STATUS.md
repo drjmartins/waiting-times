@@ -2,7 +2,7 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-12 (Claude Code session)._
+_Last updated: 2026-06-15 (Claude Code session)._
 
 ## Deployed and live ✅
 
@@ -99,6 +99,29 @@ historical-only rule missed (now 58 providers hidden, 185 selectable); banner ma
 CMB31/CMB62-only (hidden on FDS28); banner's "defaults to 2023-10 onward" trailer
 removed; footer gained a transparency note about the hiding. Live: CSH Surrey + the
 dormant codes hidden, all reachable by ?org=. 32 tests pass.
+
+### Chart-polish series (v8–v14) — ALL SHIPPED ✅ (2026-06-15)
+A run of front-end-only (site/index.html, no pipeline/data change) visual passes on the
+per-org page, deployed and verified live. v8/v9 (run 27547584946 / 27548485696): label/legend
+tidy-up, "National"→"England", provider-dropdown layout fix, index gap fix, "Beta" relabels +
+compare-page header. v10–v14 bundled into ONE deploy (run 27560316331, build+deploy GREEN,
+verified live) — thirteen changes to the big breakdown chart + cards:
+- **Title/hint:** group hint removed; chart title = `standard — cancer group` always (incl.
+  All cancers); route/modality dropped from the title (read from the dropdowns).
+- **Legend:** one line, organisation-only labels —
+  "this organisation · low reliability (n<10) · provisional | England · target".
+- **England line:** faint SOLID grey (dashed reserved for the org's own uncertain states) so
+  it never collides with a provisional org line.
+- **Annotations clear of data:** "standards changed" parked in a header strip (BG.P.t); the
+  "target NN.N%" label moved into the right margin (BG.P.r).
+- **Markers + precedence:** uncertain states shape-distinct — provisional = open circle +
+  dashed, low-reliability (n<10) = open square + dotted — both in the SAME lighter teal, so
+  shape+dash carry the distinction; final = strong solid teal + filled circle. Per-point state
+  mutually exclusive, PROVISIONAL WINS (a both-states point renders provisional; square =
+  final-but-low only).
+- **Card sparklines:** brought in line with the chart's colour logic (lighter teal for
+  provisional/low-n segments, strong solid teal for final); latest-point amber/teal target-cue
+  dot deliberately kept (the at-a-glance "meeting target now?" signal).
 
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The
