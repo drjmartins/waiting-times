@@ -6,6 +6,93 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-15 — v8 VISUAL TIDY-UP: six label/legend changes + provider-dropdown layout fix; APPROVED & DEPLOYED (Code)
+Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node
+--check clean. Six changes approved as-is; the two extra hints (FDS28 "breakdowns
+aren't published" + group-selected "narrow by referral route") KEPT per the user
+(informative, not redundant). Plus a follow-up layout fix (#7). Six changes:
+1. "National" tab relabelled "England"; removed the "England · all-England aggregate"
+   byline below the org selector (national byline now empty).
+2. PROVIDER byline: dropped the bold provider name; kept the NHS region and moved it
+   INLINE beside the dropdown (orgbtnwrap + orgname → inline-block; orgname now plain
+   region text). Name still lives in the dropdown itself, so not lost.
+3. COMMISSIONER byline: bold name dropped. ICBs all carry region "England", so the
+   shared byline code renders NOTHING beside the dropdown for commissioners — exactly
+   the "name removed, nothing else" the change asked for.
+4. Chart subtitle (#bigtag): dropped the "CMB62 · target 85.0%" prefix (+ CMB31/FDS28
+   equivalents) — now just the org name. Standard is in the chart title, target is on
+   the chart's target line.
+5. CMB31/62 only: removed the all-cancers route/modality helper strings ("Narrow by
+   referral route, then treatment modality." and the route-selected follow-on "Pick a
+   treatment modality to narrow this route further."). FDS28's own explanatory line and
+   the GROUP-selected hint ("<group> group · narrow by referral route…") are KEPT (not
+   named for removal) — flagged for confirm.
+6. Legend: moved "provisional" to SECOND position (right after the org series); England
+   comparison / target / low-reliability keep their relative order.
+7. PROVIDER-DROPDOWN LAYOUT FIX (follow-up): the provider dropdown was flowing inline to
+   the RIGHT of the type buttons (typebtns is inline-flex; orgbtnwrap was inline-block),
+   making that row wide and pushing the region far right; the commissioner one only
+   dropped below because its long ICB name wrapped. Wrapped the dropdown + inline region
+   in a block .orgrow so it ALWAYS sits on its own line BELOW the buttons (mirrors the
+   commissioner layout), with the NHS region staying inline to the right of the dropdown
+   ON that lower row. National: orgrow holds the hidden dropdown + empty byline — no
+   visible gap regression.
+Renders: screenshots/v8_a_england (England tab, no aggregate line, subtitle "England",
+legend org→provisional→target), v8_b_provider_region_inline (dropdown on its own row
+below the buttons; region "North East and Yorkshire" inline to its right; subtitle = org
+name only; no helper text), v8_c_commissioner (name gone, nothing beside dropdown),
+v8_d_route_no_helper (Screening route selected — modality dropdown still appears, follow-on
+helper text gone). DEPLOYED standalone: <run id + live verification to follow>.
+
+## 2026-06-15 — INVESTIGATION (no change): why April 2026 is missing + FY-rollover detection risk (Code)
+User noticed April 2026 is on the NHS site but the dashboard still shows "Data to
+March 2026". Investigated live; nothing changed. THREE findings:
+
+ITEM 1 — why April is missing (hypothesis was MOSTLY right, one correction). discover
+finds exactly 5 Combined CSVs on the MAIN landing page (SOURCE_PAGE), latest = "2025-26
+Oct–Mar Provisional" (data through March 2026); select_files_to_process = 0 to do. So
+the dashboard correctly shows March 2026 given what's on the main page. CORRECTION to
+the premise: April 2026 IS already in a Combined CSV — "April 2026 Monthly Combined CSV
+Provisional" (…/2026/06/April-2026-Monthly-Combined-CSV-Provisional.csv) — but it lives
+on the 2026-27 monthly SUB-PAGE, not the main page. The main page carries per-FINANCIAL-
+YEAR CUMULATIVE Combined CSVs (2022-23…2025-26); the sub-pages carry PER-MONTH ones. The
+pipeline consumes only the main page's per-FY cumulative files, and no 2026-27 cumulative
+exists there yet. So April is reachable in a Combined CSV, just not via the page/granularity
+the pipeline reads.
+
+ITEM 2 — rollover detection (THE key one). NO hardcoded FY, fixed filename, or year list
+in the code: _extract_financial_year is a generic (\d{4})-(\d{2}) regex; select_files_
+to_process treats an unseen FY as "new financial year" and processes it. So when NHS adds
+the "2026-27 Apr–… Monthly Combined CSV" to the MAIN page, discover will detect + ingest
+it automatically (FY parses to "2026-27", new-FY → processed). The REAL risks are not a
+year bug but two architectural assumptions, now concretely visible:
+ (a) SINGLE-PAGE scrape — discover fetches only SOURCE_PAGE. We can SEE that NHS publishes
+     the new-FY Combined CSV on the SUB-PAGE first (April's is there now, absent from the
+     main page). The dashboard depends on the main page eventually carrying the 2026-27
+     cumulative file; if NHS stopped maintaining per-FY cumulative files there, the pipeline
+     would silently stall. TIMING: the 2025-26 main-page split (Apr–Sep / Oct–Mar half-year
+     cumulative) suggests the first 2026-27 cumulative may not appear on the main page for
+     months — so the dashboard can legitimately trail the latest per-month release for a
+     while even with a perfectly working pipeline.
+ (b) SILENT failure — a missed/late rollover is a GREEN no-op run (0 to process), not an
+     error; nothing alarms that the latest data month has gone stale. That's exactly why
+     this had to be caught by eye. There is no staleness heartbeat.
+ Minor: marker match `m in clean` is CASE-SENSITIVE ("Monthly Combined CSV"); and the
+ per-month sub-page label has no "YYYY-YY" token so _extract_financial_year returns
+ "unknown" — both only bite if a fix starts consuming sub-page/per-month files (multiple
+ "unknown" FYs would collapse in seen_by_fy). Not a problem for the expected main-page path.
+ FIX DIRECTIONS (report only, not chosen): (i) also scrape the current-FY sub-page for the
+ monthly Combined CSV (gets April now, but needs FY-parse + dedup work); (ii) add a
+ staleness alarm (warn/fail if latest data month is > N months behind today) so a silent
+ stall becomes loud; (iii) leave as-is and accept the main-page cumulative cadence. normalise
+ still fails loud on any column change, so a layout shift in a new file errors rather than ships.
+
+ITEM 3 — cron healthy. update-data.yml scheduled runs are firing daily and all GREEN
+(6/6 recent scheduled, 12–14 Jun succeeded). NOT the suspect — corroborates item 1 (the
+data simply isn't in a main-page Combined file yet). Committed manifest last_checked stays
+2026-06-09 because it only advances when a new file is actually ingested (no-op runs don't
+commit it) — expected, not a cron failure.
+
 ## 2026-06-15 — FOOTER tidy: source-line link + drop visibility note's last sentence; VERIFIED dynamic month (Code)
 Front-end only (site/index.html footerHTML). VERIFICATION (asked): "Data to <month>"
 is DYNAMIC, not hardcoded — latest=fullMonth(META.months[META.months.length-1]) (last
