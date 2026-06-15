@@ -28,6 +28,9 @@
   select,input[type=search]{font:inherit;font-size:15px;padding:8px 10px;
     border:1px solid var(--line);border-radius:5px;background:#fff;min-width:360px}
   .orgname{font-size:13px;color:var(--ink-soft);display:inline-block;margin:0 0 0 12px;vertical-align:middle}
+  /* Empty byline (England, or a region-less provider) generates no inline box, so
+     the .orgrow collapses to zero height instead of leaving a blank line. */
+  .orgname:empty{display:none}
   .orgname b{color:var(--ink)}
   /* Org type buttons (National / Providers / Commissioners) */
   .typebtns{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px}
@@ -140,7 +143,7 @@
     <h1>NHS Cancer Waiting Times Dashboard</h1>
     <div class="sub">England &middot; Performance against NHS Cancer Waiting Time Targets</div>
     <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:8px">
-      <a href="compare.html" style="color:var(--org);text-decoration:none">Compare trusts &rarr;</a>
+      <a href="compare.html" style="color:var(--org);text-decoration:none">Compare Providers (Beta) &rarr;</a>
     </div>
   </header>
 

@@ -6,6 +6,28 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-15 — v9 VISUAL: index gap fix + "Beta" relabels across both pages; DEPLOYED (Code)
+Front-end only (site/index.html + site/compare.html), no pipeline/data change. 32 tests
+pass; JS node --check clean on both pages. Four changes:
+1. INDEX gap regression FIXED. The v8 .orgrow row left a blank line on the England view
+   (no org dropdown there): the empty inline-block byline still generated a line box.
+   Added `.orgname:empty{display:none}` so an empty byline (England, or a region-less
+   provider) generates no box and .orgrow collapses to zero height — spacing back to
+   pre-v8. Providers/Commissioners unaffected (dropdown present).
+2. INDEX cross-link relabelled "Compare trusts →" → "Compare Providers (Beta) →" (matches
+   the comparison page's actual scope + the Providers tab; "(Beta)" flags WIP). Label only;
+   href unchanged.
+3. COMPARE <h1> AND browser <title> → "NHS Cancer Waiting Times Dashboard" (matched the
+   per-org page, which uses that string for both; the old title was "Trust comparison —
+   Cancer Waiting Times Explorer", stale branding — updated both for consistency).
+4. COMPARE subtitle → "England · how providers compare (beta version)" (source lower-case;
+   .sub has text-transform:uppercase so it renders "ENGLAND · HOW PROVIDERS COMPARE (BETA
+   VERSION)"). The user's quoted current text matched the actual source (caps are CSS) —
+   no discrepancy to flag.
+Renders: screenshots/v9_a_index_gap_closed (England: buttons → Cancer group, no blank row;
+"Compare Providers (Beta) →" link), v9_b_compare_header (new title + subtitle). DEPLOYED
+standalone: <run id + live verification to follow>.
+
 ## 2026-06-15 — v8 VISUAL TIDY-UP: six label/legend changes + provider-dropdown layout fix; APPROVED & DEPLOYED (Code)
 Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node
 --check clean. Six changes approved as-is; the two extra hints (FDS28 "breakdowns
