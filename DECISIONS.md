@@ -42,7 +42,10 @@ legend org→provisional→target), v8_b_provider_region_inline (dropdown on its
 below the buttons; region "North East and Yorkshire" inline to its right; subtitle = org
 name only; no helper text), v8_c_commissioner (name gone, nothing beside dropdown),
 v8_d_route_no_helper (Screening route selected — modality dropdown still appears, follow-on
-helper text gone). DEPLOYED standalone: <run id + live verification to follow>.
+helper text gone). DEPLOYED standalone & VERIFIED LIVE: run 27547584946 (workflow_
+dispatch) — build + deploy both GREEN. Live: page 200; "England" tab present
+(data-type=national → "England"); .orgrow wrapper present; removed strings gone
+("all-England aggregate", the route/modality helper, ">National<").
 
 ## 2026-06-15 — INVESTIGATION (no change): why April 2026 is missing + FY-rollover detection risk (Code)
 User noticed April 2026 is on the NHS site but the dashboard still shows "Data to
