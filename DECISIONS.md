@@ -6,6 +6,19 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-15 — FOOTER tidy: source-line link + drop visibility note's last sentence; VERIFIED dynamic month (Code)
+Front-end only (site/index.html footerHTML). VERIFICATION (asked): "Data to <month>"
+is DYNAMIC, not hardcoded — latest=fullMonth(META.months[META.months.length-1]) (last
+data month), built=isoDate(META.built_at); both advance automatically each refresh. No
+fix needed. COPY: (1) made "NHS England Cancer Waiting Times statistics" in the FIRST
+data-source line a link to the NHS CWT statistics page (target=_blank rel=noopener);
+(2) REMOVED the visibility note's final sentence ("The complete Cancer Waiting Times
+data … published by NHS England.", incl. its link added in the prior bundle) — note now
+ends at "…very low recent total volume." Net: the NHS link moved from the visibility
+note up to the source attribution, where it reads as the canonical-source pointer. 32
+tests pass; JS node --check clean. Render: screenshots/footer_tidy (source link in line
+1, note ends cleanly). DEPLOY: <run id + live verification to follow>.
+
 ## 2026-06-15 — COPY BUNDLE deployed: "Other" caveat + visibility-note reword (two copy changes, no logic) (Code)
 Bundled the two held copy changes into one watched deploy (agreed: not worth a
 standalone deploy for one-line copy). Source-only commit (code + this log); CI

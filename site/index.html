@@ -256,10 +256,10 @@ const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+
 
 function footerHTML(META){
   const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
-  return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
+  return `Data source: <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/cancer-waiting-times/" target="_blank" rel="noopener">NHS England Cancer Waiting Times statistics</a>, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
     `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
     // Transparency note for the picker hiding (see build_site_data._negligible_orgs).
-    `Some organisations are hidden from the selectors because they have too little recent cancer activity to give a reliable picture — for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume. The complete Cancer Waiting Times data for all organisations is <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/cancer-waiting-times/" target="_blank" rel="noopener">published by NHS England</a>.`;
+    `Some organisations are hidden from the selectors because they have too little recent cancer activity to give a reliable picture — for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume.`;
   // (The Oct-2023 comparability note now lives in the amber banner below the chart
   //  + the in-chart marker, so the old third footer line would be redundant.)
 }
