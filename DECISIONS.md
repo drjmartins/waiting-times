@@ -30,7 +30,15 @@ in cancer_groups.OTHER_GROUP_NOTE -> meta.json.group_caveat.Other, driving both 
 group hint and the 'Other' dropdown tooltip (see the BUILT entry below for detail).
 32 tests pass; JS node --check clean. Renders: screenshots/footer_national (new NHS
 link) + other_after_reword (Other caveat + new footer), both read correctly.
-DEPLOY: <run id + live verification to follow>.
+DEPLOYED & VERIFIED LIVE: run 27543685260 (workflow_dispatch) — build + deploy both
+GREEN. Live (drjmartins.github.io/cancer-waiting-times): page 200; footer carries the
+reworded note with the NHS link (target=_blank rel=noopener) and the NHS CWT page
+resolves 200; old "still in the dataset and downloads"/"direct link" phrases GONE;
+meta.json.group_caveat.Other present with the exact wording. As designed, CI's commit
+step skipped (only meta.json built_at + the code-driven group_caveat changed, both
+under the meta.json exclude) so git's committed meta.json stays without group_caveat —
+the deployed Pages artefact is the freshly-built site/, which has it; every future
+rebuild regenerates it from the committed code.
 
 ## 2026-06-15 — COPY: precise "Other" group caveat (no logic); BUILT, PAUSED before deploy (Code)
 Replaced the imprecise "Other" caveat (old: "These sites appear only under the
