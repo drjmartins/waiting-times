@@ -516,6 +516,10 @@ def build(df, out_dir=config.SITE_DATA_DIR):
         # only; the six 1:1 groups are self-explanatory and absent here.
         "group_composition": {g: cancer_groups.composition_text(g)
                               for g in cancer_groups.COMPOSITE_GROUPS},
+        # Precise per-standard caveat for 'Other' (sourced from cancer_groups so
+        # the front-end copy can't drift from the mapping). Drives the group hint
+        # + the 'Other' dropdown tooltip.
+        "group_caveat": {"Other": cancer_groups.OTHER_GROUP_NOTE},
         "note": ("31-day and 62-day standards changed in October 2023; figures "
                  "before that month are not directly comparable."),
     }

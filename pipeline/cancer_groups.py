@@ -123,6 +123,22 @@ def composition_text(group):
     return ", ".join(name for name, _labels in items) if items else ""
 
 
+# Precise, reconciliation-friendly caveat for the 'Other' group, kept HERE (with
+# the mapping) rather than hardcoded in the front-end template so it travels with
+# cancer_groups.py; emitted into meta.json (group_caveat) and shown as both the
+# group hint and the 'Other' dropdown tooltip. Wording is exact per NHS England's
+# "Technical note on tumour classifications in 31 and 62 day combined standards"
+# (see DECISIONS.md 2026-06-15): brain/CNS, sarcoma and children's ARE inside CMB
+# 'Other (a)' too — only non-specific symptoms is genuinely 28-day-only.
+OTHER_GROUP_NOTE = (
+    "For the 28-day standard, NHS England publishes data individually on "
+    "brain/CNS, sarcoma, children's cancer, other cancers, and non-specific "
+    "symptoms, which are aggregated here. For the 31- and 62-day standards, NHS "
+    "England publishes a single 'Other (a)' line, covering the same cancers "
+    "except non-specific symptoms."
+)
+
+
 def assert_composition_consistent():
     """Drift guard (run at build time): every raw label cited in a composite
     group's description must still map to that group in GROUP_OF, and every

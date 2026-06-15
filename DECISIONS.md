@@ -6,6 +6,95 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-15 — COPY BUNDLE deployed: "Other" caveat + visibility-note reword (two copy changes, no logic) (Code)
+Bundled the two held copy changes into one watched deploy (agreed: not worth a
+standalone deploy for one-line copy). Source-only commit (code + this log); CI
+rebuilds site/data from the committed store, so meta.json regains group_caveat on
+the deploy build — local data-artefact churn (meta.json/compare) was reverted, not
+committed.
+CHANGE 1 — visibility footer note reworded (site/index.html footerHTML). Dropped the
+"data is still in the dataset and downloads" claim (the /data/downloads/ static files
+are NOT surfaced anywhere in the UI — no button/link; reachable only by direct URL —
+so we don't promise them) and the "viewed via its direct link" sentence (not how
+people access data, not actionable). Now ends: "The complete Cancer Waiting Times
+data for all organisations is [published by NHS England]." linking (new tab,
+rel=noopener) to england.nhs.uk/.../cancer-waiting-times/ (verified 200). INTENDED:
+/data/downloads/ is no longer referenced in the UI — files still built, just not
+surfaced; users directed to the authoritative NHS source. (Investigation behind the
+reword: downloads = static per-FY CSVs + headline CSV + gzipped full file under
+/data/downloads/, no UI; hidden orgs ARE genuinely in them — all 66 in the headline
+CSV, confirmed live RVN/RWX/RRP — so the old claim was literally true but overstated
+discoverability.)
+CHANGE 2 — "Other" group caveat (the held change) ships: precise per-standard wording
+in cancer_groups.OTHER_GROUP_NOTE -> meta.json.group_caveat.Other, driving both the
+group hint and the 'Other' dropdown tooltip (see the BUILT entry below for detail).
+32 tests pass; JS node --check clean. Renders: screenshots/footer_national (new NHS
+link) + other_after_reword (Other caveat + new footer), both read correctly.
+DEPLOY: <run id + live verification to follow>.
+
+## 2026-06-15 — COPY: precise "Other" group caveat (no logic); BUILT, PAUSED before deploy (Code)
+Replaced the imprecise "Other" caveat (old: "These sites appear only under the
+28-day standard…" — wrong per the technical note: brain/CNS, sarcoma and children's
+are inside CMB "Other (a)" too; only non-specific symptoms is FDS28-only) with the
+exact reconciliation-friendly wording: "For the 28-day standard, NHS England
+publishes data individually on brain/CNS, sarcoma, children's cancer, other cancers,
+and non-specific symptoms, which are aggregated here. For the 31- and 62-day
+standards, NHS England publishes a single 'Other (a)' line, covering the same cancers
+except non-specific symptoms." SOURCED at the mapping (new cancer_groups.OTHER_GROUP_NOTE),
+emitted into meta.json.group_caveat.Other, NOT hardcoded in the template — so it
+travels with cancer_groups.py. Front end: dropped the two hardcoded JS constants
+(OTHER_NOTE/OTHER_CAVEAT), added otherCaveat() reading meta; it now drives BOTH the
+group hint AND the 'Other' dropdown tooltip (the tooltip carried the same old
+imprecision — replaced too, so the two never disagree). "Other" no longer uses the
+generic "Aggregates {comp}." template; the three other composites (Haem/Upper GI/
+Urology) are unchanged. Applies to "Other" only. Rebuilt site from the existing real
+store (185 orgs/48 months; group_caveat present). 32 tests pass; JS node --check
+clean. Renders (Other selected, all three standards): screenshots/v7_q_other_caveat_
+{fds28,cmb31,cmb62}.png — text reads correctly, wraps over two clean lines under the
+group dropdown. NOT DEPLOYED — paused for review. Recommend bundling with the next
+change rather than a standalone deploy for a one-line copy edit (your call).
+
+## 2026-06-15 — REPORT ONLY: precise definition of the "Other" group per standard (Code)
+Question for a writeup: what does "Other" measure under FDS28 / CMB31 / CMB62 —
+NHS-published or dashboard-derived, and exact membership. Verified against the raw
+Combined CSVs (distinct Cancer_Type per standard) + NHS England's authoritative
+"Technical note on tumour classifications in 31 and 62 day combined standards"
+(.xlsx, statistics/.../2023/12/, the doc the CWT stats page points to). FINDINGS:
+
+PUBLISHED vs DERIVED:
+ - CMB31 — NHS-PUBLISHED, 1:1. The source carries a single literal line "Other (a)";
+   the dashboard group = that one line, no aggregation, no extra sites.
+ - CMB62 — NHS-PUBLISHED, 1:1. Same literal "Other (a)" line, 1:1.
+ - FDS28 — DASHBOARD-DERIVED. FDS28 has NO "Other (a)" line. The group is a residual
+   bucket the rollup builds by summing FIVE separately-published "Suspected …" lines:
+   "Suspected other cancer" + "Suspected brain/central nervous system tumours" +
+   "Suspected sarcoma" + "Suspected children's cancer" + "Suspected cancer -
+   non-specific symptoms". (Historically also "Missing or Invalid"; EXCLUDED since v7.)
+
+LABEL: "Other (a)" is identical on CMB31 and CMB62; FDS28 has no such label (it uses
+the "Suspected …" breakout instead). "(a)" is a footnote marker NHS attaches to every
+residual line (also "Haematological - Other (a)", "Urological - Other (a)").
+
+WHAT "(a)" DENOTES — exact NHS text (technical note, verbatim): «Other (a) are
+defined as having ICD-10 codes that are classed as Brain/Central Nervous System,
+Sarcoma, other cancers not separately classified, or children's cancers.» So CMB's
+single "Other (a)" line ALREADY CONTAINS brain/CNS + sarcoma + children's + "not
+separately classified" — NHS folds them in at source via ICD-10; CMB does not break
+them out. (Same note: testicular → Urology, acute leukaemia → Haematology, confirming
+those are NOT in Other.)
+
+KEY UPSHOT (vindicates the by-elimination mapping, sharpens the cross-standard caveat):
+the dashboard's four FDS28-only sites are NOT an arbitrary catch-all — brain/CNS,
+sarcoma, children's, and "Suspected other cancer" (= "not separately classified") map
+EXACTLY onto NHS's published ICD-10 definition of CMB "Other (a)". So FDS28 "Other"
+reconstructs CMB "Other (a)" almost like-for-like, with ONE genuine divergence: FDS28
+additionally absorbs "Suspected cancer - non-specific symptoms" (the NSS referral
+pathway), an FDS-only concept with NO ICD-10 tumour equivalent and thus NO counterpart
+in CMB "Other (a)". That single NSS line is the real reason cross-standard "Other" is
+not a like-for-like cohort — not the brain/sarcoma/children's sites (those ARE in CMB
+Other too). "Other (a)" is stable across the Oct-2023 comparability break (maps to
+itself in both granularity vintages per the note). Nothing changed; report only.
+
 ## 2026-06-12 — v7.1 APPLIED & DEPLOYED (items 1–4) (Code)
 User confirmed the LAST-12-MONTH window. Applied all four, deployed together (run
 27423198402, green), verified LIVE (185 selectable; hidden {providers:58,

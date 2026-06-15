@@ -259,7 +259,7 @@ function footerHTML(META){
   return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
     `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
     // Transparency note for the picker hiding (see build_site_data._negligible_orgs).
-    `Some organisations are hidden from the selectors because they have too little recent cancer activity to give a reliable picture — for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume. Their data is still in the dataset and downloads, and a hidden organisation can still be viewed via its direct link.`;
+    `Some organisations are hidden from the selectors because they have too little recent cancer activity to give a reliable picture — for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume. The complete Cancer Waiting Times data for all organisations is <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/cancer-waiting-times/" target="_blank" rel="noopener">published by NHS England</a>.`;
   // (The Oct-2023 comparability note now lives in the amber banner below the chart
   //  + the in-chart marker, so the old third footer line would be redundant.)
 }
@@ -612,11 +612,12 @@ function selectMod(mod){               // mod=null => All modalities
 
 /* ---- shared cancer-group selector (drives cards + big chart together) ---- */
 function groupText(){ return isGroupSlice() ? GROUP : "All cancers"; }
-const OTHER_NOTE="&lsquo;Other&rsquo; is a catch-all and its make-up differs by standard: "+
-  "FDS28&rsquo;s Other also absorbs brain/CNS, sarcoma, children&rsquo;s and non-specific-symptom "+
-  "referrals (which have no group of their own), so it is not a like-for-like cohort across the three standards.";
-const OTHER_CAVEAT="These sites appear only under the 28-day standard, so &lsquo;Other&rsquo; is "+
-  "not a like-for-like cohort across the three standards.";
+// 'Other' caveat — precise, reconciliation-friendly text sourced from
+// cancer_groups.py via meta.json (group_caveat) so it travels with the mapping.
+// Used for BOTH the group hint and the 'Other' dropdown option tooltip.
+function otherCaveat(){
+  return (META && META.group_caveat && META.group_caveat.Other) || "";
+}
 // Composition description for the COMPOSITE groups only, sourced from meta.json
 // (built from cancer_groups.py so it can't drift from the actual mapping). The
 // six 1:1 groups and All cancers show nothing.
@@ -629,7 +630,7 @@ function updateGroupLabel(){
   const h=document.getElementById("grouphint"); if(!h) return;
   const comp = isGroupSlice() ? compositionFor(GROUP) : "";
   if(isGroupSlice() && GROUP==="Other")
-    h.innerHTML = "&#9888; Aggregates "+comp+". "+OTHER_CAVEAT;   // composite + cross-standard caveat
+    h.innerHTML = "&#9888; "+otherCaveat();                        // precise per-standard caveat (sourced from cancer_groups)
   else if(comp)
     h.innerHTML = "Aggregates "+comp+".";                         // composite group make-up
   else
@@ -667,7 +668,7 @@ function renderGroupOptions(q){
   const gs=CANCER_GROUPS.filter(match);
   if(gs.length){ host.appendChild(hdr("Cancer group",false));
     gs.forEach(g=>{ const o=opt(g,g, isGroupSlice()&&GROUP===g);
-      if(g==="Other") o.title=OTHER_NOTE.replace(/&[a-z]+;/g, m=>({"&lsquo;":"‘","&rsquo;":"’"}[m]||""));
+      if(g==="Other") o.title=otherCaveat();
       host.appendChild(o); }); }
   if(!host.children.length) host.innerHTML='<div class="fgroup first">No matches</div>';
 }
