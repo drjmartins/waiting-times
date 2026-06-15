@@ -26,7 +26,11 @@ pass; JS node --check clean on both pages. Four changes:
    no discrepancy to flag.
 Renders: screenshots/v9_a_index_gap_closed (England: buttons → Cancer group, no blank row;
 "Compare Providers (Beta) →" link), v9_b_compare_header (new title + subtitle). DEPLOYED
-standalone: <run id + live verification to follow>.
+standalone & VERIFIED LIVE: run 27548485696 (workflow_dispatch) — build + deploy both
+GREEN. Live: both pages 200; index has "Compare Providers (Beta) →" + the
+.orgname:empty rule (old "Compare trusts" gone); compare h1 + <title> = "NHS Cancer
+Waiting Times Dashboard" and subtitle "how providers compare (beta version)" (old
+"Trust comparison" / "how trusts compare" gone).
 
 ## 2026-06-15 — v8 VISUAL TIDY-UP: six label/legend changes + provider-dropdown layout fix; APPROVED & DEPLOYED (Code)
 Front-end only (site/index.html), no pipeline/data change. 32 tests pass; JS node
