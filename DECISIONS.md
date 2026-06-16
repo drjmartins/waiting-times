@@ -6,6 +6,17 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-16 — v16 SHIPPED; VERIFIED LIVE (Code)
+"Show England" toggle approved and shipped: commit 1ba5298 (site/index.html + DECISIONS.md — no
+pipeline/data change) via watched workflow_dispatch run 27620549350 — build (3m0s: tests → fetch
+→ rebuild → upload) and deploy (16s) both GREEN; data-commit a no-op so master stayed at 1ba5298.
+VERIFIED LIVE: index/compare/data all 200; served index.html carries the toggle (SHOW_ENGLAND,
+id="engchk", setShowEngland, syncEnglandUI, ?england=off hook). Headless render of the live site
+confirms production behaviour: provider England ON (natPath=1, legend+export have England, toggle
+checked) → OFF (natPath=0, England gone from legend AND export, toggle unchecked); England tab
+(no separate comparison line, toggle hidden, org's own "England" line only). The entry below is
+the build history; this marks it shipped.
+
 ## 2026-06-16 — v16: SHOW/HIDE England comparison line; RENDERED, AWAITING DEPLOY GO (Code)
 Front-end only (site/index.html), no pipeline/data change. JS node --check clean. NOT DEPLOYED —
 paused for review. A "Show England" checkbox in the chart filter row (alongside referral route /

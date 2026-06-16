@@ -2,7 +2,7 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-16 (Claude Code session)._
+_Last updated: 2026-06-16 (Claude Code session; v16 England toggle live)._
 
 ## Deployed and live ✅
 
@@ -139,6 +139,15 @@ behaviour). Three front-end-only additions to the per-org big chart (site/index.
 - **Download** — PNG + SVG of a self-contained export (title + organisation + legend + the
   on-screen chart, CSS vars resolved, fonts inlined). Captures the on-screen slice AND window;
   filename + subtitle title-cased (e.g. Airedale-NHS-Foundation-Trust-CMB62-Haematology.png).
+
+### v16 — per-org chart: show/hide England comparison line — DEPLOYED ✅ (2026-06-16, run 27620549350)
+Live + verified (build+deploy green; headless live render confirms ON/OFF + England-tab behaviour).
+A "Show England" checkbox in the chart filter row (default ON), providers + commissioners only.
+OFF hides the grey England series, its legend entry and its pull on the y-scale (org series,
+target, Oct-2023 marker, axis all stay); hidden on the England tab (the org's own line IS England
+there). One switch — it gates ACTIVE_NAT in renderBig — so it carries into the expand modal and
+the PNG/SVG export, and composes with the time-range window. Persists across switches; deep-link
+hook `?england=off`.
 
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The
