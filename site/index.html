@@ -174,6 +174,11 @@
   .rangebtn:last-child{border-right:0}
   .rangebtn:hover{background:var(--grid)}
   .rangebtn.active{background:var(--org);color:#fff}
+
+  /* "Show England" toggle — overrides the global uppercase/block label defaults. */
+  .engtoggle{display:inline-flex;align-items:center;gap:6px;margin:0;cursor:pointer;
+    font:inherit;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink)}
+  .engtoggle input{margin:0;cursor:pointer;accent-color:var(--org)}
 </style>
 </head>
 <body>
@@ -257,6 +262,9 @@
           <div id="modpanel" class="filterpanel" role="listbox" hidden></div>
         </div>
       </span>
+      <span class="fgrp" id="engwrap">
+        <label class="engtoggle"><input type="checkbox" id="engchk" checked> Show England</label>
+      </span>
       <span id="slicehint" class="slicehint"></span>
       <span class="rangewrap" id="rangewrap">
         <span class="flabel">Time range</span>
@@ -314,6 +322,11 @@ let GROUP=null, ROUTE=null, MOD=null;
 // own recent-trend sparklines are unaffected.
 const RANGE_MONTHS={"3y":36,"12m":12,"all":Infinity};
 let RANGE="3y";
+// Show/hide the grey England comparison overlay (providers + commissioners only).
+// Default ON. On the England tab the org's own line IS England, so the toggle is
+// hidden there. Persists across org/standard switches and carries into the expand
+// modal + image export (both read the on-screen chart).
+let SHOW_ENGLAND=true;
 // NHS England's ten tumour-site groups (matches pipeline/cancer_groups.TEN_GROUPS,
 // the order NHS England's dashboard lists them).
 const CANCER_GROUPS=["Breast","Gynaecology","Haematology","Head & Neck","Lower GI",
@@ -368,6 +381,7 @@ async function init(){
   document.getElementById("dlpng").addEventListener("click", ()=>{ closeDlPanel(); downloadChart("png"); });
   document.getElementById("dlsvg").addEventListener("click", ()=>{ closeDlPanel(); downloadChart("svg"); });
   document.querySelectorAll(".rangebtn").forEach(b=>b.addEventListener("click", ()=>setRange(b.dataset.range)));
+  document.getElementById("engchk").addEventListener("change", e=>setShowEngland(e.target.checked));
 
   // Deep-link / render hooks: ?org=CODE, ?std=CMB31, ?slice=type:value, ?panel=open.
   const qs = new URLSearchParams(location.search);
@@ -375,6 +389,7 @@ async function init(){
   if(META.standards[qStd]) CURRENT_STD = qStd;
   const qRange = qs.get("range");                 // render/deep-link hook: ?range=3y|12m|all
   if(qRange && (qRange in RANGE_MONTHS)) RANGE = qRange;
+  if(qs.get("england")==="off") SHOW_ENGLAND=false;   // deep-link hook: ?england=off
   const qOrg = qs.get("org");
   // Shared cancer group can be set before the org loads so it persists through it.
   const qGroup = qs.get("group");
@@ -690,6 +705,14 @@ function clipSeries(s, minMonth){
 }
 function setRange(r){ if(RANGE===r || !(r in RANGE_MONTHS)) return; RANGE=r; renderBig(); }
 function syncRangeUI(){ document.querySelectorAll(".rangebtn").forEach(b=>b.classList.toggle("active", b.dataset.range===RANGE)); }
+// --- England comparison-line toggle ---
+function setShowEngland(on){ if(SHOW_ENGLAND===on) return; SHOW_ENGLAND=on; renderBig(); }
+function syncEnglandUI(){
+  const wrap=document.getElementById("engwrap"), chk=document.getElementById("engchk");
+  if(!wrap||!chk) return;
+  wrap.hidden = CURRENT.isNational;   // no separate comparison line on the England tab
+  chk.checked = SHOW_ENGLAND;
+}
 // National comparison must MATCH the active slice (like-for-like); null => hide it.
 function activeNatSeries(){
   if(!sliceOnNow()) return NATIONAL.standards[CURRENT_STD]||null;
@@ -881,6 +904,7 @@ function renderModOptions(q){
 function renderBig(){
   syncBreakdownUI();   // keep the route/modality controls + hint in lockstep with state
   syncRangeUI();       // keep the time-range presets in lockstep with RANGE
+  syncEnglandUI();     // keep the England toggle in lockstep (hidden on the England tab)
   // Oct-2023 comparability banner applies to CMB31/CMB62 only — hide it on FDS28
   // (the 28-day standard has no break), matching the in-chart marker.
   document.getElementById("breaknote").hidden = (CURRENT_STD==="FDS28");
@@ -906,7 +930,10 @@ function renderBig(){
   const minMonth = firstVisibleMonth(orgFull.months);
   const org = clipSeries(orgFull, minMonth);
   const nat = clipSeries(activeNatSeries(), minMonth);
-  ACTIVE_NAT = (!CURRENT.isNational && nat && nat.performance && nat.performance.length) ? nat : null;
+  // England overlay only when the toggle is ON and this isn't the England tab. Setting
+  // ACTIVE_NAT=null drops the line, its legend entry AND its pull on the y-scale, and the
+  // export (which keys off ACTIVE_NAT) hides it too — one switch, every surface.
+  ACTIVE_NAT = (SHOW_ENGLAND && !CURRENT.isNational && nat && nat.performance && nat.performance.length) ? nat : null;
   const hasLow = org.total.some(v=>(+v)<THRESH);
   // Legend on ONE line, mirroring the chart EXACTLY (line style + marker shape). The
   // org series + its two uncertain states come first, then a "|" boundary, then the

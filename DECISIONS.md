@@ -6,6 +6,22 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-16 — v16: SHOW/HIDE England comparison line; RENDERED, AWAITING DEPLOY GO (Code)
+Front-end only (site/index.html), no pipeline/data change. JS node --check clean. NOT DEPLOYED —
+paused for review. A "Show England" checkbox in the chart filter row (alongside referral route /
+time range), DEFAULT ON. New state SHOW_ENGLAND; one switch drives every surface because it just
+gates ACTIVE_NAT in renderBig — `ACTIVE_NAT = (SHOW_ENGLAND && !isNational && nat…) ? nat : null`
+— so OFF drops the grey line, its legend entry AND its pull on the y-scale, and the export (keys
+off ACTIVE_NAT) + expand modal (read the on-screen chart) hide it too. SCOPE: providers +
+commissioners only — on the England tab the org's own line IS England, so syncEnglandUI() HIDES
+the toggle there (engwrap.hidden = CURRENT.isNational). Persists across org/standard switches like
+RANGE. Deep-link hook ?england=off (consistent with ?range=). CSS overrides the global
+uppercase/block `label` defaults for the inline toggle.
+Verified (screenshots/v16_*): provider England shown (natPath=1, legend has England, toggle
+checked) vs hidden (natPath=0, no England in legend, org/target/marker/axis intact); England tab
+(toggle hidden, org's own "England" line only, no separate comparison line); export with England
+hidden (no "England" anywhere in the SVG, composes with the 3y window + title-cased subtitle).
+
 ## 2026-06-16 — v15 SHIPPED in one deploy; VERIFIED LIVE (Code)
 All three (time-range + expand modal + image export) approved and shipped together: commit
 3e59a8e (site/index.html + DECISIONS.md + STATUS.md + .gitignore — no pipeline/data change) via
