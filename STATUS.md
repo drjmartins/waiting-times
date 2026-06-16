@@ -2,7 +2,7 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-15 (Claude Code session)._
+_Last updated: 2026-06-16 (Claude Code session)._
 
 ## Deployed and live ✅
 
@@ -122,6 +122,22 @@ verified live) — thirteen changes to the big breakdown chart + cards:
 - **Card sparklines:** brought in line with the chart's colour logic (lighter teal for
   provisional/low-n segments, strong solid teal for final); latest-point amber/teal target-cue
   dot deliberately kept (the at-a-glance "meeting target now?" signal).
+
+### v15 — per-org chart: time-range + expand + image export — SHIPPING (2026-06-16)
+Three front-end-only additions to the per-org big chart (site/index.html), built to compose
+(chart renders in the modal first, then export reads what's on screen, all respecting the range):
+- **Time range** — fixed ROLLING window, segmented presets [3 years · 12 months · All],
+  default 3 years (36mo), applied to ALL standards incl. FDS28. Clips the big chart's org +
+  England series (cards' sparklines untouched). Adaptive x-axis labels (~8–10). The Oct-2023
+  in-chart marker shows ONLY when the visible window includes pre-break data, and NEVER on
+  FDS28 (verified clean in 3y/12mo/All); once the rolling window clears Oct-2023 (~2027) it
+  drops out on its own, banner-below still carries the note.
+- **Expand** — toolbar Expand button opens the chart in a fullscreen modal by MOVING the live
+  panel into it (route/modality dropdowns, tooltips, export all keep working); ✕ / Esc /
+  backdrop close. `?expand=open` hook.
+- **Download** — PNG + SVG of a self-contained export (title + organisation + legend + the
+  on-screen chart, CSS vars resolved, fonts inlined). Captures the on-screen slice AND window;
+  filename + subtitle title-cased (e.g. Airedale-NHS-Foundation-Trust-CMB62-Haematology.png).
 
 ## Open items
 1. **11 June decommission verification — user to run on/after 11 Jun 2026.** The

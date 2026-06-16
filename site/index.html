@@ -140,6 +140,40 @@
     font-size:12.5px;color:var(--ink-soft)}
   a{color:var(--org)}
   svg text{font-family:ui-monospace,Menlo,monospace}
+
+  /* Chart toolbar (Expand + Download) — lives inside .ttl so it travels with the
+     panel when it is moved into the expand modal, and so export always reads the
+     on-screen state regardless of which view is active. */
+  .charttools{margin-left:auto;display:inline-flex;gap:8px;align-items:center}
+  .toolbtn{font:inherit;font-size:12.5px;padding:5px 11px;border:1px solid var(--line);
+    border-radius:5px;background:#fff;cursor:pointer;color:var(--ink-soft);white-space:nowrap}
+  .toolbtn:hover{border-color:#bcccd1;color:var(--ink)}
+  .dlmenu{left:auto;right:0;min-width:160px}
+  .dlmenu .fopt{font-size:13.5px}
+
+  /* Expand modal: a fullscreen overlay the .bigpanel is MOVED into (and back out of
+     on close), so every existing control — route/modality dropdowns, legend,
+     tooltips — keeps working without duplicated IDs or re-wiring. */
+  .modal{position:fixed;inset:0;z-index:50;display:flex}
+  .modal[hidden]{display:none}
+  .modal-backdrop{position:absolute;inset:0;background:rgba(17,32,43,.55)}
+  .modal-inner{position:relative;margin:auto;width:min(1240px,96vw);max-height:95vh;
+    overflow:auto;background:var(--paper);border-radius:10px;
+    box-shadow:0 14px 54px rgba(17,32,43,.42);padding:16px}
+  .modal-close{position:absolute;top:12px;right:14px;z-index:2;font-size:17px;line-height:1;
+    border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 10px;
+    cursor:pointer;color:var(--ink-soft)}
+  .modal-close:hover{color:var(--ink);border-color:#bcccd1}
+  .modal-host .bigpanel{border:0;padding:8px 6px 4px}
+
+  /* Time-range presets: a compact segmented control, right-aligned in the filterbar. */
+  .rangewrap{margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+  .rangebtns{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .rangebtn{font:inherit;font-size:12.5px;padding:5px 11px;border:0;border-right:1px solid var(--line);
+    background:#fff;cursor:pointer;color:var(--ink-soft);white-space:nowrap}
+  .rangebtn:last-child{border-right:0}
+  .rangebtn:hover{background:var(--grid)}
+  .rangebtn.active{background:var(--org);color:#fff}
 </style>
 </head>
 <body>
@@ -192,8 +226,20 @@
   <div class="cards" id="cards"></div>
 
   <!-- One large time-series chart for the selected standard. -->
-  <div class="bigpanel">
-    <div class="ttl"><h2 id="bigttl"></h2><span class="tag" id="bigtag"></span></div>
+  <div class="bigpanel" id="bigpanel">
+    <div class="ttl"><h2 id="bigttl"></h2><span class="tag" id="bigtag"></span>
+      <span class="charttools" id="charttools">
+        <button type="button" id="expandbtn" class="toolbtn" title="Open the chart full-screen">&#10530; Expand</button>
+        <span class="fdrop" style="display:inline-block">
+          <button type="button" id="dlbtn" class="toolbtn" aria-haspopup="true" aria-expanded="false"
+            title="Download the chart as an image">&#10515; Download &#9662;</button>
+          <div id="dlpanel" class="filterpanel dlmenu" hidden>
+            <button type="button" class="fopt" id="dlpng">PNG image</button>
+            <button type="button" class="fopt" id="dlsvg">SVG vector</button>
+          </div>
+        </span>
+      </span>
+    </div>
     <div class="filterbar">
       <span class="fgrp" id="routewrap">
         <span class="flabel">Referral route</span>
@@ -212,6 +258,14 @@
         </div>
       </span>
       <span id="slicehint" class="slicehint"></span>
+      <span class="rangewrap" id="rangewrap">
+        <span class="flabel">Time range</span>
+        <span class="rangebtns" id="rangebtns">
+          <button type="button" class="rangebtn" data-range="3y">3 years</button>
+          <button type="button" class="rangebtn" data-range="12m">12 months</button>
+          <button type="button" class="rangebtn" data-range="all">All</button>
+        </span>
+      </span>
     </div>
     <div class="legend" id="legend"></div>
     <div class="chartbox" id="chartbox"></div>
@@ -223,6 +277,17 @@
   <div class="note" id="breaknote">Loading&hellip;</div>
 
   <footer id="foot"></footer>
+</div>
+
+<!-- Expand overlay. The .bigpanel is moved into #modalhost on open and restored on
+     close (see openModal/closeModal), so the expanded chart IS the live chart —
+     route/modality dropdowns, tooltips and export all keep working. -->
+<div id="chartmodal" class="modal" hidden>
+  <div class="modal-backdrop" id="modalbackdrop"></div>
+  <div class="modal-inner">
+    <button type="button" class="modal-close" id="modalclose" title="Close (Esc)">&#10005;</button>
+    <div class="modal-host" id="modalhost"></div>
+  </div>
 </div>
 
 <script>
@@ -243,6 +308,12 @@ let CURRENT_TYPE="national";                   // national | provider | icb (org
 //            x modality three-way isn't published, so modality can't nest under a
 //            group. Selecting a group hides AND resets it (see selectGroup).
 let GROUP=null, ROUTE=null, MOD=null;
+// Big-chart time-range: a FIXED rolling window (last-N months) so the chart stays a
+// constant width as NHS publishes more months. Default 3 years; applies to ALL
+// standards (not standard-aware). "all" = the full series. Display-only — the cards'
+// own recent-trend sparklines are unaffected.
+const RANGE_MONTHS={"3y":36,"12m":12,"all":Infinity};
+let RANGE="3y";
 // NHS England's ten tumour-site groups (matches pipeline/cancer_groups.TEN_GROUPS,
 // the order NHS England's dashboard lists them).
 const CANCER_GROUPS=["Breast","Gynaecology","Haematology","Head & Neck","Lower GI",
@@ -287,12 +358,23 @@ async function init(){
   document.getElementById("filterbtn").addEventListener("click", togglePanel);
   document.getElementById("modbtn").addEventListener("click", toggleModPanel);
   document.getElementById("groupbtn").addEventListener("click", toggleGroupPanel);
-  document.addEventListener("click", e=>{ if(!e.target.closest(".fdrop")){ closePanel(); closeModPanel(); closeOrgPanel(); closeGroupPanel(); } });
+  document.addEventListener("click", e=>{ if(!e.target.closest(".fdrop")){ closePanel(); closeModPanel(); closeOrgPanel(); closeGroupPanel(); closeDlPanel(); } });
+  // Expand modal + image download controls (live in .ttl, inside .bigpanel).
+  document.getElementById("expandbtn").addEventListener("click", toggleExpand);
+  document.getElementById("modalclose").addEventListener("click", closeModal);
+  document.getElementById("modalbackdrop").addEventListener("click", closeModal);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && EXPANDED) closeModal(); });
+  document.getElementById("dlbtn").addEventListener("click", toggleDlPanel);
+  document.getElementById("dlpng").addEventListener("click", ()=>{ closeDlPanel(); downloadChart("png"); });
+  document.getElementById("dlsvg").addEventListener("click", ()=>{ closeDlPanel(); downloadChart("svg"); });
+  document.querySelectorAll(".rangebtn").forEach(b=>b.addEventListener("click", ()=>setRange(b.dataset.range)));
 
   // Deep-link / render hooks: ?org=CODE, ?std=CMB31, ?slice=type:value, ?panel=open.
   const qs = new URLSearchParams(location.search);
   const qStd = (qs.get("std")||"").toUpperCase();
   if(META.standards[qStd]) CURRENT_STD = qStd;
+  const qRange = qs.get("range");                 // render/deep-link hook: ?range=3y|12m|all
+  if(qRange && (qRange in RANGE_MONTHS)) RANGE = qRange;
   const qOrg = qs.get("org");
   // Shared cancer group can be set before the org loads so it persists through it.
   const qGroup = qs.get("group");
@@ -311,6 +393,7 @@ async function init(){
   if(qs.get("panel")==="open") await openPanel();
   if(qs.get("modpanel")==="open") await openModPanel();
   if(qs.get("gopen")!=null) openGroupPanel();   // render hook: open the shared group dropdown
+  if(qs.get("expand")==="open") openModal();    // render hook: open the expand modal
   const qOrgq=qs.get("orgq");   // render hook: open the org dropdown mid-search
   if(qOrgq!=null && CURRENT_TYPE!=="national"){
     openOrgPanel();
@@ -589,6 +672,24 @@ function resolveSeries(allStd, bdata, std){
   return base;
 }
 function activeOrgSeries(){ return resolveSeries(CURRENT.standards, BREAKDOWN, CURRENT_STD); }
+// --- rolling time-range window (big chart only) ---
+// The first month visible under the current RANGE, given a series' full month list.
+function firstVisibleMonth(months){
+  const n=RANGE_MONTHS[RANGE];
+  return (!isFinite(n) || months.length<=n) ? months[0] : months[months.length-n];
+}
+// Clip a series to months >= minMonth (months are "YYYY-MM", so string compare works).
+// Returns the series unchanged when nothing is clipped or it's already empty.
+function clipSeries(s, minMonth){
+  if(!s || !s.months || !s.months.length || minMonth==null) return s;
+  const i0=s.months.findIndex(m=>m>=minMonth);
+  if(i0<=0) return s;
+  const sl=a=>Array.isArray(a)?a.slice(i0):a;
+  return Object.assign({}, s, {months:s.months.slice(i0), performance:s.performance.slice(i0),
+    total:sl(s.total), data_status:sl(s.data_status), within_target:sl(s.within_target)});
+}
+function setRange(r){ if(RANGE===r || !(r in RANGE_MONTHS)) return; RANGE=r; renderBig(); }
+function syncRangeUI(){ document.querySelectorAll(".rangebtn").forEach(b=>b.classList.toggle("active", b.dataset.range===RANGE)); }
 // National comparison must MATCH the active slice (like-for-like); null => hide it.
 function activeNatSeries(){
   if(!sliceOnNow()) return NATIONAL.standards[CURRENT_STD]||null;
@@ -779,11 +880,12 @@ function renderModOptions(q){
 /* ---- big chart ---- */
 function renderBig(){
   syncBreakdownUI();   // keep the route/modality controls + hint in lockstep with state
+  syncRangeUI();       // keep the time-range presets in lockstep with RANGE
   // Oct-2023 comparability banner applies to CMB31/CMB62 only — hide it on FDS28
   // (the 28-day standard has no break), matching the in-chart marker.
   document.getElementById("breaknote").hidden = (CURRENT_STD==="FDS28");
   const sAll=CURRENT.standards[CURRENT_STD];
-  const org=activeOrgSeries();
+  const orgFull=activeOrgSeries();
   // Title carries the cancer group ALWAYS (incl. "All cancers"); the route/modality
   // are read from their own dropdowns, so they no longer clutter the title.
   document.getElementById("bigttl").textContent = sAll.label + " — " + groupText();
@@ -794,11 +896,16 @@ function renderBig(){
   const low=document.getElementById("lowrel");
 
   // Empty/absent slice for this org: explain rather than draw a blank chart.
-  if(!org || !org.performance || !org.performance.length){
+  if(!orgFull || !orgFull.performance || !orgFull.performance.length){
     box.innerHTML=`<div class="emptyslice">No data published for this breakdown at this organisation.</div>`;
     document.getElementById("legend").innerHTML=""; low.hidden=true; return;
   }
-  const nat=activeNatSeries();
+  // Apply the rolling time-range window (fixed last-N months; "all" = no clip). The
+  // org series sets the visible window; the England overlay is clipped to the SAME
+  // first month so both align and the y-scale isn't pulled by out-of-window points.
+  const minMonth = firstVisibleMonth(orgFull.months);
+  const org = clipSeries(orgFull, minMonth);
+  const nat = clipSeries(activeNatSeries(), minMonth);
   ACTIVE_NAT = (!CURRENT.isNational && nat && nat.performance && nat.performance.length) ? nat : null;
   const hasLow = org.total.some(v=>(+v)<THRESH);
   // Legend on ONE line, mirroring the chart EXACTLY (line style + marker shape). The
@@ -874,9 +981,12 @@ function bigSVG(s, nat){
   }
   // Oct-2023 standards-change marker: a vertical dashed rule at the comparability
   // break, on CMB31/CMB62 only (FDS28 has no break). Complements the banner below
-  // the chart by marking exactly where the series stops being comparable.
+  // the chart by marking exactly where the series stops being comparable. Shown ONLY
+  // when the visible window includes data from BEFORE the break (xs[0] < break): once
+  // the rolling window clears Oct-2023 every visible month is already comparable, so
+  // the marker is dropped entirely (the banner below the chart still carries the note).
   let mark="";
-  if(CURRENT_STD!=="FDS28" && META && META.comparability_break){
+  if(CURRENT_STD!=="FDS28" && META && META.comparability_break && xs[0] < META.comparability_break){
     const mi=xs.indexOf(META.comparability_break);
     if(mi>=0){
       const mx=+x(mi).toFixed(1);
@@ -927,9 +1037,12 @@ function bigSVG(s, nat){
                           : `stroke="var(--org)" stroke-width="2.4"`;
     line+=`<path d="${d}" fill="none" ${style}/>`;
   }
-  // x labels: every ~6 months + last
+  // x labels: adaptive step targeting ~8–10 labels regardless of window length (so a
+  // 12-month window isn't sparse and a multi-year/"all" window doesn't collide). The
+  // last month is always labelled; loop labels stop short of it to avoid a collision.
   let xl="";
-  for(let i=0;i<n;i+=6) xl+=`<text x="${x(i).toFixed(1)}" y="${H-8}" font-size="10" text-anchor="middle" fill="var(--ink-soft)">${monthLabel(xs[i])}</text>`;
+  const lstep=Math.max(1,Math.ceil(n/8)), guard=Math.ceil(lstep/2);
+  for(let i=0;i<n-guard;i+=lstep) xl+=`<text x="${x(i).toFixed(1)}" y="${H-8}" font-size="10" text-anchor="middle" fill="var(--ink-soft)">${monthLabel(xs[i])}</text>`;
   xl+=`<text x="${x(n-1).toFixed(1)}" y="${H-8}" font-size="10" text-anchor="end" fill="var(--ink-soft)">${monthLabel(xs[n-1])}</text>`;
   // Point markers. Per-point state is MUTUALLY EXCLUSIVE, provisional wins. Both
   // uncertain states share the SAME lighter teal (--org-muted) outline; shape alone
@@ -972,6 +1085,146 @@ function showTip(i, s){
   tip.style.display="block";
 }
 function hideTip(){const t=document.getElementById("tip"); if(t)t.style.display="none";}
+
+/* ---- expand modal ----
+   We MOVE the live .bigpanel into the overlay rather than cloning it, so the
+   route/modality dropdowns, tooltips, legend and download control are the same
+   nodes and keep working — no duplicated IDs, no re-wiring. On close we put it
+   back where it was. The SVG is width:100% so it simply scales up in the wider
+   modal; a renderBig() refresh keeps tooltips/markers consistent in the new box. */
+let EXPANDED=false, _panelHome=null;
+function setExpandLabel(){ const b=document.getElementById("expandbtn");
+  if(b) b.innerHTML = EXPANDED ? "&#10529; Exit full screen" : "&#10530; Expand"; }
+function openModal(){
+  if(EXPANDED) return;
+  const panel=document.getElementById("bigpanel");
+  _panelHome={parent:panel.parentNode, next:panel.nextSibling};
+  document.getElementById("modalhost").appendChild(panel);
+  document.getElementById("chartmodal").hidden=false;
+  document.body.style.overflow="hidden";
+  EXPANDED=true; setExpandLabel(); renderBig();
+}
+function closeModal(){
+  if(!EXPANDED) return;
+  const panel=document.getElementById("bigpanel");
+  closePanel(); closeModPanel(); closeDlPanel();
+  if(_panelHome) _panelHome.parent.insertBefore(panel, _panelHome.next);
+  document.getElementById("chartmodal").hidden=true;
+  document.body.style.overflow="";
+  EXPANDED=false; setExpandLabel(); renderBig();
+}
+function toggleExpand(){ EXPANDED ? closeModal() : openModal(); }
+
+/* ---- download chart as image (PNG / SVG) ----
+   Builds a SELF-CONTAINED export SVG: a header strip (title + organisation +
+   legend) above the live chart body, with the page's CSS custom properties
+   resolved to literal colours and an explicit font-family — so the file renders
+   correctly stand-alone and when rasterised to a canvas (where page :root vars
+   and stylesheet rules do NOT apply). The chart body is taken from the on-screen
+   <svg>, so the export captures EXACTLY what's displayed (current group / route /
+   modality slice, all states, the in-chart "standards changed" marker, the
+   right-margin target label and the axis). */
+function closeDlPanel(){ const p=document.getElementById("dlpanel"); if(p)p.hidden=true;
+  const b=document.getElementById("dlbtn"); if(b)b.setAttribute("aria-expanded","false"); }
+function toggleDlPanel(){ const p=document.getElementById("dlpanel");
+  if(p && !p.hidden){ closeDlPanel(); return; }
+  if(p){ p.hidden=false; document.getElementById("dlbtn").setAttribute("aria-expanded","true"); } }
+
+// Resolve var(--x) → literal value from :root (canvas rasterisation ignores CSS vars).
+function resolvePalette(str){
+  const cs=getComputedStyle(document.documentElement);
+  return str.replace(/var\((--[a-z-]+)\)/g, (m,k)=>{ const v=cs.getPropertyValue(k).trim(); return v||m; });
+}
+// XML-escape text node content (titles/labels may contain & < >).
+function xmlEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// Legend rebuilt as flat SVG (the on-page legend is HTML). Mirrors renderBig's
+// item set/order/styles exactly. Monospace ⇒ width is predictable (~6.3px/char).
+function exportLegendSVG(x0, baseline, isNationalOrg, hasNat, hasLow){
+  const items=[];
+  items.push({ln:'stroke="var(--org)" stroke-width="2.4"', mk:"circle", mka:'fill="var(--org)"', t:isNationalOrg?"England":"this organisation"});
+  if(hasLow) items.push({ln:'stroke="var(--org-muted)" stroke-width="1.8" stroke-dasharray="1.5 3" opacity="0.9"', mk:"square", mka:'fill="#fff" stroke="var(--org-muted)" stroke-width="1.6"', t:"low reliability (n<"+THRESH+")"});
+  items.push({ln:'stroke="var(--org-muted)" stroke-width="1.8" stroke-dasharray="6 4" opacity="0.9"', mk:"circle", mka:'fill="#fff" stroke="var(--org-muted)" stroke-width="1.6"', t:"provisional"});
+  const refIdx=items.length;   // "|" boundary before the reference lines
+  if(hasNat) items.push({ln:'stroke="var(--nat)" stroke-width="1.6" opacity="0.85"', mk:null, t:"England"});
+  items.push({ln:'stroke="var(--target)" stroke-width="1.4" stroke-dasharray="5 4"', mk:null, t:"target"});
+  let x=x0, out="";
+  items.forEach((it,i)=>{
+    if(i===refIdx){ out+=`<text x="${(x+2).toFixed(1)}" y="${baseline}" font-size="11" fill="var(--line)">|</text>`; x+=14; }
+    out+=`<line x1="${x.toFixed(1)}" y1="${baseline-4}" x2="${(x+26).toFixed(1)}" y2="${baseline-4}" fill="none" ${it.ln}/>`;
+    if(it.mk==="circle") out+=`<circle cx="${(x+13).toFixed(1)}" cy="${baseline-4}" r="3" ${it.mka}/>`;
+    else if(it.mk==="square") out+=`<rect x="${(x+9.5).toFixed(1)}" y="${baseline-7.5}" width="7" height="7" ${it.mka}/>`;
+    out+=`<text x="${(x+31).toFixed(1)}" y="${baseline}" font-size="11" fill="var(--ink-soft)">${xmlEsc(it.t)}</text>`;
+    x += 31 + it.t.length*6.3 + 16;
+  });
+  return out;
+}
+
+function buildExportSVG(){
+  const s=activeOrgSeries();
+  const chartSvg=document.querySelector("#chartbox svg");
+  if(!s || !s.performance || !s.performance.length || !chartSvg) return null;
+  const {W,H}=BG, headerH=72;
+  const isNat = !!ACTIVE_NAT;
+  const hasLow = s.total.some(v=>(+v)<THRESH);
+  const title=document.getElementById("bigttl").textContent;
+  // Export subtitle title-cases the ALL-CAPS NHS org name (same humaniser as the
+  // filename), preserving NHS/FT/ICB; the on-page .tag stays as published.
+  const sub=CURRENT.isNational ? "England" : humanName(CURRENT.name);
+  const serif=`font-family="'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif"`;
+  const head =
+    `<text x="16" y="26" font-size="18" font-weight="600" fill="var(--ink)" ${serif}>${xmlEsc(title)}</text>`+
+    `<text x="16" y="44" font-size="12.5" fill="var(--ink-soft)" ${serif}>${xmlEsc(sub)}</text>`+
+    exportLegendSVG(16, 62, CURRENT.isNational, isNat, hasLow);
+  const svg=
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H+headerH}" `+
+    `viewBox="0 0 ${W} ${H+headerH}" font-family="ui-monospace,Menlo,monospace">`+
+    `<rect width="${W}" height="${H+headerH}" fill="var(--panel)"/>`+
+    head+
+    `<g transform="translate(0,${headerH})">${chartSvg.innerHTML}</g>`+
+    `</svg>`;
+  return resolvePalette(svg);
+}
+
+// NHS org names are ALL-CAPS in source; title-case for a readable filename while
+// preserving common acronyms (NHS Foundation Trust → Airedale NHS Foundation Trust).
+function humanName(name){
+  const keep=new Set(["NHS","FT","ICB","UHB","CCG","HMP","STH"]), small=new Set(["AND","OF","THE","FOR"]);
+  return name.split(/\s+/).map(w=>{ const u=w.toUpperCase();
+    return keep.has(u) ? u : small.has(u) ? w.toLowerCase()
+         : w.charAt(0).toUpperCase()+w.slice(1).toLowerCase(); }).join(" ");
+}
+// Filename, e.g. Airedale-NHS-Foundation-Trust-CMB62-Haematology.png
+function exportName(ext){
+  const parts=[CURRENT.isNational?"England":humanName(CURRENT.name), CURRENT_STD, GROUP||"All cancers"];
+  if(ROUTE) parts.push(ROUTE);
+  if(MOD) parts.push(MOD);
+  const slug=parts.join("-").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  return slug+"."+ext;
+}
+function saveBlob(blob, name){
+  const url=URL.createObjectURL(blob), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function downloadChart(kind){
+  const svg=buildExportSVG();
+  if(!svg) return;
+  if(kind==="svg"){ saveBlob(new Blob([svg],{type:"image/svg+xml;charset=utf-8"}), exportName("svg")); return; }
+  // PNG: rasterise the export SVG to a 2× canvas (white background already painted).
+  const scale=2, {W,H}=BG, headerH=72, w=W*scale, h=(H+headerH)*scale;
+  const img=new Image();
+  const url=URL.createObjectURL(new Blob([svg],{type:"image/svg+xml;charset=utf-8"}));
+  img.onload=()=>{
+    const c=document.createElement("canvas"); c.width=w; c.height=h;
+    const ctx=c.getContext("2d"); ctx.scale(scale,scale);
+    ctx.drawImage(img,0,0);
+    URL.revokeObjectURL(url);
+    c.toBlob(b=>{ if(b) saveBlob(b, exportName("png")); }, "image/png");
+  };
+  img.onerror=()=>{ URL.revokeObjectURL(url); };
+  img.src=url;
+}
 
 init();
 </script>

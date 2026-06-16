@@ -6,6 +6,72 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-16 — v15: TIME-RANGE control added; all THREE (range + expand + export) RENDERED, AWAITING DEPLOY GO (Code)
+Front-end only (site/index.html + .gitignore), no pipeline/data change. JS node --check clean.
+NOT DEPLOYED — paused for review of the four renders below; user pre-approved deploying all
+three together once happy. #1 design chosen by the user (overrides the investigation's
+"Since Oct 2023" recommendation):
+- **Fixed ROLLING window** (constant chart width as data accrues), presets [3 years · 12 months
+  · All] as a segmented control right-aligned in the filterbar. DEFAULT = 3 years (36 months),
+  applied to ALL standards incl. FDS28 (NOT standard-aware — simpler). Display-only: clips the
+  big chart's org + England series (England clipped to the org's first visible month so they
+  align and the y-scale isn't pulled by out-of-window points); the cards' recent-trend
+  sparklines are untouched. State: RANGE + RANGE_MONTHS, firstVisibleMonth()/clipSeries();
+  deep-link/render hook ?range=3y|12m|all.
+- **Adaptive x-axis labels**: step = ceil(n/8) targeting ~8–10 labels, last month always
+  labelled (loop stops short to avoid collision) — fixes both sparse-on-short and dense-on-long.
+- **Oct-2023 marker rule**: in-chart dashed line + label shown ONLY when xs[0] < comparability_
+  break (visible window includes PRE-break data). Once the rolling window clears Oct-2023
+  (~2027) the marker disappears entirely — no line, no label, no edge-note — since all visible
+  data is comparable and the banner below the chart still carries the note. "All" always shows
+  it in place; today's 3y default still shows it (reaches ~Apr 2023). Verified: 3y→present,
+  All→present, 12m→absent + banner still shown (screenshots/v15_d/e/f).
+- **#2/#3 now respect the window**: export/expand read the on-screen chart, so they capture the
+  SELECTED range automatically (12m export sample = Apr 2025→Mar 2026, no marker —
+  screenshots/v15_export_12m.*). Export SUBTITLE now title-cased via humanName() (Airedale NHS
+  Foundation Trust), matching the filename; the on-page .tag stays as-published.
+Renders for review: v15_d_default_3y_marker, v15_e_all_marker, v15_f_12m_no_marker,
+v15_g_expanded_range, v15_export_12m.{png,svg}.
+
+## 2026-06-16 — v15: per-org chart EXPAND modal + image DOWNLOAD (PNG/SVG); RENDERED, AWAITING REVIEW (Code)
+Front-end only (site/index.html + .gitignore), no pipeline/data change. JS node --check
+clean. NOT DEPLOYED — held for review. Two builds + one investigation (below).
+(1) **Expand:** a toolbar in the chart title row (`.charttools` in `.ttl`) with Expand +
+Download. Expand MOVES the live `#bigpanel` node into a fullscreen overlay (`#chartmodal`)
+and restores it on close — so route/modality dropdowns, tooltips, legend and the download
+control are the SAME nodes and keep working with zero duplicated IDs / re-wiring (verified:
+group-aware route dropdown opens + filters inside the modal — screenshots/v15_c). Close via
+✕, Esc, or backdrop click; `?expand=open` render hook added (mirrors `?panel=open`). Needed
+adding `id="bigpanel"` (panel had only the class).
+(2) **Download PNG/SVG:** `buildExportSVG()` composes a SELF-CONTAINED svg = header strip
+(title + organisation + flat-SVG legend) ABOVE the on-screen chart body (taken from
+`#chartbox svg` innerHTML, so the export is EXACTLY what's displayed — current group/route/
+modality slice, all marker states, the header-strip "standards changed" annotation, the
+right-margin "target NN.N%" label, the axis). `var(--x)` resolved to literals via
+`getComputedStyle` (canvas rasterisation ignores page :root vars) + explicit font-family
+(serif title, mono chart). SVG = blob save; PNG = rasterise that svg to a 2× canvas → toBlob.
+Filename `humanName(org)-STD-group[-route][-mod].ext`, e.g.
+`Airedale-NHS-Foundation-Trust-CMB62-Haematology.png` (humanName title-cases the ALL-CAPS NHS
+name, preserving NHS/FT/ICB acronyms). Sample PNG + SVG rendered (screenshots/v15_export_*).
+Both controls live inside `#bigpanel` so they work identically inline and expanded; export
+reads live state so it's view-independent.
+DEPENDENCY: export/expand capture WHAT'S ON SCREEN; once a time-range control (#1) exists they
+should respect the selected window — for now they capture the current FULL series.
+
+## 2026-06-16 — INVESTIGATION: time-range control for the per-org chart (Code; user to choose window)
+Report only, nothing built. Chart is 48 months now (Apr 2022 → Mar 2026), grows ~1/month.
+Findings: (a) x-axis labels (every 6mo + last → 9 now, ~89px apart) are fine today but the
+fixed step gets too sparse on short windows and too dense past ~7yr — recommend an ADAPTIVE
+step targeting ~8–10 labels. (b) The real crowding is the DATA POINTS: ~17px apart now, and
+the 11px tooltip hit-circles already overlap (<22px) — a windowed default helps more than label
+thinning. (c) Recommended control: presets [Since Oct 2023 (default) · Last 12 months · All];
+the "Since standards changed" default anchors the Oct-2023 marker at the LEFT EDGE (always
+visible, comparable data only, grows gracefully) and revives the original 2023-10-default
+decision relaxed in v7. For FDS28 (no break) the default is All/Last-N. If instead a short
+rolling window that EXCLUDES the break is chosen, the in-chart vertical marker must degrade to
+a left-edge "← standards changed earlier" note (nothing to point at). Full write-up handed to
+the user; window choice deferred to them.
+
 ## 2026-06-15 — CHART-POLISH SERIES (v10–v14) SHIPPED in one deploy; VERIFIED LIVE (Code)
 All THIRTEEN front-end changes from the five v10–v14 entries below (each previously
 "RENDERED, AWAITING REVIEW") were approved and bundled into ONE commit (ab9b8fc,

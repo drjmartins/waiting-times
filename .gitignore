@@ -18,6 +18,13 @@ site/data/national.breakdown.json
 # Local dev verification screenshots (not part of the site or pipeline)
 screenshots/
 
+# Local dev render harness (puppeteer-core + system Chrome) for screenshots /
+# export samples; not part of the site or pipeline.
+render.mjs
+node_modules/
+package.json
+package-lock.json
+
 # Python / OS cruft
 __pycache__/
 *.py[cod]
