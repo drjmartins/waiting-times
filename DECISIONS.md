@@ -6,6 +6,20 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-16 — v15 SHIPPED in one deploy; VERIFIED LIVE (Code)
+All three (time-range + expand modal + image export) approved and shipped together: commit
+3e59a8e (site/index.html + DECISIONS.md + STATUS.md + .gitignore — no pipeline/data change) via
+watched workflow_dispatch run 27619479528 — build (3m8s: tests → fetch → rebuild → upload) and
+deploy (25s) both GREEN; data-commit step a no-op so master stayed at 3e59a8e. Pre-deploy,
+FDS28 confirmed clean (no Oct-2023 marker in 3y/12mo/All, banner correctly hidden — the marker
+is standard-guarded `CURRENT_STD!=="FDS28"`, not just window-based; screenshots/v15_h).
+VERIFIED LIVE: index/compare/data all 200; served index.html carries every new marker
+(RANGE_MONTHS, firstVisibleMonth, data-range="3y", buildExportSVG, #chartmodal, humanName).
+Headless render of the live site confirms production behaviour: CMB62 default = 3y window
+(first visible 2023-04, marker shown, banner shown), CMB62 12mo (first visible 2025-04, marker
+ABSENT, banner shown), FDS28 All (first visible 2022-04 pre-break, marker ABSENT, banner
+hidden). The two entries below remain the build history; this marks them shipped.
+
 ## 2026-06-16 — v15: TIME-RANGE control added; all THREE (range + expand + export) RENDERED, AWAITING DEPLOY GO (Code)
 Front-end only (site/index.html + .gitignore), no pipeline/data change. JS node --check clean.
 NOT DEPLOYED — paused for review of the four renders below; user pre-approved deploying all

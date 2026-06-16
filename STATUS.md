@@ -123,8 +123,9 @@ verified live) — thirteen changes to the big breakdown chart + cards:
   provisional/low-n segments, strong solid teal for final); latest-point amber/teal target-cue
   dot deliberately kept (the at-a-glance "meeting target now?" signal).
 
-### v15 — per-org chart: time-range + expand + image export — SHIPPING (2026-06-16)
-Three front-end-only additions to the per-org big chart (site/index.html), built to compose
+### v15 — per-org chart: time-range + expand + image export — DEPLOYED ✅ (2026-06-16, run 27619479528)
+Live + verified (build+deploy green; headless live render confirms 3y/12mo/All + FDS28 marker
+behaviour). Three front-end-only additions to the per-org big chart (site/index.html), built to compose
 (chart renders in the modal first, then export reads what's on screen, all respecting the range):
 - **Time range** — fixed ROLLING window, segmented presets [3 years · 12 months · All],
   default 3 years (36mo), applied to ALL standards incl. FDS28. Clips the big chart's org +
