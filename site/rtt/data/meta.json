@@ -1,0 +1,228 @@
+{
+  "built_at": "2026-06-20T08:40:22.098752Z",
+  "months": [
+    "2022-04",
+    "2022-05",
+    "2022-06",
+    "2022-07",
+    "2022-08",
+    "2022-09",
+    "2022-10",
+    "2022-11",
+    "2022-12",
+    "2023-01",
+    "2023-02",
+    "2023-03",
+    "2023-04",
+    "2023-05",
+    "2023-06",
+    "2023-07",
+    "2023-08",
+    "2023-09",
+    "2023-10",
+    "2023-11",
+    "2023-12",
+    "2024-01",
+    "2024-02",
+    "2024-03",
+    "2024-04",
+    "2024-05",
+    "2024-06",
+    "2024-07",
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04"
+  ],
+  "month_range": [
+    "2022-04",
+    "2026-04"
+  ],
+  "source": "https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/",
+  "standard_target": 0.92,
+  "recovery_milestones": [
+    {
+      "target": 0.65,
+      "by": "2026-03",
+      "label": "65% by Mar 2026"
+    },
+    {
+      "target": 0.7,
+      "by": "2027-03",
+      "label": "70% by Mar 2027"
+    },
+    {
+      "target": 0.92,
+      "by": "2029-03",
+      "label": "92% standard by Mar 2029"
+    }
+  ],
+  "series_break": "2024-02",
+  "measures": {
+    "pct18": {
+      "label": "% within 18 weeks",
+      "kind": "rate"
+    },
+    "waitlist": {
+      "label": "Waiting-list size",
+      "kind": "count"
+    },
+    "longwait": {
+      "label": "Long waiters (52/65/78/104+ wks)",
+      "kind": "count"
+    }
+  },
+  "counts": {
+    "providers": 594,
+    "icbs": 48,
+    "hidden": 96
+  },
+  "treatment_functions": [
+    {
+      "code": "C_100",
+      "name": "General Surgery Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_101",
+      "name": "Urology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_110",
+      "name": "Trauma and Orthopaedic Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_120",
+      "name": "Ear Nose and Throat Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_130",
+      "name": "Ophthalmology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_140",
+      "name": "Oral Surgery Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_150",
+      "name": "Neurosurgical Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_160",
+      "name": "Plastic Surgery Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_170",
+      "name": "Cardiothoracic Surgery Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_300",
+      "name": "General Internal Medicine Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_301",
+      "name": "Gastroenterology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_320",
+      "name": "Cardiology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_330",
+      "name": "Dermatology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_340",
+      "name": "Respiratory Medicine Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_400",
+      "name": "Neurology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_410",
+      "name": "Rheumatology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_430",
+      "name": "Elderly Medicine Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "C_502",
+      "name": "Gynaecology Service",
+      "group": "Specialty"
+    },
+    {
+      "code": "X02",
+      "name": "Other - Medical Services",
+      "group": "Other"
+    },
+    {
+      "code": "X03",
+      "name": "Other - Mental Health Services",
+      "group": "Other"
+    },
+    {
+      "code": "X04",
+      "name": "Other - Paediatric Services",
+      "group": "Other"
+    },
+    {
+      "code": "X05",
+      "name": "Other - Surgical Services",
+      "group": "Other"
+    },
+    {
+      "code": "X06",
+      "name": "Other - Other Services",
+      "group": "Other"
+    }
+  ],
+  "tf_reconciliation": {
+    "checked": 24776,
+    "max_abs_delta": 0
+  },
+  "reconciliation": {
+    "checked": true,
+    "month": "2025-04",
+    "pct18": 0.5973,
+    "waitlist": 7389065,
+    "w52": 190023,
+    "w65": 9244,
+    "w78": 1361,
+    "w104": 171
+  }
+}

@@ -99,5 +99,5 @@ COMPARISON_BREAKDOWNS = ["all", "cancer", "route", "modality"]
 # Where things get written.
 RAW_DIR = "data/raw"
 PROCESSED_DIR = "data/processed"
-SITE_DATA_DIR = "site/data"
+SITE_DATA_DIR = "site/cancer/data"
 MANIFEST_PATH = "data/manifest.json"

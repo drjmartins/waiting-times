@@ -4,10 +4,29 @@ At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
 _Last updated: 2026-06-16 (Claude Code session; v16 England toggle live)._
 
+## RTT dashboard (second dashboard, /rtt/) — increments 1 & 2 BUILT, NOT deployed ⏸
+Parallel stack to the cancer one: `pipeline_rtt/` (config + build), `tests_rtt/` (9 tests),
+`site/rtt/index.html` + `site/rtt/data/`. Source = the monthly RTT "Full CSV data file" (Incomplete
+pathways, Part_2), 49 months Apr-2022→Apr-2026, NONC excluded, 6 metrics derived from the 105
+wait-bands. 642 orgs (594 providers [96 hidden], 48 ICBs) + national. **TWO fail-loud gates pass**:
+national vs Apr-2025 SPN (pct18 59.73%, waitlist 7.39M, w78/w104 exact, w52/w65 within 1%) AND the
+TF-sum gate (24,776 org-months: sum of 23 TFs == C_999 total, max|Δ|=0). Front end reuses cancer
+CSS/picker/range/expand/export/England mechanics; three cards = the measure toggle [% within 18wk ·
+Waiting-list · Long waiters]; % chart = cancer CMB model + 65/70/92% lines; NEW count chart
+(auto-scaling numeric axis); **treatment-function breakdown selector** (grouped Specialty/Other, 23
+TFs) drives all three measures, with low-reliability (n<10) markers + matched England overlay + empty-TF
+state; long-waiters [52·65·78·104] sub-control. Feb-2024 break marker+banner on all measures. 41 tests
+pass (32 cancer + 9 RTT). **Functionally complete** (picker + 3 measures + 2 chart types + TF
+breakdown + reuse mechanics). REMAINING: polish, deploy + CI/cron — awaiting the user. See DECISIONS.md
+2026-06-19 (increments 1 & 2).
+
 ## Deployed and live ✅
 
-- **Live site:** https://drjmartins.github.io/cancer-waiting-times/
-- **Repo:** https://github.com/drjmartins/cancer-waiting-times (public)
+- **Live site (post-restructure 2026-06-20):** https://drjmartins.github.io/waiting-times/
+  — root landing → **/cancer/** (relocated Cancer dashboard + compare) and **/rtt/** (RTT dashboard).
+  Old URL https://drjmartins.github.io/cancer-waiting-times/ now a stub repo doing a query/path-preserving
+  redirect to …/waiting-times/cancer/.
+- **Repo:** https://github.com/drjmartins/waiting-times (renamed from cancer-waiting-times; public)
 - **Deploy:** GitHub Pages via `.github/workflows/update-data.yml` (daily cron
   `0 16 * * *` + manual `workflow_dispatch`). Build runs tests → fetches any new
   NHS files → rebuilds `site/data` → commits data back (only when something other

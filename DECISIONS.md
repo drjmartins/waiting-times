@@ -6,6 +6,218 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-20 — BIGGEST DEPLOY: site restructure (waiting-times: /cancer/ + /rtt/ + landing) + RTT goes live (Code)
+User approved all three calls (A: rename repo + stub redirect; minimal two-card landing; stub is the
+redirect mechanism). Landed as ONE change. Restructure:
+ - MOVED the live cancer dashboard from site root to site/cancer/ (index.html, compare.html, data/).
+   pipeline/config.SITE_DATA_DIR site/data → site/cancer/data (build_site_data keys everything off it);
+   .gitignore + the CI commit paths + the no-op-commit meta.json excludes all repathed.
+ - NEW minimal root landing site/index.html (two cards → cancer/ , rtt/).
+ - CROSS-LINKS: cancer → ../rtt/ + ../ (All dashboards); rtt → ../cancer/ + ../. Landing → cancer/ , rtt/.
+ - REPO RENAME cancer-waiting-times → waiting-times (Pages URL …/cancer-waiting-times/ → …/waiting-times/).
+ - STUB redirect repo at the freed-up cancer-waiting-times: index.html + 404.html, JS query+hash+path
+   preserving → …/waiting-times/cancer/ (so …/cancer-waiting-times/?org=RJ1 and …/compare.html resolve).
+LOCAL VERIFY before deploy: all paths 200 (landing, /cancer/ + compare + data + breakdown, /rtt/ + data +
+breakdown); headless render confirms cancer deep-link (?org=&std=&range=&england=) renders + cross-links
+(compare.html, ../rtt/, ../), compare.html loads, RTT TF-breakdown renders (../cancer/, ../). 45 tests pass.
+Deploy sequence: push (dispatch-only workflow, no auto-deploy) → rename repo → create+enable stub Pages →
+workflow_dispatch on waiting-times → watch build+deploy green → verify live. (Live-verify results appended
+below once confirmed.)
+
+## 2026-06-20 — RTT wired into CI (update-data.yml); pipeline runs GREEN end-to-end; DEPLOY HELD for the restructure (Code)
+Per the user: wire pipeline_rtt into the existing daily workflow FIRST, do NOT deploy core-only (a live
+dashboard with gitignored-and-therefore-dead breakdowns isn't worth a broken interim). Done + validated
+locally; the actual Actions-green lands on the held deploy.
+NEW MODULES: pipeline_rtt/discover.py (enumerate FY pages 2022-23..current, scrape Full-CSV zip links,
+parse month, incremental manifest) + pipeline_rtt/run.py (discover → fetch new/revised → build). Raw
+zips stay gitignored + are NOT persisted between CI runs, so each run re-fetches all months (~175MB) and
+always picks up NHS revisions — simpler and more correct than an incremental store, no revision-drift to
+manage; local re-runs skip unchanged months via the manifest.
+FAIL-LOUD-BEFORE-PUBLISH: build.run() reordered so BOTH gates (national SPN headline + sum-of-TFs==C_999)
+run BEFORE any file is written; a failure raises, run.py exits 1, the CI step fails, and the deploy job
+(needs: build) never runs — so stale/partial RTT data can't ship. Added a dedup guard (_zip_month skips a
+second file for an already-processed month). Proven by test_build_fails_loud_and_writes_nothing_on_bad_gate
+(build raises AND writes no meta/index/national).
+WORKFLOW: renamed to "Update CWT + RTT data and deploy"; added a "Fetch + rebuild RTT" step after the
+cancer one; commit step now also stages data_rtt/manifest.json + site/rtt/data (breakdowns gitignored, so
+only the core JSON is committed) and excludes BOTH meta.json files from the no-op-commit check. The Pages
+artifact uploads the freshly-built site/ — incl. the 642 RTT breakdown files rebuilt in-workspace — so the
+live breakdown selector works.
+VALIDATED LOCALLY: `python -m pipeline_rtt.run` GREEN against live NHS (scraped 5 FY pages, discovered 49
+months, recon=True, TF-sum max|Δ|=0, 642 orgs). 45 tests pass (32 cancer + 13 RTT; new: discover parsing/
+FY-enumeration/select-to-fetch, fail-loud-no-publish). YAML valid; artifact contains breakdowns; gitignore
+stages core-only. CAN'T get a real Actions run without triggering the (held) deploy, since build→deploy are
+coupled — confirmation is local + by-construction until the deploy.
+NEXT: restructure plan (cancer-waiting-times→waiting-times, /cancer/ + /rtt/ + root landing) sent for review;
+deploy everything (RTT page+core, CI-rebuilt breakdowns, cancer forward-link, restructure) as ONE change.
+
+## 2026-06-19 — RTT polish pass (5 items) applied; RE-RENDERED, AWAITING DEPLOY GO (Code)
+Front-end only (site/rtt/index.html) + ONE cancer-page edit (site/index.html), no pipeline/data change.
+41 tests still pass; JS --check clean both pages. NOT deployed — paused for the deploy go. The five
+user-listed items:
+ 1. CROSS-LINK both ways: added a forward "RTT Waiting Times Dashboard →" link on the cancer page's
+    header (beside Compare), mirroring RTT's "← Cancer" back-link. This edits the DEPLOYED cancer
+    index.html but MUST ship in the SAME deploy as /rtt/ (no live link to /rtt/ before it exists).
+ 2. Dropped the "INCOMPLETE" card eyebrow entirely; the eyebrow now shows the treatment-function name
+    when one is sliced, nothing otherwise.
+ 3. Recovery milestones (65/70%) now drawn ONLY on the all-England, all-TF headline (showMs =
+    TF===null && CURRENT.isNational); suppressed on individual-TF and per-provider views, and the
+    y-axis no longer stretches to 65/70 off-headline. 92% target line stays on every % view.
+ 4. Wording aligned to "92% target" everywhere (was "92% standard" on the chart, "92.0% target" on the
+    card); decimal dropped via targetPct().
+ 5. Count cards on <13-month orgs (the 6 parked Apr-2026 ICBs) show "no year-ago data" (neutral) instead
+    of a misleading "0% vs yr ago".
+RE-RENDERED + state-verified (screenshots/rtt_pol_1..3): England all-TF (milestones present, no eyebrow,
+"92% target"), individual-TF (0 milestone lines), NHS Essex 1-month ICB ("no year-ago data"). Tooltip
+scale fixed to pass the same showMs so the national dot positions stay correct. NEXT: deploy (the /rtt/
+page + data + the cancer forward-link in one go) + CI/cron wiring on the user's go.
+
+## 2026-06-19 — RTT increment 2 BUILT: treatment-function breakdown selector across all 3 measures + TF-sum gate; RENDERED, AWAITING REVIEW (Code)
+Decisions from the user applied: keep all five X0x "Other–" buckets separate under an "Other" heading
+(23 selectable TFs, default C_999 total); long-waiters = default 52+ with the [52·65·78·104] sub-control
+each on its own axis; England overlay %-chart-only; Apr-2026 ICB-reorg parked. BUILT, NOT deployed.
+PIPELINE: process_zip now folds C_999 → core store and the 23 individual TFs → a breakdown store;
+writes org/<CODE>.breakdown.json + national.breakdown.json (lazy, gitignored, ~9.6MB total, median 6KB).
+NEW FAIL-LOUD GATE reconcile_tf: sum across the 23 TFs == published C_999 total for EVERY org-month
+BEFORE any file is written — 24,776 org-months reconcile EXACTLY (max|Δ|=0, same discipline as cancer's
+cancer-group gate). meta.json gains treatment_functions[] (code/name/group, X0x→"Other") + tf_reconciliation.
+Build ~2min over 49 months. National SPN gate still green.
+FRONT END: a grouped "Treatment function" dropdown (Overview→All / Specialty / Other — same picker
+pattern as the org list) in the filterbar, DRIVES ALL THREE measures (cards + chart). Default All
+treatment functions = the core C_999 series. Selecting a TF lazy-loads the breakdown (national too, for
+the matched England overlay). Series accessors generalised over a {months,measures} source (breakdown
+omits data_status/target — defaulted). Low-reliability (n<10) now MEANINGFUL at TF level and rendered:
+open-square markers + lighter-teal dotted segments + legend entry (verified live on KIMS Hospital
+ophthalmology, 6 square markers). Empty state for a TF an org doesn't publish (cards + chart explain
+the gap; measure toggle still works). Export filename includes the TF. Title/cards carry the TF name.
+VERIFIED (screenshots/rtt_bd_*): RAJ Trauma & Orthopaedic across all 3 measures (33.0% / 16.1k / 2.58k),
+England-overlay matched to the TF, low-reliability squares, grouped dropdown, empty-TF case, export name.
+41 tests pass (32 cancer + 9 RTT; new: breakdown routing, TF-sum gate pass/fail, build_tf_payload).
+STILL NOT done (per build order): polish, deploy, CI workflow + daily cron. Next: the dashboard is now
+functionally complete (picker + 3 measures + 2 chart types + TF breakdown + reuse mechanics) — remaining
+is polish + deploy/CI when the user calls it.
+
+## 2026-06-19 — RTT increment 1 BUILT: pipeline + /rtt/ page (picker, % chart, 3-measure toggle, counts chart); RENDERED, AWAITING REVIEW (Code)
+Architecture calls all made by the user (entry below). BUILT this increment, NOT deployed — paused
+for review per the build order. New, parallel to the cancer stack: `pipeline_rtt/` (config + build),
+`tests_rtt/` (6 tests), `site/rtt/index.html` + `site/rtt/data/`. Full suite 38 pass (32 cancer + 6
+RTT). data_rtt/raw/*.zip gitignored (175MB, re-fetched); the ~2MB derived per-org JSON is committed.
+PIPELINE: scraped all 49 monthly Full-CSV zips (Apr-2022→Apr-2026) off the FY sub-pages; stream-parse
+each, keep ONLY Part_2 (incomplete) / C_999 (all-TF) rows, exclude NONC, derive 6 metrics/org-month
+from the 105 bands. Aggregates: national = all non-NONC rows; provider = by Provider Org Code (across
+commissioners); icb = by Commissioner Parent. Output 642 orgs (594 providers [96 hidden negligible],
+48 ICBs) + national; org JSON median 3.5KB, total 1.9MB.
+RECONCILIATION GATE PASSES (fail-loud, Apr-2025 vs SPN): pct18=0.5973 (SPN 59.7% ✓), waitlist
+7,389,065 (~7.4M ✓), w78=1,361 ✓ exact, w104=171 ✓ exact; w52=190,023 vs 190,068 and w65=9,244 vs
+9,258 within the 1% count tolerance (revised-extract vs original-SPN vintage). The `unknown clock
+start` column is 0 throughout and `Total All` == sum of bands exactly, so the denominator question is
+moot — confirmed empirically, no need to chase the rules-suite wording.
+FRONT END (reuses cancer's CSS, picker, range/expand/export/England mechanics verbatim): three
+summary cards ARE the measure toggle [% within 18 weeks · Waiting-list size · Long waiters]; the %
+card shows vs-92%, the count cards show latest + YoY trend (no target). TWO chart renderers — the
+% chart is the cancer CMB model (0–1, 92% target line + faint 65%/70% recovery-milestone reference
+lines in the right margin, England grey overlay) and a NEW count chart (numeric auto-scaling 0-based
+axis, K/M ticks, no target). Feb-2024 break marker + banner on ALL measures (the cancer Oct-2023
+logic, shown only when the window reaches pre-break). Headless render verified all paths
+(screenshots/rtt_*): measure toggle, threshold sub-control, England-overlay scoping, break marker,
+PNG/SVG export.
+TWO calls made in-build, flagged for the user to confirm/redirect:
+ 1. LONG-WAITERS proposal = default 52+, with a [52·65·78·104 wks] segmented sub-control, each
+    threshold on its OWN auto-scaled axis (rejected: all four on one linear axis — 52+ tops ~500k
+    while 104+ tops ~20k, so 104+/78+ would be a flat line on the floor; the sweep screenshots show
+    each is only readable on its own scale). Open to a log-axis overlay or small-multiples instead.
+ 2. ENGLAND comparison overlay is shown on the % chart ONLY (counts can't share a linear scale with
+    the 7M national total); the toggle is hidden for the two count measures. Could revisit with a
+    dual-axis or %-of-England framing.
+KNOWN, noted not blocked: an Apr-2026 ICB reorganisation introduces 6 new merged ICB codes (NHS
+Essex, Surrey & Sussex, Thames Valley, etc.) appearing only in the latest month — honest single-point
+series; could hide no-recent-data ICBs in a polish pass. Provider negligible-hide threshold (recent
+12-mo peak waitlist < 100) is a placeholder; 498 providers remain selectable (searchable picker).
+NOT YET (per build order): TF breakdown selector (the 24-value taxonomy — shown to the user for the
+collapse-X0x decision before wiring), polish, deploy, CI workflow, daily cron.
+
+## 2026-06-19 — INVESTIGATION: second dashboard for RTT (Referral to Treatment) waiting times at /rtt/ (Code; user makes the architecture calls)
+INVESTIGATE-ONLY, nothing built (same discipline as the time-range / org-hiding investigations).
+Source: england.nhs.uk RTT, per-FY sub-pages (rtt-data-2025-26 etc.). Verified against the LIVE
+Mar-2026 file listing + the Apr-2025 SPN (downloaded + parsed the actual Mar-2026 Full CSV extract).
+Scope = % within 18 weeks (92% standard) AND waiting-list size + 52/65/78+ long-waiters — ALL of
+which are INCOMPLETE-pathway metrics, so the whole stated scope comes from ONE pathway type
+(Part_2). NHS's own dashboard at data.england.nhs.uk/dashboard/rtt — context only, nothing to do.
+
+DATA MODEL. Each month publishes NINE files: 4 provider XLSX + 4 commissioner XLSX (Incomplete /
+Admitted / NonAdmitted / NewPeriods) + ONE combined **Full CSV data file** (ZIP ~4M → one ~85MB
+CSV, 121 cols). BOTH provider AND commissioner are published; commissioner aggregates sub-ICB → ICB
+→ region → England. Use the Full CSV (the RTT analogue of cancer's "Monthly Combined CSV") — it
+holds all 5 pathway types + both org levels in one, so we DON'T need the XLSX parser. Pathway types
+(col "RTT Part Type"): Part_1A completed-admitted, Part_1B completed-non-admitted, Part_2 incomplete,
+Part_2A incomplete-with-DTA, Part_3 new-clock-starts. Our scope needs only **Part_2**.
+- Dimensions: provider/commissioner org+parent codes (cols 1–13), **Treatment Function** (a reduced
+  24-value taxonomy: C_100 General Surgery … C_502 Gynaecology + X02–X06 "Other" + C_999 a
+  pre-aggregated Total — codes carry a `C_` prefix), and **105 one-week wait-band columns**
+  ("Gt 00 To 01 Weeks" … "Gt 103 To 104 Weeks" + a single "Gt 104 Weeks" catch-all), then Total /
+  unknown-clock-start / Total All summary cols.
+- CAVEAT (confirmed by parsing the file): in the Full CSV the Total + unknown-clock-start summary
+  cols are BLANK — we compute every metric from the 105 bands ourselves. Must (a) filter out NONC
+  (non-English-commissioned) rows — present only in the Full CSV, will over-count headline if kept;
+  (b) NOT double-count C_999 (the all-TF total row) against the individual TFs.
+- DERIVATION: waiting-list size = sum of all 105 bands for Part_2 (= the "size of the RTT waiting
+  list"). % within 18 weeks = sum(first 18 bands) / denominator. 52+/65+/78+/104+ = sum of bands
+  from that threshold on (104+ = the single catch-all band). DENOMINATOR caveat: the established
+  published convention is to EXCLUDE unknown-clock-start from the % (reported as a separate count)
+  while the headline waiting-list size (7.4m, Apr-25) is the grand total INCLUDING them — but the
+  exact wording isn't printed in the v5.0 guidance / SPN I could decode. RESOLUTION (matches our
+  existing reconcile-to-total gate discipline): compute it, then RECONCILE the derived national %
+  to the published SPN headline (Apr-25 = 59.7%) as a fail-loud build gate rather than trusting the
+  prose. Same for the long-waiter counts (190,068 >52wk / 9,258 >65wk / 1,361 >78wk / 171 >104wk).
+
+DISCONTINUITIES. (1) The 92% / 18-week incomplete standard IS still the live NHS Constitution
+standard in 2025/26 (the admitted-90% / non-admitted-95% measures were ABOLISHED Oct-2015, leaving
+the single incomplete measure — so any pre-Oct-2015 series is a separate regime, like cancer's
+Oct-2023). (2) **Feb-2024 community-services break** — community paediatrics + other community
+pathways left RTT for the CHS waiting-list collection (~36k pathways dropped Feb-24, ~7k more Mar-24;
+est. ~4.4k fewer 52wk / ~2.5k 65wk / ~1.4k 78wk). This is the direct analogue of cancer's Oct-2023
+break and needs the same "series changed" marker/banner treatment. (3) Apr-2021 DCB0095 return
+change; CCG→ICB transition Jul-2022 (commissioner identifiers change); COVID Apr-2020 cliff (~47%);
+some periods have non-submitting trusts (NHS publishes "incl. estimates"; medians/percentiles do
+NOT include estimates). RECOVERY TRAJECTORY (planning guidance / elective-reform plan) gives
+MILESTONE lines distinct from the flat 92% target: 65% by Mar-2026 (+ every trust ≥5pp), 70% by
+Mar-2027, back to 92% by Mar-2029 — candidate annotations.
+
+REUSABILITY. Drops in AS-IS (all front-end-only, chart-agnostic mechanics that read what's on
+screen): the grouped Trust/ICB picker + index.json model (RTT has both levels, classifies the same
+way), one-JSON-per-org load + lazy per-org breakdown file, time-range presets, expand modal,
+PNG/SVG export, Show-England toggle, low-reliability (n<10) flag, provisional/final markers, the
+discover→normalise→build_site_data pipeline scaffold + reconciliation-gate + CI pattern. The
+**% within 18 weeks** chart is essentially cancer's CMB model (a 0–1 performance series + a single %
+target line) — near drop-in. GENUINELY NEW: (a) a **counts / absolute-number chart** — numeric
+auto-scaled y-axis (K/M formatting, no 0–1 cap, no single % target) for waiting-list size + the
+52/65/78/104+ long-waiter family (multi-series); bigSVG/sparkSVG + bigScales assume performance 0–1,
+so a numeric-axis variant is the real new component (the SVG scaffold/range/expand/export/tooltips
+around it are reused). (b) the **24-treatment-function taxonomy** replaces the cancer-group selector
+as the shared "specialty" lens — SIMPLER than cancer (single dim, no route×modality cross). (c) a
+**measure/pathway toggle** to fill the slot cancer's 3-standard toggle held: [% within 18 weeks] vs
+[Waiting-list size] vs [Long waiters 52/65/78+], the first on the % chart, the rest on the new counts
+chart. (d) Feb-2024 break marker + recovery-milestone lines. (Completed-admitted / non-admitted
+median + 92nd-pctile waits are OUT of the stated scope — a possible later extension, not this round.)
+
+SIZE / PERF. The one-JSON-per-org model HOLDS — do NOT ship the 105 raw bands to the browser;
+pre-aggregate in the pipeline to ~6 derived metrics per org-month-TF (pct18, waiting-list, w52, w65,
+w78, w104). Est. payloads: core (all-TF C_999 row) ~8–10KB/org for 48mo (~30KB full history since
+2012); lazy per-org breakdown (24 TFs × 6 metrics × months) ~36KB (48mo) to ~130KB (full) — same
+order as today's cancer breakdown files (40–200KB), lazy-loaded one at a time. Org cardinality
+similar (~185 acute providers + 42 ICBs + ~106 sub-ICBs + regions). The ONE place the cancer model
+needs a guard: if a 105-band DISTRIBUTION histogram chart is ever wanted, that's ~125k numbers/org —
+ship only the latest-month (or a few snapshot months) bands or load on demand, never the full
+band×month×TF cube. PIPELINE adaptation: unlike cancer's per-FY combined CSV, the RTT Full CSV is
+PER-MONTH (~85MB each) — a from-scratch pull of full history is ~14GB of raw, so stream-filter to
+Part_2 + derived metrics into a tidy parquet and do NOT hoard raw monthly fulls the way data/raw
+keeps the cancer FY files (the daily incremental fetch only ever adds the newest month).
+
+OPEN ARCHITECTURE CALLS handed to the user (none made here): chart-type set + whether to build the
+counts chart now; how the measure/pathway toggle maps; treatment-function taxonomy grouping (24 as-is
+vs collapse the X0x "Other" set); history depth (since 2012 vs a bounded window); whether to confirm
+the exact % denominator via the rules suite or lean on the reconcile-to-headline gate.
+
 ## 2026-06-16 — v16 SHIPPED; VERIFIED LIVE (Code)
 "Show England" toggle approved and shipped: commit 1ba5298 (site/index.html + DECISIONS.md — no
 pipeline/data change) via watched workflow_dispatch run 27620549350 — build (3m0s: tests → fetch
