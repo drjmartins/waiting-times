@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-06-12T14:45:28.904515Z",
+  "built_at": "2026-06-20T09:13:52.458836Z",
   "comparability_break": "2023-10",
   "n_orgs": 185,
   "n_orgs_total": 251,
@@ -84,6 +84,9 @@
     "Upper GI": "oesophagus & stomach, hepatobiliary",
     "Urology": "prostate, testicular, other urological",
     "Other": "brain/CNS, sarcoma, children's cancer, non-specific symptoms"
+  },
+  "group_caveat": {
+    "Other": "For the 28-day standard, NHS England publishes data individually on brain/CNS, sarcoma, children's cancer, other cancers, and non-specific symptoms, which are aggregated here. For the 31- and 62-day standards, NHS England publishes a single 'Other (a)' line, covering the same cancers except non-specific symptoms."
   },
   "note": "31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable."
 }
