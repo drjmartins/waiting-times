@@ -50,7 +50,12 @@ def run_real():
                 for chunk in r.iter_content(1 << 16):
                     f.write(chunk)
         manifest.setdefault("months", {})[month] = url
-    discover.save_manifest(manifest)
+    # Only persist the manifest when we actually fetched something. save_manifest
+    # stamps last_checked, so writing it every run would churn data_rtt/manifest.json
+    # and reintroduce the daily no-op "Auto update CWT data" commit the CI hardening
+    # removed (the no-op-commit guard only excludes the meta.json files).
+    if todo:
+        discover.save_manifest(manifest)
 
     meta = build.run()        # runs BOTH gates, then writes site/rtt/data
     print(f"Rebuilt RTT site data: {meta['counts']} | "

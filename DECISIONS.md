@@ -21,8 +21,21 @@ LOCAL VERIFY before deploy: all paths 200 (landing, /cancer/ + compare + data + 
 breakdown); headless render confirms cancer deep-link (?org=&std=&range=&england=) renders + cross-links
 (compare.html, ../rtt/, ../), compare.html loads, RTT TF-breakdown renders (../cancer/, ../). 45 tests pass.
 Deploy sequence: push (dispatch-only workflow, no auto-deploy) → rename repo → create+enable stub Pages →
-workflow_dispatch on waiting-times → watch build+deploy green → verify live. (Live-verify results appended
-below once confirmed.)
+workflow_dispatch on waiting-times → watch build+deploy green → verify live.
+SHIPPED + VERIFIED LIVE: commit 29dda0c pushed; repo renamed cancer-waiting-times → waiting-times; stub
+repo created at the freed name with Pages on (index.html + 404.html). Deploy run 27866606606 GREEN (build
+6m2s — cancer + RTT both fetched/built, BOTH gates passed, committed, artifact uploaded; deploy 16s).
+Live checks (curl + headless): all paths 200 incl. CI-rebuilt gitignored breakdowns (cancer RJ1.breakdown,
+RTT RAJ.breakdown + national.breakdown); live RTT meta shows recon=True, tf maxΔ=0, 642 orgs.
+Behavioural: (1) …/cancer-waiting-times/?org=RJ1&std=CMB62 → redirects to …/waiting-times/cancer/?org=RJ1&
+std=CMB62 and loads Guy's & St Thomas' (query PRESERVED); (2) …/cancer-waiting-times/compare.html →
+…/waiting-times/cancer/compare.html (deep path via 404.html); (3) cancer deep-link renders (CMB62, england=
+off); (4) RTT TF-breakdown renders live; (5) landing → cancer/ + rtt/. The daily cron is the SAME workflow,
+now running both pipelines with fail-loud gates — this dispatch exercised that path green.
+FOLLOW-UP FIX (same session): the first CI run made an "Auto update CWT data" no-op commit (ebe3c1f)
+because run.py wrote data_rtt/manifest.json (churning last_checked) every run. Fixed to match cancer —
+save the RTT manifest ONLY when a month was actually fetched, so true no-op daily runs leave only the
+excluded meta.json files and skip the commit.
 
 ## 2026-06-20 — RTT wired into CI (update-data.yml); pipeline runs GREEN end-to-end; DEPLOY HELD for the restructure (Code)
 Per the user: wire pipeline_rtt into the existing daily workflow FIRST, do NOT deploy core-only (a live
