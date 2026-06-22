@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-06-21T17:28:42.797669Z",
+  "built_at": "2026-06-22T11:15:55.546523Z",
   "months": [
     "2022-04",
     "2022-05",
@@ -92,7 +92,7 @@
   "counts": {
     "providers": 594,
     "icbs": 48,
-    "hidden": 96
+    "hidden": 64
   },
   "treatment_functions": [
     {
