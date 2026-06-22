@@ -40,6 +40,14 @@
     margin-bottom:6px;border:1px solid var(--line);border-radius:5px}
   .note{background:#fff7e8;border:1px solid #f0dcae;border-left:3px solid var(--target);
     padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0 22px}
+  /* Contextual org-lifecycle note (former/newly-formed) — neutral, distinct from the amber break note. */
+  .orgnote{background:var(--grid);border:1px solid var(--line);border-left:3px solid var(--org);
+    padding:9px 12px;font-size:13px;color:var(--ink-soft);border-radius:0 4px 4px 0;margin:2px 0 18px}
+  .orgnote[hidden]{display:none}
+  .orgnote b{color:var(--ink)}
+  .orgnote .rellink{background:none;border:0;padding:0;font:inherit;color:var(--org);
+    text-decoration:underline;cursor:pointer}
+  .orgnote .rellink:hover{color:var(--org-strong,var(--org))}
 
   /* Three summary cards = the MEASURE switcher */
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:18px 0 22px}
@@ -147,7 +155,7 @@
 <div class="wrap">
   <header>
     <h1>NHS RTT Waiting Times Dashboard</h1>
-    <div class="sub">England &middot; Referral to Treatment &mdash; 18-week waiting times &amp; the waiting list</div>
+    <div class="sub">England &middot; Referral to Treatment &mdash; 18-week waiting times &amp; waiting lists</div>
     <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:8px">
       <a href="../cancer/" style="color:var(--org);text-decoration:none">&larr; Cancer Waiting Times Dashboard</a>
       <span style="color:var(--line);margin:0 8px">|</span>
@@ -177,6 +185,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Contextual org-lifecycle note: shown when a former / newly-formed org is selected. -->
+  <div class="orgnote" id="orgnote" hidden></div>
 
   <!-- Three summary cards = the MEASURE switcher (% within 18wk / waiting list / long waiters) -->
   <div class="cards" id="cards"></div>
@@ -295,9 +306,9 @@ function fmtAxis(v){
 
 function footerHTML(M){
   const latest=fullMonth(M.months[M.months.length-1]), built=isoDate(M.built_at);
-  return `Data source: <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/" target="_blank" rel="noopener">NHS England Referral to Treatment (RTT) waiting times statistics</a>, published monthly and used here under the Open Government Licence v3.0. Figures are derived from the monthly Full CSV extract (Incomplete pathways), aggregated across treatment functions; non-English-commissioned activity is excluded. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England. NHS England also publishes an official RTT dashboard.<br><br>`+
+  return `Data source: <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/" target="_blank" rel="noopener">NHS England Referral to Treatment (RTT) waiting times statistics</a>, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
     `Data to ${latest}. Last updated ${built}.<br><br>`+
-    `Some independent-sector providers with very little recent activity are hidden from the selectors but remain reachable by direct link.`;
+    `Some independent-sector providers with very little recent activity are hidden. Non-English-commissioned activity is also excluded.`;
 }
 
 async function init(){
@@ -307,10 +318,8 @@ async function init(){
   const idx = await (await fetch(DATA+"index.json")).json();
   window._idx = idx;
   document.getElementById("breaknote").innerHTML =
-    "&#9888; <b>February 2024 series break.</b> From February 2024, community-service pathways "+
-    "(e.g. community paediatrics) are no longer reported in RTT and moved to the Community Health "+
-    "Services waiting-list collection — so figures before and after are not strictly comparable. "+
-    "The dashed marker in the chart shows where this happens (when the visible window reaches back that far).";
+    "&#9888; Community services moved out of RTT reporting in February 2024; "+
+    "figures before that month are not directly comparable.";
 
   document.querySelectorAll(".typebtn").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
   document.getElementById("orgbtn").addEventListener("click", toggleOrgPanel);
@@ -374,6 +383,7 @@ function orgListFor(type){
 // Classify for the grouped picker, off the org NAME: NHS Trust vs Independent
 // sector (providers); ICB vs Other (commissioners — the national hubs).
 function orgGroupOf(o){
+  if(o.former) return "Former organisations";   // closed/superseded per ODS — own group, still selectable
   const u=(o.name||"").toUpperCase();
   if(o.level==="icb") return u.includes("INTEGRATED CARE BOARD") ? "ICB" : "Other";
   const isTrust=(u.includes("TRUST") && (u.includes("NHS")||u.includes("NATIONAL HEALTH SERVICE")));
@@ -384,7 +394,11 @@ function buildOrgOptions(q){
   q=(q||"").trim().toLowerCase();
   const list=orgListFor(CURRENT_TYPE).filter(o=> !q || o.name.toLowerCase().includes(q) || o.code.toLowerCase().includes(q));
   if(!list.length){ host.innerHTML='<div class="fgroup first">No matches</div>'; return; }
-  const order = CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Independent sector"];
+  // Former (closed/superseded per ODS) orgs are bucketed last but stay SELECTABLE —
+  // their history is still viewable (valuable right after a merger when the
+  // successor is data-thin). Prolonged inactivity later hides them via the build.
+  const base = CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Independent sector"];
+  const order = [...base, "Former organisations"];
   let first=true;
   for(const grp of order){
     const items=list.filter(o=>orgGroupOf(o)===grp);
@@ -419,6 +433,7 @@ function dropSearchKey(e){
 async function loadNational(){
   CURRENT = Object.assign({code:NATIONAL_CODE, name:"England", level:"national", region:"England", isNational:true}, NATIONAL);
   BREAKDOWN=null;
+  renderOrgNote(null);
   if(TF!==null) await ensureBreakdown();
   render();
 }
@@ -426,8 +441,43 @@ async function loadOrg(code){
   CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
   CURRENT.isNational=false;
   BREAKDOWN=null;                       // breakdown is per-org; refetch lazily
+  renderOrgNote(code);
   if(TF!==null) await ensureBreakdown();
   render();
+}
+
+// Jump to a related org (a successor / predecessor from the ODS change note).
+function goToOrg(code){
+  const e=(window._idx||[]).find(o=>o.code===code);
+  if(e) setType(e.level, e.code);
+}
+const _fullM=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const longDate = iso => { if(!iso) return ""; const[y,m]=iso.split("-"); return _fullM[+m-1]+" "+y; };
+// Generic, auto-generated lifecycle note (no hand-written per-merger text), built
+// from the index entry's ODS succession fields. Former → "Closed … — see related:";
+// newly-formed → "Formed … — see related:". Hidden when neither applies.
+function renderOrgNote(code){
+  const box=document.getElementById("orgnote");
+  const e=code ? (window._idx||[]).find(o=>o.code===code) : null;
+  if(!e || (!e.former && e.reltype!=="formed")){ box.hidden=true; box.innerHTML=""; return; }
+  const rel=(e.related||[]).map(r=>{
+    const known=(window._idx||[]).some(o=>o.code===r.code);
+    return known ? `<button type="button" class="rellink" onclick="goToOrg('${r.code}')">${r.name}</button>`
+                 : `${r.name} (${r.code})`;
+  });
+  let msg;
+  if(e.former){
+    const when=longDate(e.closed);
+    msg=`<b>Closed${when?" "+when:""}.</b> This organisation was reorganised`+
+        (rel.length?` — see related organisation${rel.length>1?"s":""}: ${rel.join(", ")}.`:".")+
+        ` Its figures up to closure remain viewable here.`;
+  } else {
+    const when=longDate(e.opened);
+    msg=`<b>Formed${when?" "+when:""}.</b> This is a new organisation`+
+        (rel.length?`, drawing on the area${rel.length>1?"s":""} of: ${rel.join(", ")}.`:".")+
+        ` Earlier months are not available under this code.`;
+  }
+  box.innerHTML=msg; box.hidden=false;
 }
 
 function render(){

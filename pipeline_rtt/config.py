@@ -84,6 +84,11 @@ RELIABILITY_THRESHOLD = 10
 PICKER_PROVIDER_WINDOW_MONTHS = 12
 PICKER_MIN_PROVIDER_WAITLIST = 100
 
+# An org whose data series FIRST appears within this many months AND is CURRENT per
+# ODS is "young" (newly created, e.g. a just-merged ICB) — checked first and
+# protected from the hiding rule so it shows from month 1. See pipeline_common/ods.py.
+YOUNG_WINDOW_MONTHS = 12
+
 # Where things live.
 RAW_DIR = "data_rtt/raw"
 SITE_DATA_DIR = "site/rtt/data"

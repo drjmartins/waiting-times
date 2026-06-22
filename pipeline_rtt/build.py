@@ -22,6 +22,7 @@ import datetime as dt
 from collections import defaultdict
 
 from . import config
+from pipeline_common import ods
 
 
 # --- wait-band column resolution -------------------------------------------
@@ -208,15 +209,25 @@ def reconcile_tf(store, bd_orgs):
     return {"checked": checked, "max_abs_delta": worst}
 
 
-def _negligible(by_month, all_months):
+def _negligible(by_month, all_months, code, classification):
     """A provider is hidden if its max monthly waiting list over the last
-    PICKER_PROVIDER_WINDOW_MONTHS stays below PICKER_MIN_PROVIDER_WAITLIST."""
-    recent = sorted(all_months)[-config.PICKER_PROVIDER_WINDOW_MONTHS:]
+    PICKER_PROVIDER_WINDOW_MONTHS stays below PICKER_MIN_PROVIDER_WAITLIST.
+
+    YOUNG-ORG PROTECTION (2026-06-22): an org that is CURRENT per ODS and whose
+    series first appears within YOUNG_WINDOW_MONTHS is thin because newly created,
+    not dormant — checked first and never hidden (so it shows from month one)."""
+    months = sorted(all_months)
+    young_cutoff = months[-config.YOUNG_WINDOW_MONTHS] if len(months) >= config.YOUNG_WINDOW_MONTHS else months[0]
+    first_month = min(by_month) if by_month else ""
+    if not ods.is_former(classification.get(code)) and first_month >= young_cutoff:
+        return False
+    recent = months[-config.PICKER_PROVIDER_WINDOW_MONTHS:]
     peak = max((by_month[mo]["total"] for mo in recent if mo in by_month), default=0)
     return peak < config.PICKER_MIN_PROVIDER_WAITLIST
 
 
-def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR):
+def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=None):
+    classification = classification or {}   # ODS org-status; absent → current (fail-open)
     zips = sorted(f for f in os.listdir(raw_dir) if f.endswith(".zip"))
     if not zips:
         raise RuntimeError(f"no zips in {raw_dir}")
@@ -274,8 +285,9 @@ def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR):
         with open(os.path.join(org_dir, f"{code}.breakdown.json"), "w") as f:
             json.dump(bd_payload, f, separators=(",", ":"))
         entry = {"code": code, "name": name, "level": level, "region": "England"}
-        if level == "provider" and _negligible(by_month, all_months):
+        if level == "provider" and _negligible(by_month, all_months, code, classification):
             entry["hidden"] = True
+        ods.annotate_entry(entry, classification.get(code))
         index.append(entry)
 
     index.sort(key=lambda e: (e["level"], e["name"]))

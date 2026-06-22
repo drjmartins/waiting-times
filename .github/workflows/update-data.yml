@@ -46,7 +46,7 @@ jobs:
         run: |
           git config user.name "cwt-bot"
           git config user.email "cwt-bot@users.noreply.github.com"
-          git add data/manifest.json data/processed site/cancer/data data_rtt/manifest.json site/rtt/data
+          git add data/manifest.json data/processed site/cancer/data data_rtt/manifest.json site/rtt/data ods_classification.json
           if git diff --cached --quiet -- . ':(exclude)site/cancer/data/meta.json' ':(exclude)site/rtt/data/meta.json'; then
             echo "No data change (only meta.json built_at) — skipping no-op commit."
           else

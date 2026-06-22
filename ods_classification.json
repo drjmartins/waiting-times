@@ -1,0 +1,4666 @@
+{
+  "as_of": "2026-05-07",
+  "orgs": {
+    "D7T5G": {
+      "closed": null,
+      "name": "NHS ESSEX INTEGRATED CARE BOARD",
+      "opened": "2026-04-01",
+      "predecessors": [
+        {
+          "code": "QJG",
+          "name": "NHS SUFFOLK AND NORTH EAST ESSEX INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QM7",
+          "name": "NHS HERTFORDSHIRE AND WEST ESSEX INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QH8",
+          "name": "NHS MID AND SOUTH ESSEX INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "G6V2S": {
+      "closed": null,
+      "name": "NORTH LONDON NHS FOUNDATION TRUST",
+      "opened": "2024-11-01",
+      "predecessors": [
+        {
+          "code": "RRP",
+          "name": "BARNET, ENFIELD AND HARINGEY MENTAL HEALTH NHS TRUST"
+        },
+        {
+          "code": "TAF",
+          "name": "TAF"
+        },
+        {
+          "code": "RNK",
+          "name": "TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "N5E8H": {
+      "closed": "2026-01-31",
+      "name": "SURREY HEARTLANDS - SOUTH EAST SMHPC (CYPMHS TIER 4)",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "QBX": {
+      "closed": null,
+      "name": "BUCKINGHAMSHIRE ICS (PRE ICB)",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "QH8": {
+      "closed": "2026-04-01",
+      "name": "NHS MID AND SOUTH ESSEX INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "D7T5G",
+          "name": "NHS ESSEX INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QHG": {
+      "closed": "2026-04-01",
+      "name": "NHS BEDFORDSHIRE, LUTON AND MILTON KEYNES INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S1Y5D",
+          "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QJG": {
+      "closed": "2026-04-01",
+      "name": "NHS SUFFOLK AND NORTH EAST ESSEX INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "D7T5G",
+          "name": "NHS ESSEX INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "T6Y0W",
+          "name": "NHS NORFOLK AND SUFFOLK INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QM7": {
+      "closed": "2026-04-01",
+      "name": "NHS HERTFORDSHIRE AND WEST ESSEX INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S1Y5D",
+          "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "D7T5G",
+          "name": "NHS ESSEX INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QMJ": {
+      "closed": "2026-04-01",
+      "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "Z9B2Z",
+          "name": "NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QMK": {
+      "closed": "2018-04-01",
+      "name": "DURHAM, DARLINGTON, TEESIDE, HAMBLETON, RICHMONDSHIRE AND WHITBY STP",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "QHM",
+          "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QMM": {
+      "closed": "2026-04-01",
+      "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "T6Y0W",
+          "name": "NHS NORFOLK AND SUFFOLK INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QNQ": {
+      "closed": "2026-04-01",
+      "name": "NHS FRIMLEY INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S0E4D",
+          "name": "NHS THAMES VALLEY INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "S9B9J",
+          "name": "NHS SURREY AND SUSSEX INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QRL",
+          "name": "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QNX": {
+      "closed": "2026-04-01",
+      "name": "NHS SUSSEX INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S9B9J",
+          "name": "NHS SURREY AND SUSSEX INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QRL": {
+      "closed": null,
+      "name": "NHS HAMPSHIRE AND ISLE OF WIGHT INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "QNQ",
+          "name": "NHS FRIMLEY INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "QRV": {
+      "closed": "2026-04-01",
+      "name": "NHS NORTH WEST LONDON INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "Z9B2Z",
+          "name": "NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QT8": {
+      "closed": "2018-04-01",
+      "name": "WEST, NORTH AND EAST CUMBRIA HEALTH & CARE PARTNERSHIP (STP)",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "QHM",
+          "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QU9": {
+      "closed": "2026-04-01",
+      "name": "NHS BUCKINGHAMSHIRE, OXFORDSHIRE AND BERKSHIRE WEST INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S0E4D",
+          "name": "NHS THAMES VALLEY INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QUE": {
+      "closed": "2026-04-01",
+      "name": "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S1Y5D",
+          "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QVP": {
+      "closed": "2018-04-01",
+      "name": "NORTHUMBERLAND, TYNE AND WEAR AND NORTH DURHAM STP",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "QHM",
+          "name": "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "QXU": {
+      "closed": "2026-04-01",
+      "name": "NHS SURREY HEARTLANDS INTEGRATED CARE BOARD",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "S9B9J",
+          "name": "NHS SURREY AND SUSSEX INTEGRATED CARE BOARD"
+        }
+      ]
+    },
+    "R0B": {
+      "closed": null,
+      "name": "SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST",
+      "opened": "2019-04-01",
+      "predecessors": [
+        {
+          "code": "RLN",
+          "name": "CITY HOSPITALS SUNDERLAND NHS FOUNDATION TRUST"
+        },
+        {
+          "code": "RE9",
+          "name": "SOUTH TYNESIDE NHS FOUNDATION TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "R0C": {
+      "closed": null,
+      "name": "PROJECT NIGHTINGALE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "R1E": {
+      "closed": "2018-06-01",
+      "name": "STAFFORDSHIRE AND STOKE ON TRENT PARTNERSHIP NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RRE",
+          "name": "MIDLANDS PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "R1G": {
+      "closed": "2015-10-01",
+      "name": "TORBAY AND SOUTHERN DEVON HEALTH AND CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RA9",
+          "name": "TORBAY AND SOUTH DEVON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "R1J": {
+      "closed": "2019-10-01",
+      "name": "GLOUCESTERSHIRE CARE SERVICES NHS TRUST",
+      "opened": "2013-03-22",
+      "predecessors": [
+        {
+          "code": "5QH",
+          "name": "5QH"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RTQ",
+          "name": "GLOUCESTERSHIRE HEALTH AND CARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "R1K": {
+      "closed": null,
+      "name": "LONDON NORTH WEST UNIVERSITY HEALTHCARE NHS TRUST",
+      "opened": "2014-10-01",
+      "predecessors": [
+        {
+          "code": "RC3",
+          "name": "EALING HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RV8",
+          "name": "NORTH WEST LONDON HOSPITALS NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "R1L": {
+      "closed": null,
+      "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+      "opened": "2017-04-01",
+      "predecessors": [
+        {
+          "code": "RRD",
+          "name": "NORTH ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
+        },
+        {
+          "code": "RWN",
+          "name": "SOUTH ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RA0": {
+      "closed": null,
+      "name": "CROYDON AND SURREY DOWNS COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RA1": {
+      "closed": null,
+      "name": "EPSOM HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RA3": {
+      "closed": "2020-04-01",
+      "name": "WESTON AREA HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RA7",
+          "name": "UNIVERSITY HOSPITALS BRISTOL AND WESTON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RA5": {
+      "closed": null,
+      "name": "EAST GLOUCESTERSHIRE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RA6": {
+      "closed": null,
+      "name": "CORNWALL COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RA8": {
+      "closed": null,
+      "name": "TRECARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAB": {
+      "closed": null,
+      "name": "THE FREEMAN GROUP OF HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAF": {
+      "closed": null,
+      "name": "NORTHERN GENERAL HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAG": {
+      "closed": null,
+      "name": "DONCASTER ROYAL INFIRMARY AND MONTAGU HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAJ": {
+      "closed": null,
+      "name": "MID AND SOUTH ESSEX NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RDD",
+          "name": "BASILDON AND THURROCK UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"
+        },
+        {
+          "code": "RQ8",
+          "name": "MID ESSEX HOSPITAL SERVICES NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RAK": {
+      "closed": null,
+      "name": "ROYAL LONDON HOSPITAL AND ASSOCIATED COMMUNITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAL": {
+      "closed": null,
+      "name": "ROYAL FREE LONDON NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RAM",
+          "name": "ROYAL NATIONAL THROAT, NOSE AND EAR HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RAP",
+          "name": "NORTH MIDDLESEX UNIVERSITY HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RVL",
+          "name": "BARNET AND CHASE FARM HOSPITALS NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RAM": {
+      "closed": null,
+      "name": "ROYAL NATIONAL THROAT, NOSE AND EAR HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAP": {
+      "closed": "2025-01-01",
+      "name": "NORTH MIDDLESEX UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RAL",
+          "name": "ROYAL FREE LONDON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RAQ": {
+      "closed": null,
+      "name": "NORTH HERTFORDSHIRE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAT": {
+      "closed": null,
+      "name": "NORTH EAST LONDON NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RDF",
+          "name": "FOREST HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RG4",
+          "name": "REDBRIDGE HEALTH CARE NHS TRUST"
+        },
+        {
+          "code": "RG6",
+          "name": "BHB COMMUNITY HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RAU": {
+      "closed": null,
+      "name": "CENTRAL MIDDLESEX HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAV": {
+      "closed": null,
+      "name": "THE GUYS AND LEWISHAM NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RAX": {
+      "closed": null,
+      "name": "KINGSTON AND RICHMOND NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RY9",
+          "name": "HOUNSLOW AND RICHMOND COMMUNITY HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RAZ": {
+      "closed": null,
+      "name": "ST HELIER NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RB4": {
+      "closed": "2006-06-30",
+      "name": "ESSEX AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RB6": {
+      "closed": null,
+      "name": "MERSEY REGIONAL AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RB7": {
+      "closed": "2007-09-30",
+      "name": "STAFFORDSHIRE AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RB8": {
+      "closed": null,
+      "name": "SOUTH YORKSHIRE AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBA": {
+      "closed": "2020-04-01",
+      "name": "TAUNTON AND SOMERSET NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RH5",
+          "name": "SOMERSET NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RBB": {
+      "closed": "2015-02-01",
+      "name": "ROYAL NATIONAL HOSPITAL FOR RHEUMATIC DISEASES NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RD1",
+          "name": "ROYAL UNITED HOSPITALS BATH NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RBG": {
+      "closed": null,
+      "name": "FIRST COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBH": {
+      "closed": null,
+      "name": "THE FOUNDATION NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBJ": {
+      "closed": null,
+      "name": "RUGBY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBM": {
+      "closed": null,
+      "name": "ROYAL LIVERPOOL UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBP": {
+      "closed": null,
+      "name": "CHESTER AND HALTON COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBR": {
+      "closed": null,
+      "name": "BROADGREEN HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBU": {
+      "closed": null,
+      "name": "CENTRAL MANCHESTER HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBX": {
+      "closed": null,
+      "name": "LINCOLNSHIRE AMBULANCE AND HEALTH TRANSPORT SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RBZ": {
+      "closed": "2022-04-01",
+      "name": "NORTHERN DEVON HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RH8",
+          "name": "ROYAL DEVON UNIVERSITY HEALTHCARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RC1": {
+      "closed": "2020-04-01",
+      "name": "BEDFORD HOSPITAL NHS TRUST",
+      "opened": "1992-04-01",
+      "predecessors": [
+        {
+          "code": "EAA",
+          "name": "EAA"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RC9",
+          "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RC3": {
+      "closed": "2014-10-01",
+      "name": "EALING HOSPITAL NHS TRUST",
+      "opened": "1992-04-01",
+      "predecessors": [
+        {
+          "code": "EKA",
+          "name": "EKA"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1K",
+          "name": "LONDON NORTH WEST UNIVERSITY HEALTHCARE NHS TRUST"
+        }
+      ]
+    },
+    "RC4": {
+      "closed": null,
+      "name": "EAST HERTFORDSHIRE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RC5": {
+      "closed": null,
+      "name": "HAREFIELD HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RC8": {
+      "closed": null,
+      "name": "HORIZON NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RC9": {
+      "closed": null,
+      "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "EBA",
+          "name": "EBA"
+        },
+        {
+          "code": "RC1",
+          "name": "BEDFORD HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RCA": {
+      "closed": null,
+      "name": "NORTHALLERTON HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCE": {
+      "closed": null,
+      "name": "BRADFORD COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCH": {
+      "closed": null,
+      "name": "NORTH TEES HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCJ": {
+      "closed": null,
+      "name": "SOUTH TEES HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCK": {
+      "closed": null,
+      "name": "THE ROYAL VICTORIA INFIRMARY AND ASSOCIATED HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCL": {
+      "closed": null,
+      "name": "ALLINGTON NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCM": {
+      "closed": null,
+      "name": "HINCHINGBROOKE HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCN": {
+      "closed": null,
+      "name": "BARNSLEY COMMUNITY AND PRIORITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCP": {
+      "closed": null,
+      "name": "BASSETLAW HOSPITAL AND COMMUNITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCS": {
+      "closed": "2006-04-01",
+      "name": "NOTTINGHAM CITY HOSPITAL NHS TRUST",
+      "opened": "1992-04-01",
+      "predecessors": [
+        {
+          "code": "CHL",
+          "name": "CHL"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RX1",
+          "name": "NOTTINGHAM UNIVERSITY HOSPITALS NHS TRUST"
+        }
+      ]
+    },
+    "RCT": {
+      "closed": null,
+      "name": "NOTTINGHAM COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCV": {
+      "closed": null,
+      "name": "CENTRAL SHEFFIELD UNIVERSITY HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCX": {
+      "closed": null,
+      "name": "THE QUEEN ELIZABETH HOSPITAL, KING'S LYNN, NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DK1",
+          "name": "DK1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RCY": {
+      "closed": null,
+      "name": "ASHFORD HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RCZ": {
+      "closed": null,
+      "name": "BARNET COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RD2": {
+      "closed": null,
+      "name": "BATH AND WEST COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RD6": {
+      "closed": null,
+      "name": "EAST BERKSHIRE NHS TRUST FOR PEOPLE WITH LEARNING DISABILITIES",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RD7": {
+      "closed": "2014-10-01",
+      "name": "HEATHERWOOD AND WEXHAM PARK HOSPITALS NHS FOUNDATION TRUST",
+      "opened": "1992-04-01",
+      "predecessors": [
+        {
+          "code": "KE1",
+          "name": "KE1"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RDU",
+          "name": "FRIMLEY HEALTH NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RD8": {
+      "closed": null,
+      "name": "MILTON KEYNES UNIVERSITY HOSPITAL NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "KM1",
+          "name": "KM1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RD9": {
+      "closed": null,
+      "name": "MILTON KEYNES COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDA": {
+      "closed": null,
+      "name": "PARKSIDE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDB": {
+      "closed": null,
+      "name": "SOUTH BEDFORDSHIRE COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDC": {
+      "closed": null,
+      "name": "WELLHOUSE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDD": {
+      "closed": "2020-04-01",
+      "name": "BASILDON AND THURROCK UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+      "opened": "1992-04-01",
+      "predecessors": [
+        {
+          "code": "FAT",
+          "name": "FAT"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RAJ",
+          "name": "MID AND SOUTH ESSEX NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RDE": {
+      "closed": null,
+      "name": "EAST SUFFOLK AND NORTH ESSEX NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RGQ",
+          "name": "IPSWICH HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "FAG",
+          "name": "FAG"
+        },
+        {
+          "code": "FAH",
+          "name": "FAH"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RDF": {
+      "closed": null,
+      "name": "FOREST HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDG": {
+      "closed": null,
+      "name": "MID ESSEX HOSPITAL SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDJ": {
+      "closed": null,
+      "name": "NORTH EAST ESSEX MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDK": {
+      "closed": null,
+      "name": "SOUTHEND COMMUNITY CARE SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDL": {
+      "closed": null,
+      "name": "EASTBOURNE HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDM": {
+      "closed": null,
+      "name": "HASTINGS AND ROTHER NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDQ": {
+      "closed": null,
+      "name": "RAVENSBOURNE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDR": {
+      "closed": null,
+      "name": "SUSSEX COMMUNITY NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "GA1",
+          "name": "GA1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RDT": {
+      "closed": null,
+      "name": "LAMBETH HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDU": {
+      "closed": null,
+      "name": "FRIMLEY HEALTH NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "HFP",
+          "name": "HFP"
+        },
+        {
+          "code": "RD7",
+          "name": "HEATHERWOOD AND WEXHAM PARK HOSPITALS NHS FOUNDATION TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RDV": {
+      "closed": null,
+      "name": "ST PETER'S HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDX": {
+      "closed": null,
+      "name": "BATH MENTAL HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RDY": {
+      "closed": null,
+      "name": "DORSET HEALTHCARE UNIVERSITY NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "JA3",
+          "name": "JA3"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RE2": {
+      "closed": null,
+      "name": "GATESHEAD HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RE4": {
+      "closed": null,
+      "name": "SOUTH TEES COMMUNITY AND MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RE5": {
+      "closed": null,
+      "name": "WESTMORLAND HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RE6": {
+      "closed": null,
+      "name": "CUMBRIA AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RE7": {
+      "closed": null,
+      "name": "WEST CUMBRIA HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RE9": {
+      "closed": "2019-04-01",
+      "name": "SOUTH TYNESIDE NHS FOUNDATION TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "AR3",
+          "name": "AR3"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R0B",
+          "name": "SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "REA": {
+      "closed": null,
+      "name": "EXETER AND DISTRICT COMMUNITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REB": {
+      "closed": null,
+      "name": "FRENCHAY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RED": {
+      "closed": null,
+      "name": "PLYMOUTH COMMUNITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REE": {
+      "closed": null,
+      "name": "SOUTHMEAD HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REH": {
+      "closed": null,
+      "name": "HEREFORDSHIRE COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REL": {
+      "closed": null,
+      "name": "WALSGRAVE HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REQ": {
+      "closed": null,
+      "name": "SOUTHPORT AND FORMBY HOSPITALS SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RER": {
+      "closed": null,
+      "name": "ST HELENS AND KNOWSLEY COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RES": {
+      "closed": null,
+      "name": "NORTH MERSEY COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REU": {
+      "closed": null,
+      "name": "BURNLEY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REV": {
+      "closed": null,
+      "name": "LANCASTER ACUTE HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REX": {
+      "closed": null,
+      "name": "OLDHAM NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REY": {
+      "closed": null,
+      "name": "WRIGHTINGTON HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "REZ": {
+      "closed": null,
+      "name": "ROCHDALE HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RF2": {
+      "closed": null,
+      "name": "ROYAL HULL HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RF3": {
+      "closed": null,
+      "name": "EAST YORKSHIRE HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RF6": {
+      "closed": null,
+      "name": "NORTH EAST LINCOLNSHIRE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RF7": {
+      "closed": null,
+      "name": "SCUNTHORPE AND GOOLE HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFB": {
+      "closed": null,
+      "name": "LEICESTER GENERAL HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFD": {
+      "closed": null,
+      "name": "LEICESTER ROYAL INFIRMARY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFG": {
+      "closed": null,
+      "name": "ROTHERHAM PRIORITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFJ": {
+      "closed": null,
+      "name": "CENTRAL NOTTINGHAMSHIRE HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFK": {
+      "closed": null,
+      "name": "QUEEN'S MEDICAL CENTRE, NOTTINGHAM UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFL": {
+      "closed": null,
+      "name": "GLENFIELD HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFP": {
+      "closed": null,
+      "name": "DERBY CITY GENERAL HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFT": {
+      "closed": null,
+      "name": "BEDFORD AND SHIRES HEALTH AND CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFU": {
+      "closed": "2006-06-30",
+      "name": "BEDFORDSHIRE AND HERTFORDSHIRE AMBULANCE AND PARAMEDIC SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFW": {
+      "closed": "2015-09-01",
+      "name": "WEST MIDDLESEX UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "EJW",
+          "name": "EJW"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RQM",
+          "name": "CHELSEA AND WESTMINSTER HOSPITAL NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RFX": {
+      "closed": null,
+      "name": "HOUNSLOW AND SPELTHORNE COMMUNITY AND MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFY": {
+      "closed": null,
+      "name": "RIVERSIDE MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RFZ": {
+      "closed": null,
+      "name": "NORTHWICK PARK AND ST MARKS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG1": {
+      "closed": null,
+      "name": "MID KENT HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG2": {
+      "closed": null,
+      "name": "QUEEN ELIZABETH HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG3": {
+      "closed": null,
+      "name": "BROMLEY HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG4": {
+      "closed": null,
+      "name": "REDBRIDGE HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG6": {
+      "closed": null,
+      "name": "BHB COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG7": {
+      "closed": null,
+      "name": "HAVERING HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG8": {
+      "closed": null,
+      "name": "THAMESIDE COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RG9": {
+      "closed": null,
+      "name": "CHASE FARM HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGA": {
+      "closed": null,
+      "name": "CALDERDALE HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGB": {
+      "closed": null,
+      "name": "HUDDERSFIELD HEALTH CARE SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGC": {
+      "closed": "2012-04-01",
+      "name": "WHIPPS CROSS UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": "2001-04-01",
+      "predecessors": [
+        {
+          "code": "RDF",
+          "name": "FOREST HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1H",
+          "name": "BARTS HEALTH NHS TRUST"
+        }
+      ]
+    },
+    "RGF": {
+      "closed": null,
+      "name": "WAKEFIELD AND PONTEFRACT COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGH": {
+      "closed": null,
+      "name": "WEST YORKSHIRE METROPOLITAN AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGJ": {
+      "closed": null,
+      "name": "EAST SUFFOLK LOCAL HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGK": {
+      "closed": null,
+      "name": "NORTH WEST ANGLIA HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGL": {
+      "closed": null,
+      "name": "MID ANGLIA COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGM": {
+      "closed": null,
+      "name": "ROYAL PAPWORTH HOSPITAL NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DH2",
+          "name": "DH2"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RGN": {
+      "closed": null,
+      "name": "NORTH WEST ANGLIA NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DP1",
+          "name": "DP1"
+        },
+        {
+          "code": "RQQ",
+          "name": "HINCHINGBROOKE HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RGP": {
+      "closed": null,
+      "name": "JAMES PAGET UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DG1",
+          "name": "DG1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RGQ": {
+      "closed": "2018-07-01",
+      "name": "IPSWICH HOSPITAL NHS TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "DE1",
+          "name": "DE1"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RDE",
+          "name": "EAST SUFFOLK AND NORTH ESSEX NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RGR": {
+      "closed": null,
+      "name": "WEST SUFFOLK NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DW1",
+          "name": "DW1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RGS": {
+      "closed": null,
+      "name": "LIFESPAN HEALTH CARE CAMBRIDGE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGT": {
+      "closed": null,
+      "name": "CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DC1",
+          "name": "DC1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RGU": {
+      "closed": null,
+      "name": "BRIGHTON HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGV": {
+      "closed": null,
+      "name": "THANET HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGW": {
+      "closed": null,
+      "name": "KENT AND CANTERBURY HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGX": {
+      "closed": null,
+      "name": "EASTBOURNE AND COUNTY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RGZ": {
+      "closed": "2009-04-01",
+      "name": "QUEEN MARY'S SIDCUP NHS TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "GK2",
+          "name": "GK2"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RYQ",
+          "name": "SOUTH LONDON HEALTHCARE NHS TRUST"
+        }
+      ]
+    },
+    "RH1": {
+      "closed": null,
+      "name": "ROYAL BERKSHIRE AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RH2": {
+      "closed": null,
+      "name": "SOUTH BUCKINGHAMSHIRE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RH3": {
+      "closed": null,
+      "name": "HORTON GENERAL HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RH4": {
+      "closed": null,
+      "name": "WEST BERKSHIRE PRIORITY CARE SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RH6": {
+      "closed": null,
+      "name": "GLOUCESTERSHIRE ROYAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RH7": {
+      "closed": null,
+      "name": "SEVERN NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHB": {
+      "closed": null,
+      "name": "CAMDEN AND ISLINGTON COMMUNITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHC": {
+      "closed": null,
+      "name": "ENFIELD COMMUNITY CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHE": {
+      "closed": null,
+      "name": "CRAWLEY HORSHAM NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHH": {
+      "closed": null,
+      "name": "EAST SURREY HOSPITAL AND COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHJ": {
+      "closed": null,
+      "name": "WORTHING PRIORITY CARE SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHN": {
+      "closed": null,
+      "name": "ANDOVER DISTRICT COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHP": {
+      "closed": null,
+      "name": "DORSET AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHS": {
+      "closed": null,
+      "name": "SOUTHAMPTON COMMUNITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHU": {
+      "closed": null,
+      "name": "PORTSMOUTH HOSPITALS UNIVERSITY NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "JC1",
+          "name": "JC1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RHV": {
+      "closed": null,
+      "name": "THE RADCLIFFE INFIRMARY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RHW": {
+      "closed": null,
+      "name": "ROYAL BERKSHIRE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "KW1",
+          "name": "KW1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RHX": {
+      "closed": "2012-11-02",
+      "name": "OXFORDSHIRE LEARNING DISABILITY NHS TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "KX6",
+          "name": "KX6"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RW1",
+          "name": "HAMPSHIRE AND ISLE OF WIGHT HEALTHCARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RHY": {
+      "closed": null,
+      "name": "TWO SHIRES AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJ3": {
+      "closed": null,
+      "name": "NORTH WEST LONDON MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJ5": {
+      "closed": "2007-10-01",
+      "name": "ST MARY'S NHS TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "EQM",
+          "name": "EQM"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RYJ",
+          "name": "IMPERIAL COLLEGE HEALTHCARE NHS TRUST"
+        }
+      ]
+    },
+    "RJ9": {
+      "closed": null,
+      "name": "WESTCOUNTRY AMBULANCE SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJB": {
+      "closed": null,
+      "name": "KIDDERMINSTER HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJD": {
+      "closed": "2017-10-31",
+      "name": "MID STAFFORDSHIRE NHS FOUNDATION TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "MF1",
+          "name": "MF1"
+        }
+      ],
+      "status": "former",
+      "successors": []
+    },
+    "RJF": {
+      "closed": "2018-07-01",
+      "name": "BURTON HOSPITALS NHS FOUNDATION TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "MH1",
+          "name": "MH1"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RTG",
+          "name": "UNIVERSITY HOSPITALS OF DERBY AND BURTON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RJH": {
+      "closed": "2007-04-07",
+      "name": "GOOD HOPE HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJM": {
+      "closed": null,
+      "name": "WALSALL COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJQ": {
+      "closed": null,
+      "name": "WARRINGTON COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJS": {
+      "closed": null,
+      "name": "HALTON GENERAL HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJT": {
+      "closed": null,
+      "name": "CHESHIRE COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJU": {
+      "closed": null,
+      "name": "CHORLEY AND SOUTH RIBBLE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJV": {
+      "closed": null,
+      "name": "WEST LANCASHIRE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RJX": {
+      "closed": "2016-07-01",
+      "name": "CALDERSTONES PARTNERSHIP NHS FOUNDATION TRUST",
+      "opened": "1993-04-01",
+      "predecessors": [
+        {
+          "code": "PE2",
+          "name": "PE2"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RW4",
+          "name": "MERSEY CARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RJY": {
+      "closed": null,
+      "name": "WIGAN AND LEIGH HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RK1": {
+      "closed": null,
+      "name": "PILGRIM HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RK2": {
+      "closed": null,
+      "name": "LEICESTERSHIRE MENTAL HEALTH SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RK4": {
+      "closed": null,
+      "name": "LINCOLN DISTRICT HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RK6": {
+      "closed": null,
+      "name": "NOTTINGHAM HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RK7": {
+      "closed": null,
+      "name": "COMMUNITY HEALTH SHEFFIELD NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RK8": {
+      "closed": null,
+      "name": "DERBYSHIRE ROYAL INFIRMARY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RKA": {
+      "closed": null,
+      "name": "WEST MIDLANDS AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RKC": {
+      "closed": null,
+      "name": "WARRINGTON HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RKD": {
+      "closed": null,
+      "name": "HAMPSHIRE AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RKE": {
+      "closed": null,
+      "name": "WHITTINGTON HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "FBG",
+          "name": "FBG"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RKF": {
+      "closed": null,
+      "name": "THE PRINCESS ROYAL HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RKL": {
+      "closed": null,
+      "name": "WEST LONDON NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RV2",
+          "name": "EALING, HAMMERSMITH AND FULHAM MENTAL HEALTH NHS TRUST"
+        },
+        {
+          "code": "T1001",
+          "name": "T1001"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RKV": {
+      "closed": null,
+      "name": "SOUTH AND EAST WALES AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RKX": {
+      "closed": null,
+      "name": "COMMUNITY HEALTH CARE SERVICE (NORTH DERBYSHIRE) NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RL5": {
+      "closed": "2006-06-30",
+      "name": "HEREFORD AND WORCESTER AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RL6": {
+      "closed": "2006-06-30",
+      "name": "COVENTRY AND WARWICKSHIRE AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RL7": {
+      "closed": null,
+      "name": "BIRMINGHAM HEARTLANDS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLC": {
+      "closed": null,
+      "name": "NORTH TYNESIDE HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLF": {
+      "closed": null,
+      "name": "NORTH LAKELAND HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLG": {
+      "closed": null,
+      "name": "CARLISLE HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLH": {
+      "closed": null,
+      "name": "PRIORITY HEALTHCARE WEARSIDE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLK": {
+      "closed": null,
+      "name": "CHEVIOT AND WANSBECK NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLM": {
+      "closed": null,
+      "name": "NORTHUMBERLAND COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLN": {
+      "closed": "2019-04-01",
+      "name": "CITY HOSPITALS SUNDERLAND NHS FOUNDATION TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "AT4",
+          "name": "AT4"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R0B",
+          "name": "SOUTH TYNESIDE AND SUNDERLAND NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RLR": {
+      "closed": null,
+      "name": "WORCESTER ROYAL INFIRMARY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLU": {
+      "closed": "2017-02-01",
+      "name": "BIRMINGHAM WOMEN'S NHS FOUNDATION TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "MQ5",
+          "name": "MQ5"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RQ3",
+          "name": "BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RLW": {
+      "closed": null,
+      "name": "CITY HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RLZ": {
+      "closed": null,
+      "name": "ROYAL SHREWSBURY HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RM1": {
+      "closed": null,
+      "name": "NORFOLK AND NORWICH UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "DN1",
+          "name": "DN1"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RM2": {
+      "closed": "2017-10-01",
+      "name": "UNIVERSITY HOSPITAL OF SOUTH MANCHESTER NHS FOUNDATION TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "PM1",
+          "name": "PM1"
+        },
+        {
+          "code": "PM2",
+          "name": "PM2"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R0A",
+          "name": "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RM4": {
+      "closed": "2012-04-01",
+      "name": "TRAFFORD HEALTHCARE NHS TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "PU1",
+          "name": "PU1"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RW3",
+          "name": "CENTRAL MANCHESTER UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RM6": {
+      "closed": null,
+      "name": "NORTHGATE AND PRUDHOE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RM7": {
+      "closed": null,
+      "name": "GATESHEAD HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RM8": {
+      "closed": null,
+      "name": "FURNESS HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RM9": {
+      "closed": null,
+      "name": "ALEXANDRA HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMA": {
+      "closed": "2006-06-30",
+      "name": "GREATER MANCHESTER AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMB": {
+      "closed": null,
+      "name": "BLACKBURN, HYNDBURN AND RIBBLE VALLEY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMD": {
+      "closed": "2006-06-30",
+      "name": "LANCASHIRE AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RME": {
+      "closed": null,
+      "name": "COMMUNICARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMF": {
+      "closed": null,
+      "name": "PRESTON ACUTE HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMG": {
+      "closed": null,
+      "name": "GUILD COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMH": {
+      "closed": null,
+      "name": "MENTAL HEALTH SERVICES OF SALFORD NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMJ": {
+      "closed": null,
+      "name": "SALFORD COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMK": {
+      "closed": null,
+      "name": "NORTH MANCHESTER HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RML": {
+      "closed": null,
+      "name": "BLACKPOOL, WYRE AND FYLDE COMMUNITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMM": {
+      "closed": null,
+      "name": "COMMUNITY HEALTHCARE BOLTON NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMN": {
+      "closed": null,
+      "name": "BURY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMQ": {
+      "closed": null,
+      "name": "TAMESIDE AND GLOSSOP COMMUNITY AND PRIORITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMR": {
+      "closed": null,
+      "name": "BLACKPOOL VICTORIA HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMS": {
+      "closed": null,
+      "name": "STOCKPORT ACUTE SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMT": {
+      "closed": null,
+      "name": "STOCKPORT HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMU": {
+      "closed": null,
+      "name": "EAST YORKSHIRE COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMV": {
+      "closed": null,
+      "name": "HULL AND HOLDERNESS COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMW": {
+      "closed": null,
+      "name": "DEWSBURY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RMY": {
+      "closed": null,
+      "name": "NORFOLK AND SUFFOLK NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RT6",
+          "name": "SUFFOLK MENTAL HEALTH PARTNERSHIP NHS TRUST"
+        },
+        {
+          "code": "DN3",
+          "name": "DN3"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RMZ": {
+      "closed": "2006-06-30",
+      "name": "EAST ANGLIAN AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RN4": {
+      "closed": null,
+      "name": "PORTSMOUTH HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RN9": {
+      "closed": null,
+      "name": "LEWISHAM AND GUYS MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNB": {
+      "closed": null,
+      "name": "COVENTRY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RND": {
+      "closed": null,
+      "name": "SOUTH BIRMINGHAM MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNE": {
+      "closed": null,
+      "name": "SANDWELL HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNF": {
+      "closed": null,
+      "name": "NORTHERN BIRMINGHAM MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNG": {
+      "closed": null,
+      "name": "PREMIER HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNH": {
+      "closed": "2012-04-01",
+      "name": "NEWHAM UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "FAB",
+          "name": "FAB"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1H",
+          "name": "BARTS HEALTH NHS TRUST"
+        }
+      ]
+    },
+    "RNK": {
+      "closed": "2026-04-01",
+      "name": "TAVISTOCK AND PORTMAN NHS FOUNDATION TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "FBL",
+          "name": "FBL"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "G6V2S",
+          "name": "NORTH LONDON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RNL": {
+      "closed": "2019-10-01",
+      "name": "NORTH CUMBRIA UNIVERSITY HOSPITALS NHS TRUST",
+      "opened": "2001-04-01",
+      "predecessors": [
+        {
+          "code": "RLG",
+          "name": "CARLISLE HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RE7",
+          "name": "WEST CUMBRIA HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RNN",
+          "name": "NORTH CUMBRIA INTEGRATED CARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RNM": {
+      "closed": null,
+      "name": "NEWCASTLE CITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNP": {
+      "closed": null,
+      "name": "NEWCASTLE, NORTH TYNESIDE AND NORTHUMBERLAND MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNR": {
+      "closed": null,
+      "name": "ROCKINGHAM FOREST NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNT": {
+      "closed": null,
+      "name": "STOKE MANDEVILLE HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNU": {
+      "closed": null,
+      "name": "OXFORD HEALTH NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "KX7",
+          "name": "KX7"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RNW": {
+      "closed": null,
+      "name": "NORTHAMPTON COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNX": {
+      "closed": null,
+      "name": "OXFORD RADCLIFFE HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RNY": {
+      "closed": null,
+      "name": "OXFORDSHIRE AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RP2": {
+      "closed": null,
+      "name": "HARINGEY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RP3": {
+      "closed": null,
+      "name": "MID ESSEX COMMUNITY AND MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RP4": {
+      "closed": null,
+      "name": "GREAT ORMOND STREET HOSPITAL FOR CHILDREN NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "T0101",
+          "name": "T0101"
+        },
+        {
+          "code": "T01",
+          "name": "T01"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RP6": {
+      "closed": null,
+      "name": "MOORFIELDS EYE HOSPITAL NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "T03",
+          "name": "T03"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RP8": {
+      "closed": null,
+      "name": "NORTH WALES AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPC": {
+      "closed": null,
+      "name": "QUEEN VICTORIA HOSPITAL NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "GJ2",
+          "name": "GJ2"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RPD": {
+      "closed": null,
+      "name": "KENT AND SUSSEX WEALD NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPF": {
+      "closed": null,
+      "name": "SOUTH KENT HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPH": {
+      "closed": null,
+      "name": "KENT AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPK": {
+      "closed": null,
+      "name": "SUSSEX WEALD AND DOWNS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPL": {
+      "closed": "2009-04-01",
+      "name": "WORTHING AND SOUTHLANDS HOSPITALS NHS TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "HWS",
+          "name": "HWS"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RYR",
+          "name": "UNIVERSITY HOSPITALS SUSSEX NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RPN": {
+      "closed": null,
+      "name": "KINGSTON AND DISTRICT COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPQ": {
+      "closed": null,
+      "name": "SURREY AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPR": {
+      "closed": "2009-04-01",
+      "name": "ROYAL WEST SUSSEX NHS TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "HSR",
+          "name": "HSR"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RYR",
+          "name": "UNIVERSITY HOSPITALS SUSSEX NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RPS": {
+      "closed": null,
+      "name": "MID SUSSEX NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPV": {
+      "closed": null,
+      "name": "RIVERSIDE COMMUNITY HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPW": {
+      "closed": null,
+      "name": "ST ALBANS AND HEMEL HEMPSTEAD NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPX": {
+      "closed": null,
+      "name": "ROYAL BROMPTON HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RPY": {
+      "closed": null,
+      "name": "THE ROYAL MARSDEN NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "T06",
+          "name": "T06"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RQ2": {
+      "closed": null,
+      "name": "SUSSEX AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQ4": {
+      "closed": null,
+      "name": "BLACK COUNTRY MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQ5": {
+      "closed": null,
+      "name": "WOLVERHAMPTON HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQ6": {
+      "closed": "2019-10-01",
+      "name": "ROYAL LIVERPOOL AND BROADGREEN UNIVERSITY HOSPITALS NHS TRUST",
+      "opened": "1995-04-01",
+      "predecessors": [
+        {
+          "code": "RBM",
+          "name": "ROYAL LIVERPOOL UNIVERSITY HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RBR",
+          "name": "BROADGREEN HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "REM",
+          "name": "LIVERPOOL UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RQ7": {
+      "closed": null,
+      "name": "THE MANCHESTER CHILDREN'S HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQ8": {
+      "closed": "2020-04-01",
+      "name": "MID ESSEX HOSPITAL SERVICES NHS TRUST",
+      "opened": "1995-04-01",
+      "predecessors": [
+        {
+          "code": "FBJ",
+          "name": "FBJ"
+        },
+        {
+          "code": "RDG",
+          "name": "MID ESSEX HOSPITAL SERVICES NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RAJ",
+          "name": "MID AND SOUTH ESSEX NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RQ9": {
+      "closed": null,
+      "name": "THE BETHLEM AND MAUDSLEY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQE": {
+      "closed": null,
+      "name": "MID GLAMORGAN AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQJ": {
+      "closed": null,
+      "name": "WEST HERTS COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQK": {
+      "closed": null,
+      "name": "HARROW AND HILLINGDON HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQL": {
+      "closed": null,
+      "name": "MOUNT VERNON AND WATFORD HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQM": {
+      "closed": null,
+      "name": "CHELSEA AND WESTMINSTER HOSPITAL NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "ENA",
+          "name": "ENA"
+        },
+        {
+          "code": "RFW",
+          "name": "WEST MIDDLESEX UNIVERSITY HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RQP": {
+      "closed": null,
+      "name": "UNIVERSITY COLLEGE LONDON HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQQ": {
+      "closed": "2017-04-01",
+      "name": "HINCHINGBROOKE HEALTH CARE NHS TRUST",
+      "opened": "1995-04-01",
+      "predecessors": [
+        {
+          "code": "RCM",
+          "name": "HINCHINGBROOKE HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RGN",
+          "name": "NORTH WEST ANGLIA NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RQR": {
+      "closed": null,
+      "name": "ST JAMES'S AND SEACROFT UNIVERSITY HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQS": {
+      "closed": null,
+      "name": "UNITED LEEDS TEACHING HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQT": {
+      "closed": null,
+      "name": "FOSSE HEALTH, LEICESTERSHIRE COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQU": {
+      "closed": null,
+      "name": "GRANTHAM AND DISTRICT HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQV": {
+      "closed": null,
+      "name": "ESSEX AND HERTFORDSHIRE COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RQW": {
+      "closed": null,
+      "name": "THE PRINCESS ALEXANDRA HOSPITAL NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "FBS",
+          "name": "FBS"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RR2": {
+      "closed": "2006-09-30",
+      "name": "ISLE OF WIGHT HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RR4": {
+      "closed": null,
+      "name": "PINDERFIELDS AND PONTEFRACT HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RR5": {
+      "closed": null,
+      "name": "WIRRAL AND WEST CHESHIRE COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RR9": {
+      "closed": null,
+      "name": "NORTH DURHAM HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRC": {
+      "closed": null,
+      "name": "WEST WALES AMBULANCE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRD": {
+      "closed": "2017-04-01",
+      "name": "NORTH ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+      "opened": "2001-04-01",
+      "predecessors": [
+        {
+          "code": "RDJ",
+          "name": "NORTH EAST ESSEX MENTAL HEALTH NHS TRUST"
+        },
+        {
+          "code": "RP3",
+          "name": "MID ESSEX COMMUNITY AND MENTAL HEALTH NHS TRUST"
+        },
+        {
+          "code": "RQV",
+          "name": "ESSEX AND HERTFORDSHIRE COMMUNITY NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1L",
+          "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RRF": {
+      "closed": null,
+      "name": "WRIGHTINGTON, WIGAN AND LEIGH TEACHING HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "REY",
+          "name": "WRIGHTINGTON HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RJY",
+          "name": "WIGAN AND LEIGH HEALTH SERVICES NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RRG": {
+      "closed": null,
+      "name": "TOWER HAMLETS HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRH": {
+      "closed": null,
+      "name": "NEWHAM COMMUNITY HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRL": {
+      "closed": null,
+      "name": "CITY AND HACKNEY COMMUNITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRP": {
+      "closed": "2024-11-01",
+      "name": "BARNET, ENFIELD AND HARINGEY MENTAL HEALTH NHS TRUST",
+      "opened": "2001-04-01",
+      "predecessors": [
+        {
+          "code": "RHC",
+          "name": "ENFIELD COMMUNITY CARE NHS TRUST"
+        },
+        {
+          "code": "RCZ",
+          "name": "BARNET COMMUNITY HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RP2",
+          "name": "HARINGEY HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "G6V2S",
+          "name": "NORTH LONDON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RRQ": {
+      "closed": null,
+      "name": "CAMDEN AND ISLINGTON MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRU": {
+      "closed": null,
+      "name": "LONDON AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "HLV01",
+          "name": "HLV01"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RRV": {
+      "closed": null,
+      "name": "UNIVERSITY COLLEGE LONDON HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RQP",
+          "name": "UNIVERSITY COLLEGE LONDON HOSPITALS NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RRX": {
+      "closed": null,
+      "name": "LINCOLN AND LOUTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRY": {
+      "closed": null,
+      "name": "HARTLEPOOL AND EAST DURHAM NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RRZ": {
+      "closed": null,
+      "name": "WORCESTERSHIRE COMMUNITY HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RT1": {
+      "closed": null,
+      "name": "CAMBRIDGESHIRE AND PETERBOROUGH NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RGS",
+          "name": "LIFESPAN HEALTH CARE CAMBRIDGE NHS TRUST"
+        },
+        {
+          "code": "RGK",
+          "name": "NORTH WEST ANGLIA HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RT3": {
+      "closed": "2021-02-01",
+      "name": "ROYAL BROMPTON & HAREFIELD NHS FOUNDATION TRUST",
+      "opened": "1998-04-01",
+      "predecessors": [
+        {
+          "code": "RPX",
+          "name": "ROYAL BROMPTON HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RC5",
+          "name": "HAREFIELD HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RJ1",
+          "name": "GUY'S AND ST THOMAS' NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RT6": {
+      "closed": "2012-01-01",
+      "name": "SUFFOLK MENTAL HEALTH PARTNERSHIP NHS TRUST",
+      "opened": "1999-04-01",
+      "predecessors": [
+        {
+          "code": "RGJ",
+          "name": "EAST SUFFOLK LOCAL HEALTH SERVICES NHS TRUST"
+        },
+        {
+          "code": "RGL",
+          "name": "MID ANGLIA COMMUNITY HEALTH NHS TRUST"
+        },
+        {
+          "code": "RCL",
+          "name": "ALLINGTON NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RMY",
+          "name": "NORFOLK AND SUFFOLK NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RT7": {
+      "closed": null,
+      "name": "NORTH WEST WALES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RTA": {
+      "closed": null,
+      "name": "SOUTH DURHAM HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RTC": {
+      "closed": null,
+      "name": "COUNTY DURHAM AND DARLINGTON PRIORITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RTH": {
+      "closed": null,
+      "name": "OXFORD UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RHV",
+          "name": "THE RADCLIFFE INFIRMARY NHS TRUST"
+        },
+        {
+          "code": "RNX",
+          "name": "OXFORD RADCLIFFE HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RBF",
+          "name": "NUFFIELD ORTHOPAEDIC CENTRE NHS TRUST"
+        },
+        {
+          "code": "RH3",
+          "name": "HORTON GENERAL HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RTJ": {
+      "closed": null,
+      "name": "SURREY HAMPSHIRE BORDERS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RTK": {
+      "closed": null,
+      "name": "ASHFORD AND ST PETER'S HOSPITALS NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RCY",
+          "name": "ASHFORD HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RDV",
+          "name": "ST PETER'S HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RTM": {
+      "closed": null,
+      "name": "EAST KENT NHS AND SOCIAL CARE PARTNERSHIP TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RTN": {
+      "closed": null,
+      "name": "SURREY OAKLANDS NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RTP": {
+      "closed": null,
+      "name": "SURREY AND SUSSEX HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RHE",
+          "name": "CRAWLEY HORSHAM NHS TRUST"
+        },
+        {
+          "code": "RHH",
+          "name": "EAST SURREY HOSPITAL AND COMMUNITY HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RTV": {
+      "closed": "2021-06-01",
+      "name": "NORTH WEST BOROUGHS HEALTHCARE NHS FOUNDATION TRUST",
+      "opened": "2002-04-01",
+      "predecessors": [
+        {
+          "code": "RBP",
+          "name": "CHESTER AND HALTON COMMUNITY NHS TRUST"
+        },
+        {
+          "code": "RER",
+          "name": "ST HELENS AND KNOWSLEY COMMUNITY HEALTH NHS TRUST"
+        },
+        {
+          "code": "RJQ",
+          "name": "WARRINGTON COMMUNITY HEALTH CARE NHS TRUST"
+        },
+        {
+          "code": "RMM",
+          "name": "COMMUNITY HEALTHCARE BOLTON NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RW4",
+          "name": "MERSEY CARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RTW": {
+      "closed": null,
+      "name": "SHROPSHIRE'S COMMUNITY AND MENTAL HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RV1": {
+      "closed": null,
+      "name": "TEES EAST AND NORTH YORKSHIRE AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RV2": {
+      "closed": null,
+      "name": "EALING, HAMMERSMITH AND FULHAM MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RV3": {
+      "closed": null,
+      "name": "CENTRAL AND NORTH WEST LONDON NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RQK",
+          "name": "HARROW AND HILLINGDON HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RFY",
+          "name": "RIVERSIDE MENTAL HEALTH NHS TRUST"
+        },
+        {
+          "code": "RJ3",
+          "name": "NORTH WEST LONDON MENTAL HEALTH NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RV4": {
+      "closed": null,
+      "name": "COMMUNITY HEALTH SOUTH LONDON NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RV6": {
+      "closed": null,
+      "name": "EAST MIDLANDS AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RV7": {
+      "closed": "2010-04-01",
+      "name": "BEDFORDSHIRE AND LUTON MENTAL HEALTH AND SOCIAL CARE PARTNERSHIP NHS TRUST",
+      "opened": "1999-04-01",
+      "predecessors": [
+        {
+          "code": "RFT",
+          "name": "BEDFORD AND SHIRES HEALTH AND CARE NHS TRUST"
+        },
+        {
+          "code": "RDB",
+          "name": "SOUTH BEDFORDSHIRE COMMUNITY HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RWN",
+          "name": "SOUTH ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RV8": {
+      "closed": "2014-10-01",
+      "name": "NORTH WEST LONDON HOSPITALS NHS TRUST",
+      "opened": "1999-04-01",
+      "predecessors": [
+        {
+          "code": "RFZ",
+          "name": "NORTHWICK PARK AND ST MARKS NHS TRUST"
+        },
+        {
+          "code": "RAU",
+          "name": "CENTRAL MIDDLESEX HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1K",
+          "name": "LONDON NORTH WEST UNIVERSITY HEALTHCARE NHS TRUST"
+        }
+      ]
+    },
+    "RV9": {
+      "closed": null,
+      "name": "HUMBER TEACHING NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RMV",
+          "name": "HULL AND HOLDERNESS COMMUNITY HEALTH NHS TRUST"
+        },
+        {
+          "code": "RMU",
+          "name": "EAST YORKSHIRE COMMUNITY HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RVF": {
+      "closed": null,
+      "name": "GWENT HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RVK": {
+      "closed": null,
+      "name": "NORTH EAST AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RVL": {
+      "closed": "2014-07-02",
+      "name": "BARNET AND CHASE FARM HOSPITALS NHS TRUST",
+      "opened": "1999-04-01",
+      "predecessors": [
+        {
+          "code": "RG9",
+          "name": "CHASE FARM HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RDC",
+          "name": "WELLHOUSE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RAL",
+          "name": "ROYAL FREE LONDON NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RVM": {
+      "closed": null,
+      "name": "SOUTH WEST LONDON COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RVP": {
+      "closed": null,
+      "name": "SOUTH LINCOLNSHIRE HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RVQ": {
+      "closed": null,
+      "name": "WILTSHIRE AND SWINDON HEALTH CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RVR": {
+      "closed": null,
+      "name": "EPSOM AND ST HELIER UNIVERSITY HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RA1",
+          "name": "EPSOM HEALTH CARE NHS TRUST"
+        },
+        {
+          "code": "RAZ",
+          "name": "ST HELIER NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RVT": {
+      "closed": null,
+      "name": "NORTH SEFTON AND WEST LANCASHIRE COMMUNITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RVX": {
+      "closed": "2006-04-01",
+      "name": "TEES AND NORTH EAST YORKSHIRE NHS TRUST",
+      "opened": "1999-04-01",
+      "predecessors": [
+        {
+          "code": "RE4",
+          "name": "SOUTH TEES COMMUNITY AND MENTAL HEALTH NHS TRUST"
+        },
+        {
+          "code": "RRY",
+          "name": "HARTLEPOOL AND EAST DURHAM NHS TRUST"
+        },
+        {
+          "code": "RCH",
+          "name": "NORTH TEES HEALTH NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RX3",
+          "name": "TEES, ESK AND WEAR VALLEYS NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RW1": {
+      "closed": null,
+      "name": "HAMPSHIRE AND ISLE OF WIGHT HEALTHCARE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RHX",
+          "name": "OXFORDSHIRE LEARNING DISABILITY NHS TRUST"
+        },
+        {
+          "code": "R1C",
+          "name": "SOLENT NHS TRUST"
+        },
+        {
+          "code": "RN4",
+          "name": "PORTSMOUTH HEALTH CARE NHS TRUST"
+        },
+        {
+          "code": "RHS",
+          "name": "SOUTHAMPTON COMMUNITY HEALTH SERVICES NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RW2": {
+      "closed": null,
+      "name": "SOUTHERN DERBYSHIRE COMMUNITY AND MENTAL HEALTH SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RW3": {
+      "closed": "2017-10-01",
+      "name": "CENTRAL MANCHESTER UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+      "opened": "2001-04-01",
+      "predecessors": [
+        {
+          "code": "RQ7",
+          "name": "THE MANCHESTER CHILDREN'S HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RBU",
+          "name": "CENTRAL MANCHESTER HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RM4",
+          "name": "TRAFFORD HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R0A",
+          "name": "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RW7": {
+      "closed": null,
+      "name": "NORTH WEST SURREY MENTAL HEALTH NHS PARTNERSHIP TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RW8": {
+      "closed": "2006-04-01",
+      "name": "WEST SUSSEX HEALTH AND SOCIAL CARE NHS TRUST",
+      "opened": "2002-04-01",
+      "predecessors": [
+        {
+          "code": "RPK",
+          "name": "SUSSEX WEALD AND DOWNS NHS TRUST"
+        },
+        {
+          "code": "RPS",
+          "name": "MID SUSSEX NHS TRUST"
+        },
+        {
+          "code": "RHJ",
+          "name": "WORTHING PRIORITY CARE SERVICES NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RX2",
+          "name": "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RW9": {
+      "closed": "2006-04-01",
+      "name": "SOUTH OF TYNE AND WEARSIDE MENTAL HEALTH NHS TRUST",
+      "opened": "2002-04-01",
+      "predecessors": [
+        {
+          "code": "RLH",
+          "name": "PRIORITY HEALTHCARE WEARSIDE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RX4",
+          "name": "CUMBRIA, NORTHUMBERLAND, TYNE AND WEAR NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RWC": {
+      "closed": null,
+      "name": "DONCASTER AND SOUTH HUMBER HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RWG": {
+      "closed": null,
+      "name": "WEST HERTFORDSHIRE TEACHING HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RPW",
+          "name": "ST ALBANS AND HEMEL HEMPSTEAD NHS TRUST"
+        },
+        {
+          "code": "RQL",
+          "name": "MOUNT VERNON AND WATFORD HOSPITALS NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RWH": {
+      "closed": null,
+      "name": "EAST AND NORTH HERTFORDSHIRE TEACHING NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RAQ",
+          "name": "NORTH HERTFORDSHIRE NHS TRUST"
+        },
+        {
+          "code": "RC4",
+          "name": "EAST HERTFORDSHIRE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RWK": {
+      "closed": null,
+      "name": "EAST LONDON NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RRG",
+          "name": "TOWER HAMLETS HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RRH",
+          "name": "NEWHAM COMMUNITY HEALTH SERVICES NHS TRUST"
+        },
+        {
+          "code": "RRL",
+          "name": "CITY AND HACKNEY COMMUNITY SERVICES NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RWL": {
+      "closed": null,
+      "name": "BIRMINGHAM SPECIALIST COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RWM": {
+      "closed": null,
+      "name": "CARDIFF AND VALE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RWN": {
+      "closed": "2017-04-01",
+      "name": "SOUTH ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+      "opened": "2000-04-01",
+      "predecessors": [
+        {
+          "code": "RV7",
+          "name": "BEDFORDSHIRE AND LUTON MENTAL HEALTH AND SOCIAL CARE PARTNERSHIP NHS TRUST"
+        },
+        {
+          "code": "RDK",
+          "name": "SOUTHEND COMMUNITY CARE SERVICES NHS TRUST"
+        },
+        {
+          "code": "RG8",
+          "name": "THAMESIDE COMMUNITY HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1L",
+          "name": "ESSEX PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RWQ": {
+      "closed": "2011-07-01",
+      "name": "WORCESTERSHIRE MENTAL HEALTH PARTNERSHIP NHS TRUST",
+      "opened": "2000-04-01",
+      "predecessors": [
+        {
+          "code": "RJB",
+          "name": "KIDDERMINSTER HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RRZ",
+          "name": "WORCESTERSHIRE COMMUNITY HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1A",
+          "name": "HEREFORDSHIRE AND WORCESTERSHIRE HEALTH AND CARE NHS TRUST"
+        }
+      ]
+    },
+    "RWR": {
+      "closed": null,
+      "name": "HERTFORDSHIRE PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RC8",
+          "name": "HORIZON NHS TRUST"
+        },
+        {
+          "code": "RQJ",
+          "name": "WEST HERTS COMMUNITY HEALTH NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RWW": {
+      "closed": null,
+      "name": "NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RKC",
+          "name": "WARRINGTON HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RJS",
+          "name": "HALTON GENERAL HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RY2",
+          "name": "BRIDGEWATER COMMUNITY HEALTHCARE NHS FOUNDATION TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RWX": {
+      "closed": null,
+      "name": "BERKSHIRE HEALTHCARE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RH4",
+          "name": "WEST BERKSHIRE PRIORITY CARE SERVICES NHS TRUST"
+        },
+        {
+          "code": "RD6",
+          "name": "EAST BERKSHIRE NHS TRUST FOR PEOPLE WITH LEARNING DISABILITIES"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RX2": {
+      "closed": null,
+      "name": "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RW8",
+          "name": "WEST SUSSEX HEALTH AND SOCIAL CARE NHS TRUST"
+        },
+        {
+          "code": "RXD",
+          "name": "EAST SUSSEX COUNTY HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RX5": {
+      "closed": "2013-02-01",
+      "name": "GREAT WESTERN AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RXC": {
+      "closed": null,
+      "name": "EAST SUSSEX HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RDL",
+          "name": "EASTBOURNE HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RDM",
+          "name": "HASTINGS AND ROTHER NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RXD": {
+      "closed": "2006-04-01",
+      "name": "EAST SUSSEX COUNTY HEALTHCARE NHS TRUST",
+      "opened": "2002-04-01",
+      "predecessors": [
+        {
+          "code": "RGX",
+          "name": "EASTBOURNE AND COUNTY HEALTHCARE NHS TRUST"
+        },
+        {
+          "code": "RDM",
+          "name": "HASTINGS AND ROTHER NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RX2",
+          "name": "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RXH": {
+      "closed": "2021-04-01",
+      "name": "BRIGHTON AND SUSSEX UNIVERSITY HOSPITALS NHS TRUST",
+      "opened": "2002-04-01",
+      "predecessors": [
+        {
+          "code": "RPS",
+          "name": "MID SUSSEX NHS TRUST"
+        },
+        {
+          "code": "RGU",
+          "name": "BRIGHTON HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RYR",
+          "name": "UNIVERSITY HOSPITALS SUSSEX NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RXJ": {
+      "closed": null,
+      "name": "WEST KENT NHS AND SOCIAL CARE TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RXK": {
+      "closed": null,
+      "name": "SANDWELL AND WEST BIRMINGHAM HOSPITALS NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RLW",
+          "name": "CITY HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RNE",
+          "name": "SANDWELL HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RXQ": {
+      "closed": null,
+      "name": "BUCKINGHAMSHIRE HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RNT",
+          "name": "STOKE MANDEVILLE HOSPITAL NHS TRUST"
+        },
+        {
+          "code": "RH2",
+          "name": "SOUTH BUCKINGHAMSHIRE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RXX": {
+      "closed": null,
+      "name": "SURREY AND BORDERS PARTNERSHIP NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RTN",
+          "name": "SURREY OAKLANDS NHS TRUST"
+        },
+        {
+          "code": "RW7",
+          "name": "NORTH WEST SURREY MENTAL HEALTH NHS PARTNERSHIP TRUST"
+        },
+        {
+          "code": "RTJ",
+          "name": "SURREY HAMPSHIRE BORDERS NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RXY": {
+      "closed": null,
+      "name": "KENT AND MEDWAY MENTAL HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RXJ",
+          "name": "WEST KENT NHS AND SOCIAL CARE TRUST"
+        },
+        {
+          "code": "RTM",
+          "name": "EAST KENT NHS AND SOCIAL CARE PARTNERSHIP TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RY1": {
+      "closed": "2018-04-01",
+      "name": "LIVERPOOL COMMUNITY HEALTH NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RW4",
+          "name": "MERSEY CARE NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RY2": {
+      "closed": "2026-04-01",
+      "name": "BRIDGEWATER COMMUNITY HEALTHCARE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RWW",
+          "name": "NORTH CHESHIRE AND MERSEY NHS FOUNDATION TRUST"
+        }
+      ]
+    },
+    "RY3": {
+      "closed": null,
+      "name": "EAST OF ENGLAND COMMUNITY HEALTH AND CARE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RYV",
+          "name": "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYC": {
+      "closed": null,
+      "name": "EAST OF ENGLAND AMBULANCE SERVICE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RMZ",
+          "name": "EAST ANGLIAN AMBULANCE NHS TRUST"
+        },
+        {
+          "code": "RFU",
+          "name": "BEDFORDSHIRE AND HERTFORDSHIRE AMBULANCE AND PARAMEDIC SERVICE NHS TRUST"
+        },
+        {
+          "code": "RB4",
+          "name": "ESSEX AMBULANCE SERVICE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYD": {
+      "closed": null,
+      "name": "SOUTH EAST COAST AMBULANCE SERVICE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RPH",
+          "name": "KENT AMBULANCE NHS TRUST"
+        },
+        {
+          "code": "RQ2",
+          "name": "SUSSEX AMBULANCE SERVICE NHS TRUST"
+        },
+        {
+          "code": "RPQ",
+          "name": "SURREY AMBULANCE SERVICE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYE": {
+      "closed": null,
+      "name": "SOUTH CENTRAL AMBULANCE SERVICE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RKD",
+          "name": "HAMPSHIRE AMBULANCE SERVICE NHS TRUST"
+        },
+        {
+          "code": "RNY",
+          "name": "OXFORDSHIRE AMBULANCE NHS TRUST"
+        },
+        {
+          "code": "RHY",
+          "name": "TWO SHIRES AMBULANCE NHS TRUST"
+        },
+        {
+          "code": "RH1",
+          "name": "ROYAL BERKSHIRE AMBULANCE SERVICE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYF": {
+      "closed": null,
+      "name": "SOUTH WESTERN AMBULANCE SERVICE NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RHP",
+          "name": "DORSET AMBULANCE NHS TRUST"
+        },
+        {
+          "code": "RJ9",
+          "name": "WESTCOUNTRY AMBULANCE SERVICES NHS TRUST"
+        },
+        {
+          "code": "RX5",
+          "name": "GREAT WESTERN AMBULANCE SERVICE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYH": {
+      "closed": null,
+      "name": "NHS DIRECT NHS TRUST",
+      "opened": "2007-04-01",
+      "predecessors": [
+        {
+          "code": "T1370",
+          "name": "T1370"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYJ": {
+      "closed": null,
+      "name": "IMPERIAL COLLEGE HEALTHCARE NHS TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RQN",
+          "name": "HAMMERSMITH HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RJ5",
+          "name": "ST MARY'S NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYL": {
+      "closed": null,
+      "name": "CWM TAF NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RYM": {
+      "closed": null,
+      "name": "ABERTAWE BRO MORGANNWG UNIVERSITY NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RYN": {
+      "closed": null,
+      "name": "HYWEL DDA NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RYP": {
+      "closed": null,
+      "name": "NORTH WALES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "RYQ": {
+      "closed": null,
+      "name": "SOUTH LONDON HEALTHCARE NHS TRUST",
+      "opened": "2009-04-01",
+      "predecessors": [
+        {
+          "code": "RG3",
+          "name": "BROMLEY HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RGZ",
+          "name": "QUEEN MARY'S SIDCUP NHS TRUST"
+        },
+        {
+          "code": "RG2",
+          "name": "QUEEN ELIZABETH HOSPITAL NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYR": {
+      "closed": null,
+      "name": "UNIVERSITY HOSPITALS SUSSEX NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RPL",
+          "name": "WORTHING AND SOUTHLANDS HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RXH",
+          "name": "BRIGHTON AND SUSSEX UNIVERSITY HOSPITALS NHS TRUST"
+        },
+        {
+          "code": "RPR",
+          "name": "ROYAL WEST SUSSEX NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "RYV": {
+      "closed": "2026-04-01",
+      "name": "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RY3",
+          "name": "EAST OF ENGLAND COMMUNITY HEALTH AND CARE NHS TRUST"
+        }
+      ]
+    },
+    "S0E4D": {
+      "closed": null,
+      "name": "NHS THAMES VALLEY INTEGRATED CARE BOARD",
+      "opened": "2026-04-01",
+      "predecessors": [
+        {
+          "code": "QNQ",
+          "name": "NHS FRIMLEY INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QU9",
+          "name": "NHS BUCKINGHAMSHIRE, OXFORDSHIRE AND BERKSHIRE WEST INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "S1Y5D": {
+      "closed": null,
+      "name": "NHS CENTRAL EAST INTEGRATED CARE BOARD",
+      "opened": "2026-04-01",
+      "predecessors": [
+        {
+          "code": "QHG",
+          "name": "NHS BEDFORDSHIRE, LUTON AND MILTON KEYNES INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QUE",
+          "name": "NHS CAMBRIDGESHIRE AND PETERBOROUGH INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QM7",
+          "name": "NHS HERTFORDSHIRE AND WEST ESSEX INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "S9B9J": {
+      "closed": null,
+      "name": "NHS SURREY AND SUSSEX INTEGRATED CARE BOARD",
+      "opened": "2026-04-01",
+      "predecessors": [
+        {
+          "code": "QNX",
+          "name": "NHS SUSSEX INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QNQ",
+          "name": "NHS FRIMLEY INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QXU",
+          "name": "NHS SURREY HEARTLANDS INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "T6Y0W": {
+      "closed": null,
+      "name": "NHS NORFOLK AND SUFFOLK INTEGRATED CARE BOARD",
+      "opened": "2026-04-01",
+      "predecessors": [
+        {
+          "code": "QMM",
+          "name": "NHS NORFOLK AND WAVENEY INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QJG",
+          "name": "NHS SUFFOLK AND NORTH EAST ESSEX INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    },
+    "V8A1W": {
+      "closed": "2026-01-31",
+      "name": "SURREY HEARTLANDS SMHPC (ADULT EATING DISORDERS)",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "X4L0A": {
+      "closed": "2024-03-31",
+      "name": "DORSET AND WESSEX (CYPMHS TIER 4)",
+      "opened": null,
+      "predecessors": [],
+      "status": "former",
+      "successors": []
+    },
+    "Z9B2Z": {
+      "closed": null,
+      "name": "NHS WEST AND NORTH LONDON INTEGRATED CARE BOARD",
+      "opened": "2026-04-01",
+      "predecessors": [
+        {
+          "code": "QMJ",
+          "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD"
+        },
+        {
+          "code": "QRV",
+          "name": "NHS NORTH WEST LONDON INTEGRATED CARE BOARD"
+        }
+      ],
+      "status": "current",
+      "successors": []
+    }
+  },
+  "source": "ODS ORD API"
+}

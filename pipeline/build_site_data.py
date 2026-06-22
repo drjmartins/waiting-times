@@ -20,6 +20,7 @@ import pandas as pd
 
 from . import config
 from . import cancer_groups
+from pipeline_common import ods
 
 # Non-real placeholder orgs (e.g. the 'UNKNOWN' unallocated-commissioner bucket).
 # Hidden from the picker and comparison view, but RETAINED in the tidy store and
@@ -32,10 +33,25 @@ def _is_placeholder(code, name):
             or str(name).strip().upper() in PLACEHOLDER_NAMES)
 
 
-def _negligible_orgs(df):
+def _first_months(df):
+    """{code: earliest YYYY-MM present in the data} — used for young-org detection."""
+    return (df[df["breakdown_type"] == "all"]
+            .groupby("org_code")["month"].min().to_dict())
+
+
+
+
+def _negligible_orgs(df, classification=None):
     """Codes to HIDE from the picker / default lists (selection-only: the per-org
     files are still written, the org stays in the store + downloads, and a direct
     ?org= link still resolves and renders with the usual low-reliability flags).
+
+    YOUNG-ORG PROTECTION (2026-06-22): an org that is CURRENT per ODS and whose
+    series first appears within config.YOUNG_WINDOW_MONTHS is "young" (thin because
+    newly created, e.g. a just-merged ICB) — it is checked FIRST and never hidden,
+    so it shows from month one. ODS status separates young (current) from dormant
+    (former); the inactivity rule below still hides former-dormant orgs and the
+    pre-existing current-but-defunct codes (the two rules do different jobs).
 
     Computed DYNAMICALLY from the current data each build — not a frozen list — so
     an org that crosses the bar (or a brand-new org) appears automatically and a
@@ -50,13 +66,19 @@ def _negligible_orgs(df):
         denominator (summed across standards) is below
         config.PICKER_MIN_COMMISSIONER_DENOM — isolates the commissioning hubs.
     Placeholders are already excluded elsewhere; skip them here too."""
+    classification = classification or {}
     allrows = df[df["breakdown_type"] == "all"]
     recent = set(_recent_final_months(df))
     all_months = sorted(df["month"].unique())
     provider_window = set(all_months[-config.PICKER_PROVIDER_WINDOW_MONTHS:])
+    young_cutoff = all_months[-config.YOUNG_WINDOW_MONTHS] if len(all_months) >= config.YOUNG_WINDOW_MONTHS else all_months[0]
+    first_months = _first_months(df)
     hidden = set()
     for (code, name, level), g in allrows.groupby(["org_code", "org_name", "org_level"]):
         if _is_placeholder(code, name):
+            continue
+        # Young (current per ODS + recently first-appeared) → never hide. Checked first.
+        if not ods.is_former(classification.get(code)) and first_months.get(code, "") >= young_cutoff:
             continue
         if level == "provider":
             recent_g = g.loc[g["month"].isin(provider_window), "total"]
@@ -446,17 +468,21 @@ def _build_downloads(df, out_dir):
     return files
 
 
-def build(df, out_dir=config.SITE_DATA_DIR):
+def build(df, out_dir=config.SITE_DATA_DIR, classification=None):
     # Fail loudly if a composite group's composition description has drifted from
     # the actual cancer_groups mapping before we emit it into meta.json (v7).
     cancer_groups.assert_composition_consistent()
     os.makedirs(os.path.join(out_dir, "org"), exist_ok=True)
 
+    # Shared ODS org-status classification (current/former + succession links).
+    # Absent/empty → every org treated as current (fail-open); annotation only.
+    classification = classification or {}
+
     # Negligible-activity orgs to hide from the picker (computed each build). They
     # still get per-org files written and stay in index.json flagged hidden=true,
     # so direct ?org= links resolve; the front end just filters them out of the
-    # picker / default lists.
-    hidden = _negligible_orgs(df)
+    # picker / default lists. Young current-per-ODS orgs are protected (see above).
+    hidden = _negligible_orgs(df, classification)
 
     # Per-org files + index
     index = []
@@ -475,6 +501,7 @@ def build(df, out_dir=config.SITE_DATA_DIR):
             entry = {"code": code, "name": name, "level": level, "region": region}
             if code in hidden:
                 entry["hidden"] = True   # negligible activity: out of the picker, still direct-linkable
+            ods.annotate_entry(entry, classification.get(code))
             index.append(entry)
     index.sort(key=lambda r: r["name"])
     with open(os.path.join(out_dir, "index.json"), "w") as f:

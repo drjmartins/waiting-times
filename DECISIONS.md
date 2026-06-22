@@ -6,6 +6,160 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-22 — BUILT (paused pre-deploy): self-updating ODS org-status feature, BOTH dashboards (Code) — SUPERSEDES the pooling proposal below
+
+User killed pooling entirely (too risky/messy — incl. the clean Z9B2Z case). New direction: a fully
+hands-off, self-updating org-lifecycle feature, no pooling / no apportionment / no human approval step.
+New orgs show their own real (initially short) series; no fabricated history. Design was confirmed before
+build; built + re-rendered + tested; **NOT deployed** (deploys with Part A on user's say-so). 50 tests pass.
+
+THREE lifecycle states (kept distinct): CURRENT (live per ODS → main list) · FORMER (closed/superseded per
+ODS → "Former organisations" picker group, STILL SELECTABLE — history stays viewable) · HIDDEN (a FORMER
+org that ALSO trips the existing inactivity rule → out of the picker, data retained + ?org= reachable).
+Supersession and hiding are two separate events in time; a newly-superseded org is NOT hidden immediately.
+
+LOAD-BEARING CORRECTION (user credited): classify FORMER from the **succession link whose legal start has
+passed**, NOT `Status`. Verified live 2026-06-22 that ODS keeps closed orgs `Status:Active` through a
+~6-month migration overlap (all 12 ICBs + Frimley still "Active"), so Status alone misses every current
+merger. `Status==Inactive` kept only as an additional catch-all (post-overlap).
+
+WHAT WAS BUILT:
+ - `pipeline_common/ods.py` (NEW shared module, both pipelines import it). Reads the free no-auth ODS ORD
+   REST API (directory.spineservices.nhs.uk/ORD/2-0-0). Fetches role summaries (RO261 ICB + RO197 NHS
+   Trust/FT — verified both trusts AND FTs are RO197), then full records only for recently-changed /
+   inactive orgs (→ a few dozen GETs, not 600+). Emits {code: {name,status,closed,opened,successors,
+   predecessors}} for succession-affected orgs only; absent code => CURRENT (fail-open). ORG-TYPE-AGNOSTIC
+   by the role list — future trust/provider mergers picked up by widening ROLES, no rebuild.
+ - FAIL-SOFT (verified): `refresh_or_cache()` tries live, on ANY error returns the last-known committed
+   cache and NEVER raises (data update can't crash on the new dependency); missing cache => {} (fail-open,
+   never drops orgs). ONE SHARED committed cache `ods_classification.json` (user's call — same truth for
+   both, can't drift; added to CI `git add`). `as_of` stamped from the STORED orgs' max LastChangeDate
+   (ODS-derived, not per-run) so it commits only on real ODS change (respects the no-op-commit guard).
+ - DATA MODEL: additive index.json fields, mirror the existing `hidden` flag — `former:true`, `closed`,
+   `opened`, `related:[{code,name}]`, `reltype:"superseded"|"formed"`. Names stored (not just codes) so a
+   note resolves even when the related org isn't in THIS dashboard's data yet. No change to series files.
+ - HIDING REVISED (two rules, different jobs — user confirmed both stay): YOUNG (current per ODS + series
+   first-appears within config.YOUNG_WINDOW_MONTHS=12) is checked FIRST and never hidden → new orgs show
+   from month one (the existing "no year-ago data" note + n<10 flag carry the thin view). The inactivity
+   rule still hides former-dormant orgs AND the pre-existing current-but-defunct codes. Net effect un-hides
+   only (RTT hidden 96→64, cancer 66→59); never over-hides.
+ - FRONT END (both, near-identical pickers): `orgGroupOf` buckets `former` orgs into a trailing
+   "Former organisations" group (still selectable); a neutral `#orgnote` shows a GENERIC auto note built
+   from the succession fields — former → "Closed <month>. … see related organisations: X, Y. Its figures
+   up to closure remain viewable here."; new → "Formed <month>. … drawing on the areas of: …". Related
+   orgs are clickable (goToOrg) when present in this dashboard, else plain text+code. No hand-written
+   per-merger copy.
+
+VERIFIED (re-rendered both): RTT former QNQ/Frimley → note lists its 3 successors (incl QRL), full history
+through Mar-2026 selectable; RTT young Z9B2Z (West & North London) → single Apr-2026 month SHOWN (not
+hidden), "Formed April 2026" note, "no year-ago data" cards; picker shows ICB + "Former organisations"
+groups. Cancer (data ends Mar-2026, so no new codes yet — publication lag): 12 ICBs flagged former with
+notes; successors not-yet-in-cancer render as plain text (S0E4D/S9B9J) while QRL (present) is a live link —
+the graceful-degradation the stored-names design buys. Cancer gets the young new codes automatically when
+April CWT publishes; RTT already has them. Both keyed on the same ODS codes (confirmed).
+
+NOTED FOR USER (review): young-protection surfaced ~32 brand-new small independent-sector clinics in RTT
+(ACES/Optegra/SpaMedica chains, 1–6 months) into the main list — a faithful consequence of "show young
+from month one"; YOUNG_WINDOW_MONTHS (12) is the single knob to tighten if that's too lenient (it currently
+== "lacks a full year of history" == shows the "no year-ago" note, a coherent definition). Open: deploy
+this + Part A together on say-so.
+
+## 2026-06-22 — Part A SHIPPED (RTT copy ×3) + Part B INVESTIGATION (ICB-merger handling, BOTH dashboards — report/propose only, no build) (Code)
+
+### Part A — three RTT copy changes (BUILT, site/rtt/index.html, re-rendered + verified) ✅
+Front-end-only, no pipeline/data change. (1) Feb-2024 banner → "⚠ Community services moved out of RTT
+reporting in February 2024; figures before that month are not directly comparable." (dropped the bold
+"series break" lead-in + the dashed-marker sentence — the marker still renders, ask if the explanation
+should return). (2) Footer trimmed to data-source + OGL + independence line; the derivation/"official RTT
+dashboard" sentence removed; non-English-commissioned note moved to the closing line: "Some
+independent-sector providers with very little recent activity are hidden. Non-English-commissioned
+activity is also excluded." Dates CONFIRMED DYNAMIC (`${latest}`=fullMonth(months[-1]), `${built}`=
+isoDate(built_at) from meta.json, same mechanism as cancer footerHTML) — current meta renders "Data to
+April 2026. Last updated 20 June 2026" (built_at=2026-06-20; next cron flips to 21 Jun automatically; the
+"21 June" in the brief was illustrative). (3) Subtitle "… & the waiting list" → "… & waiting lists".
+Headless render confirms all three strings; no test asserts on the old copy.
+
+### Part B — ICB-merger handling: INVESTIGATION + PROPOSAL (no build; user decides before any build)
+Source of truth: NHS ODS "ICB Mergers Phase 1 April 2026" change-summary xlsx PLUS — decisively — the
+live ODS ORD REST API (directory.spineservices.nhs.uk/ORD/2-0-0/organisations/<code>, free, no auth,
+JSON). Both dashboards key ICBs on the 3-char (old) / 5-char (new) ODS ICB code, level:"icb" — CONFIRMED.
+RTT data already carries all 6 new codes (single month, Apr-2026) AND the 12 old; cancer carries the 12
+old + QRL but NONE of the 6 new YET — purely a publication-lag artefact: cancer data ends 2026-03, new
+codes are effective 2026-04, so they land the moment April-2026 CWT publishes. Symmetric, imminent, BOTH.
+
+**1. EXACT old→new mapping — pulled live from ODS `Succs` (Successor links), matches the xlsx SICBL
+groupings exactly:**
+```
+QHG Beds Luton & MK        → S1Y5D                      (whole)
+QUE Cambs & P'boro         → S1Y5D                      (whole)
+QM7 Herts & West Essex     → S1Y5D + D7T5G              (SPLIT — 2 successors)
+QH8 Mid & South Essex      → D7T5G                      (whole)
+QJG Suffolk & NE Essex     → D7T5G + T6Y0W              (SPLIT — 2 successors)
+QMM Norfolk & Waveney      → T6Y0W                      (whole)
+QMJ North Central London   → Z9B2Z                      (whole)
+QRV North West London      → Z9B2Z                      (whole)
+QU9 Bucks Oxon & Berks W   → S0E4D                      (whole)
+QNQ Frimley                → S0E4D + S9B9J + QRL         (SPLIT — 3 successors; 3rd is the EXISTING QRL)
+QXU Surrey Heartlands      → S9B9J                      (whole)
+QNX Sussex                 → S9B9J                      (whole)
+```
+New-ICB predecessor view (reciprocal Predecessor links, also live): S1Y5D←{QHG,QUE,QM7}; D7T5G←{QJG,QM7,
+QH8}; T6Y0W←{QMM,QJG}; Z9B2Z←{QMJ,QRV}; S0E4D←{QNQ,QU9}; S9B9J←{QNX,QNQ,QXU}. QRL is RETAINED (Active,
+keeps code) and gains a Predecessor link from QNQ = the Frimley boundary transfer.
+
+**2. CLEAN vs MESSY (decision rule: a new ICB is a clean whole-ICB union iff EVERY predecessor has exactly
+ONE successor; split orgs are QM7, QJG, QNQ):**
+ - **Z9B2Z West & North London = QMJ + QRV — the ONLY fully-clean union.** Both predecessors wholly
+   absorbed → pool = exact sum, reconciles, verifiable. AUTO-POOL candidate.
+ - S1Y5D, D7T5G, T6Y0W — MESSY: each contains a split predecessor (QM7 and/or QJG split at SICBL level —
+   e.g. Herts&West Essex 06K/06N→Central East but 07H→Essex; Suffolk&NE Essex 06L/07K→Norfolk&Suffolk but
+   06T→Essex). Summing whole predecessors would double-count or misattribute.
+ - S0E4D Thames Valley = QU9(whole) + Frimley fragment; S9B9J Surrey & Sussex = QXU+QNX(whole) + Frimley
+   fragment — MESSY via the QNQ split (244 LSOAs→TV new SICBL; 95→S&S into 92A; 101→Hants&IoW into D9Y0V).
+ - QRL Hants & IoW — RETAINED code, boundary-only gain of Frimley territory.
+ RECOMMENDATION (matches user's steer): auto-pool ONLY Z9B2Z (clean). Leave the 5 split/boundary-affected
+ new codes (and QRL) as HONEST SHORT SERIES — do NOT fabricate apportioned history. Flag, don't invent.
+
+**3. AUTOMATION FEASIBILITY — strong YES.** The old→new mapping is fully machine-readable from ODS ORD, no
+hand-maintenance: each org record carries `Succs.Succ[]` with Type Successor/Predecessor (bidirectional),
+`Target.OrgId.extension` (the linked code), `Target.PrimaryRoleId` (org TYPE — RO261=ICB), and a Legal
+Date (2026-04-01). `/sync?LastChangeDate=` gives daily deltas. VERIFIED LIVE for all 12+6+QRL today
+(Jun-2026; links pre-published from 12-Jan-2026). Splits vs merges are inferable purely from link count +
+direction: an old code with >1 Successor = split; a new code whose every predecessor has exactly 1
+successor = clean merge. TWO-TIER DESIGN (proposed): TIER 1 auto-pool clean whole-ICB unions (all
+predecessors degree-1 → sum, with a reconciliation guard like the existing TF/group gates); TIER 2
+detect-and-FLAG any new code touching a split predecessor → fail-loud / escalate to a human decision,
+never auto-apportion. AUTO/MANUAL LINE sits exactly at "does any predecessor have >1 successor". CAVEATS:
+succession links appear BEFORE operational cutover and never expire → gate the actual series switch on the
+old org's Status flipping Inactive / legal-close date, not on link existence; succession is only mandatory
+for STATUTORY orgs (ICBs, trusts) — NOT GP practices/sub-ICB, which use RE5 geographic relationships.
+
+**3b. GENERALISATION — CONFIRMED org-type-agnostic.** The same `Succs` mechanism + `PrimaryRoleId` filter
+covers NHS Trusts (RO107 etc.) identically; a future trust-merger phase is picked up by changing/loosening
+the role filter, NOT by an ICB-only rebuild. Design the pooler around (code, role, succession-links), not
+around "ICB". Only excluded tier is non-statutory orgs (GP practices) — out of scope for both dashboards.
+
+**4. UX PROPOSALS (across clean-merge / split / boundary-only):**
+ a. POOLED-series transparency alert — reuse the existing break-marker/banner pattern: where a series'
+    pre-Apr-2026 portion is reconstructed from predecessors (only Z9B2Z under the recommendation), show a
+    marker at the Apr-2026 join + a banner ("history before April 2026 pooled from NHS North Central
+    London + NHS North West London"). Honest, consistent with the Feb-2024 / Oct-2023 markers.
+ b. Grouped picker — add a "Former ICBs (to Mar 2026)" section beneath current ICBs (mirrors the existing
+    Trust/ICB grouped picker). CLEAN merge (Z9B2Z): predecessors QMJ/QRV become ALIASES/redirects to the
+    new code (selecting them deep-links to Z9B2Z, since their history now lives there) — avoids a dead
+    single-direction stub. SPLIT predecessors (QM7, QJG, QNQ): stay SEPARATELY listed as closed series
+    (their history can't be cleanly handed to one successor). New split-derived codes (S1Y5D etc.) stay
+    as their own honest short series. QRL: unchanged, stays current.
+ c. Directional context notes — selecting any reorganised org shows a contextual "reorganised April 2026"
+    note pointing to related codes: Frimley (QNQ) → "split April 2026 between Thames Valley, Surrey &
+    Sussex and Hampshire & IoW"; the 3 successors + QRL → "this area was reorganised in April 2026; parts
+    came from NHS Frimley ICB — see also …". Drives users between old/new without implying false continuity.
+
+OPEN DECISIONS for the user before any build: (i) confirm auto-pool scope = Z9B2Z only; (ii) approve the
+two-tier auto/flag pipeline design + ODS ORD `Succs` as the live source (vs a checked-in mapping file);
+(iii) approve the three UX patterns (esp. alias-redirect for clean predecessors vs keep-listed for splits).
+Nothing built for Part B.
+
 ## 2026-06-20 — BIGGEST DEPLOY: site restructure (waiting-times: /cancer/ + /rtt/ + landing) + RTT goes live (Code)
 User approved all three calls (A: rename repo + stub redirect; minimal two-card landing; stub is the
 redirect mechanism). Landed as ONE change. Restructure:

@@ -2,7 +2,17 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-16 (Claude Code session; v16 England toggle live)._
+_Last updated: 2026-06-22 (Claude Code session; ODS org-status feature BUILT, paused pre-deploy)._
+
+## ⏸ BUILT, NOT YET DEPLOYED (deploy together, on user's say-so)
+- **Part A — RTT copy ×3** (`site/rtt/index.html`): Feb-2024 banner reworded; footer trimmed (dynamic
+  dates confirmed); subtitle "… & waiting lists". Re-rendered + verified.
+- **Self-updating ODS org-status feature, BOTH dashboards** (supersedes the ICB-pooling proposal — pooling
+  dropped). Three lifecycle states (current / former-but-selectable / hidden) driven by ODS ORD succession
+  links via the shared `pipeline_common/ods.py` (fail-soft to a committed `ods_classification.json`).
+  Former orgs → "Former organisations" picker group + generic auto change-note; young new orgs shown from
+  month one (hiding gated on succession-link supersession, not ODS Status). 50 tests pass. See DECISIONS
+  2026-06-22. Open knob: YOUNG_WINDOW_MONTHS=12 (surfaces ~32 new IS clinics in RTT — tighten if desired).
 
 ## RTT dashboard (second dashboard, /rtt/) — increments 1 & 2 BUILT, NOT deployed ⏸
 Parallel stack to the cancer one: `pipeline_rtt/` (config + build), `tests_rtt/` (9 tests),

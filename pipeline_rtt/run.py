@@ -17,6 +17,7 @@ import os
 import sys
 
 from . import config, discover, build
+from pipeline_common import ods
 
 
 def run_real():
@@ -57,7 +58,10 @@ def run_real():
     if todo:
         discover.save_manifest(manifest)
 
-    meta = build.run()        # runs BOTH gates, then writes site/rtt/data
+    # Shared ODS org-status classification (current/former + succession links);
+    # fail-soft to the last-known committed cache on any ODS outage (never raises).
+    classification = ods.refresh_or_cache()
+    meta = build.run(classification=classification)   # runs BOTH gates, then writes site/rtt/data
     print(f"Rebuilt RTT site data: {meta['counts']} | "
           f"recon={meta['reconciliation'].get('checked')} "
           f"tf_recon_maxΔ={meta['tf_reconciliation']['max_abs_delta']}")

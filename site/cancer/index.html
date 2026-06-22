@@ -48,6 +48,14 @@
     margin-bottom:6px;border:1px solid var(--line);border-radius:5px}
   .note{background:#fff7e8;border:1px solid #f0dcae;border-left:3px solid var(--target);
     padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0 22px}
+  /* Contextual org-lifecycle note (former/newly-formed) — neutral, distinct from the amber break note. */
+  .orgnote{background:var(--grid);border:1px solid var(--line);border-left:3px solid var(--org);
+    padding:9px 12px;font-size:13px;color:var(--ink-soft);border-radius:0 4px 4px 0;margin:2px 0 16px}
+  .orgnote[hidden]{display:none}
+  .orgnote b{color:var(--ink)}
+  .orgnote .rellink{background:none;border:0;padding:0;font:inherit;color:var(--org);
+    text-decoration:underline;cursor:pointer}
+  .orgnote .rellink:hover{color:var(--org-strong,var(--org))}
 
   /* Shared cancer-group selector (drives all three cards + the big chart) */
   .groupbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
@@ -219,6 +227,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Contextual org-lifecycle note: shown when a former / newly-formed org is selected. -->
+  <div class="orgnote" id="orgnote" hidden></div>
 
   <!-- Shared cancer-group filter: drives all three cards AND the big chart together. -->
   <div class="groupbar" id="groupbar">
@@ -459,6 +470,7 @@ function orgListFor(type){
 // "Other" (the specialised/national commissioning hubs). The data classifies
 // cleanly: 173 trusts vs 28 other providers, 42 ICBs vs 8 hubs, no ambiguous cases.
 function orgGroupOf(o){
+  if(o.former) return "Former organisations";   // closed/superseded per ODS — own group, still selectable
   const u=(o.name||"").toUpperCase();
   if(o.level==="icb") return u.includes("INTEGRATED CARE BOARD") ? "ICB" : "Other";
   const isTrust=(u.includes("TRUST") && (u.includes("NHS")||u.includes("NATIONAL HEALTH SERVICE"))) || u.includes("NHS FT");
@@ -471,7 +483,9 @@ function buildOrgOptions(q){
   q=(q||"").trim().toLowerCase();
   const list=orgListFor(CURRENT_TYPE).filter(o=> !q || o.name.toLowerCase().includes(q) || o.code.toLowerCase().includes(q));
   if(!list.length){ host.innerHTML='<div class="fgroup first">No matches</div>'; return; }
-  const order = CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Other"];
+  // Former (closed/superseded per ODS) orgs bucketed last but still SELECTABLE —
+  // history stays viewable (valuable right after a merger). Inactivity hides later.
+  const order = (CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Other"]).concat(["Former organisations"]);
   let first=true;
   for(const grp of order){
     const items=list.filter(o=>orgGroupOf(o)===grp);
@@ -524,6 +538,7 @@ async function loadNational(){
   CURRENT = Object.assign({code:NATIONAL_CODE, name:"England", level:"national",
     region:"England", isNational:true}, NATIONAL);
   BREAKDOWN=null; resetSliceForSwitch();
+  renderOrgNote(null);
   await ensureForGroup();
   render();
 }
@@ -531,8 +546,42 @@ async function loadOrg(code){
   CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
   CURRENT.isNational=false;
   BREAKDOWN=null; resetSliceForSwitch();   // breakdown is per-org; refetch lazily
+  renderOrgNote(code);
   await ensureForGroup();
   render();
+}
+
+// Jump to a related org (a successor / predecessor from the ODS change note).
+function goToOrg(code){
+  const e=(window._idx||[]).find(o=>o.code===code);
+  if(e) setType(e.level, e.code);
+}
+const _monthYear = iso => { if(!iso) return ""; const[y,m]=iso.split("-"); return _MN[+m-1]+" "+y; };
+// Generic, auto-generated lifecycle note (no hand-written per-merger text), built
+// from the index entry's ODS succession fields. Former → "Closed … — see related:";
+// newly-formed → "Formed … — see related:". Hidden when neither applies.
+function renderOrgNote(code){
+  const box=document.getElementById("orgnote");
+  const e=code ? (window._idx||[]).find(o=>o.code===code) : null;
+  if(!e || (!e.former && e.reltype!=="formed")){ box.hidden=true; box.innerHTML=""; return; }
+  const rel=(e.related||[]).map(r=>{
+    const known=(window._idx||[]).some(o=>o.code===r.code);
+    return known ? `<button type="button" class="rellink" onclick="goToOrg('${r.code}')">${r.name}</button>`
+                 : `${r.name} (${r.code})`;
+  });
+  let msg;
+  if(e.former){
+    const when=_monthYear(e.closed);
+    msg=`<b>Closed${when?" "+when:""}.</b> This organisation was reorganised`+
+        (rel.length?` — see related organisation${rel.length>1?"s":""}: ${rel.join(", ")}.`:".")+
+        ` Its figures up to closure remain viewable here.`;
+  } else {
+    const when=_monthYear(e.opened);
+    msg=`<b>Formed${when?" "+when:""}.</b> This is a new organisation`+
+        (rel.length?`, drawing on the area${rel.length>1?"s":""} of: ${rel.join(", ")}.`:".")+
+        ` Earlier months are not available under this code.`;
+  }
+  box.innerHTML=msg; box.hidden=false;
 }
 
 function render(){

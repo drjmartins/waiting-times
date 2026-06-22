@@ -78,6 +78,15 @@ COMPARISON_WINDOW_MONTHS = 3
 PICKER_PROVIDER_WINDOW_MONTHS = 12
 PICKER_MIN_COMMISSIONER_DENOM = 2000
 
+# --- Org lifecycle / ODS status (see pipeline_common/ods.py + DECISIONS 2026-06-22)
+# An org whose data series FIRST appears within this many months AND is CURRENT per
+# ODS is "young" — thin because it is newly created (e.g. a just-merged ICB), NOT
+# dormant. Young orgs are checked FIRST and protected from the inactivity-hiding
+# rule above, so a brand-new code shows from its first month (the existing
+# "no year-ago data" note + n<10 flag handle the thin view). ODS status is what
+# separates young (current) from dormant (former) — both can have minimal data.
+YOUNG_WINDOW_MONTHS = 12
+
 # Funnel control limits, anchored to the national distribution. z for two-sided
 # 95% (~2 SD) and 99.8% (~3 SD), per standard funnel methodology.
 FUNNEL_LIMITS = {"p95": 1.96, "p998": 3.09}
