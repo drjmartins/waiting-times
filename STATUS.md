@@ -2,7 +2,18 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-22 (Claude Code session; "Formed" note scoped to genuine recent formations DEPLOYED)._
+_Last updated: 2026-06-22 (Claude Code session; footer-accuracy reword DEPLOYED + live-verified)._
+
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27966254999, build+deploy GREEN)
+- **Footer accuracy reword, BOTH dashboards.** Hiding is org-type-agnostic (the inactivity rule keys on
+  recent activity, not provider type — dormant NHS trusts are hidden alongside independents: cancer 34
+  trusts + 17 independent hidden, RTT 22 + 42), so the RTT footer's "independent-sector providers … are
+  hidden" was misleading. Reworded: RTT → "Providers with very little recent activity (no month reaching 100
+  on the waiting list in the past year) are hidden. Non-English-commissioned activity is also excluded.";
+  cancer → "Organisations with very little recent activity (for providers, no standard reaching at least 10
+  patients in a single month over the last year; for commissioners, very low recent total volume) are
+  hidden." Provider-type-filter mention deliberately dropped (toggle is self-evident in the UI). Live-
+  verified: both footers render with the new copy, clean punctuation, dynamic dates intact.
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27964831412, build+deploy GREEN)
 - **"Formed / new organisation" note scoped to genuine recent formations, BOTH dashboards.** It previously
@@ -14,9 +25,7 @@ _Last updated: 2026-06-22 (Claude Code session; "Formed" note scoped to genuine 
   note unchanged (asymmetric). Live: RTT RTH/R1L/QRL no note, Z9B2Z Formed note, QNQ Former unchanged;
   cancer RTH no note, QNQ Former unchanged. Formed notes now = RTT 6 (the 2026 ICBs) / cancer 0 (until April
   CWT lands). 53 tests. See DECISIONS 2026-06-22.
-- **PENDING (report-first, not yet built): footer-accuracy reword** on both dashboards — the RTT footer's
-  "independent-sector providers … are hidden" is misleading now that hiding is org-type-agnostic (NHS trusts
-  hidden too) and independents are behind the provider-type opt-in. Wording proposed; awaiting approval.
+  (Footer-accuracy reword that this entry flagged as pending is now DEPLOYED — see the top entry.)
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27962238975, build+deploy GREEN; CI commit a11c663)
 - **Provider-type hardening + cache-bust, BOTH dashboards.** Follow-up to a reported "RTT Independent Sector

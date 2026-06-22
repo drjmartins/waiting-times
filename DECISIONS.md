@@ -6,6 +6,21 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: footer-accuracy reword, BOTH dashboards (Code)
+
+Hiding is org-type-AGNOSTIC (verified live: the inactivity rule keys on recent activity, not type —
+cancer hides 34 NHS trusts + 17 independent; RTT 22 + 42), so the RTT footer's "independent-sector providers
+… are hidden" was misleading. Reworded both (user-approved final copy):
+ - RTT: "Providers with very little recent activity (no month reaching 100 on the waiting list in the past
+   year) are hidden. Non-English-commissioned activity is also excluded."
+ - Cancer: "Organisations with very little recent activity (for providers, no standard reaching at least 10
+   patients in a single month over the last year; for commissioners, very low recent total volume) are
+   hidden."
+Provider-type-filter mention deliberately dropped (toggle self-evident in the UI). Deployed run 27966254999
+(GREEN). Live-verified: both footers render with the new copy, clean punctuation, dynamic dates intact
+(RTT "Data to April 2026. Last updated 22 June 2026"; cancer "Data to March 2026 …"). No test asserted on
+the old text. 53 tests pass.
+
 ## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: scope the "Formed" note to genuine recent formations, BOTH dashboards (Code)
 (Deployed run 27964831412, build+deploy GREEN; CI commit pending. Live: RTT RTH/R1L/QRL → no note, Z9B2Z →
 Formed note, QNQ → Former note unchanged; cancer RTH → no note, QNQ → Former unchanged. CI: ODS live fetch
