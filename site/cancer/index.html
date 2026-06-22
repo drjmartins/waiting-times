@@ -39,6 +39,10 @@
   .typebtn:last-child{border-right:0}
   .typebtn:hover{background:var(--grid)}
   .typebtn.active{background:var(--org);color:#fff}
+  /* Provider-type sub-filter (Providers view only) — between the type buttons and the dropdown. */
+  .ptyperow{margin:0 0 6px}
+  .ptyperow[hidden]{display:none}
+  .ptyperow label{margin-bottom:4px}
   .orgbtnwrap{display:inline-block;vertical-align:middle}
   .orgbtnwrap .filterbtn{min-width:380px}
   .filterbtn[disabled],.orgbtnwrap[hidden]{display:none}
@@ -211,6 +215,14 @@
         <button type="button" class="typebtn" data-type="provider">Providers</button>
         <button type="button" class="typebtn" data-type="icb">Commissioners</button>
       </div>
+      <!-- Provider-type sub-filter: scopes the org dropdown (Providers view only). Default NHS Trusts. -->
+      <div class="ptyperow" id="ptyperow" hidden>
+        <label>Provider type</label>
+        <div class="typebtns" id="ptypebtns">
+          <button type="button" class="typebtn ptypebtn" data-ptype="trust">NHS Trusts</button>
+          <button type="button" class="typebtn ptypebtn" data-ptype="independent">Independent Sector</button>
+        </div>
+      </div>
       <!-- Dropdown + inline region on their OWN row below the type buttons (so the
            provider view mirrors the commissioner layout: buttons, then dropdown). -->
       <div class="orgrow">
@@ -320,6 +332,8 @@ const DEFAULT_STD = "CMB62";            // 62-day combined is the most-watched
 const THRESH = 10;                      // pipeline RELIABILITY_THRESHOLD: denom < this = low-reliability
 let META=null, NATIONAL=null, CURRENT=null, CURRENT_STD=DEFAULT_STD;
 let CURRENT_TYPE="national";                   // national | provider | icb (org type buttons)
+let PTYPE="trust";                             // provider-type filter: trust | independent (default NHS Trusts)
+const ptypeOf = o => o.ptype==="independent" ? "independent" : "trust";  // absent => NHS trust
 // Composite breakdown state (v6). Three independent axes:
 //   GROUP  — null = All cancers, else one of the ten tumour-site groups. The
 //            page-level shared selector; drives the cards + chart and PERSISTS
@@ -379,7 +393,8 @@ async function init(){
   window._idx = idx;
   document.getElementById("breaknote").innerHTML = "&#9888; "+META.note;
   // Org type buttons + searchable org dropdown
-  document.querySelectorAll(".typebtn").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
+  document.querySelectorAll("#typebtns .typebtn").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
+  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>b.addEventListener("click",()=>setPtype(b.dataset.ptype)));
   document.getElementById("orgbtn").addEventListener("click", toggleOrgPanel);
   document.getElementById("orgsearch").addEventListener("input", e=>buildOrgOptions(e.target.value));
   document.getElementById("orgsearch").addEventListener("keydown", dropSearchKey);
@@ -436,14 +451,26 @@ async function init(){
 // never blank. `code` optionally selects a specific org (deep link).
 async function setType(type, code){
   CURRENT_TYPE=type;
-  document.querySelectorAll(".typebtn").forEach(b=>b.classList.toggle("active", b.dataset.type===type));
+  document.querySelectorAll("#typebtns .typebtn").forEach(b=>b.classList.toggle("active", b.dataset.type===type));
   closeOrgPanel();
   const drop=document.getElementById("orgdrop");
   if(type==="national"){
+    document.getElementById("ptyperow").hidden=true;
     drop.hidden=true;
     document.getElementById("orglabel").textContent="England — all-England";
     await loadNational();
     return;
+  }
+  // Provider-type filter shows for Providers only. DEEP-LINK SAFETY: when a specific
+  // org is requested, the filter FOLLOWS that org's type so the link is never hidden;
+  // otherwise default to NHS Trusts.
+  if(type==="provider"){
+    const e=code && window._idx.find(o=>o.code===code);
+    PTYPE = e ? ptypeOf(e) : "trust";
+    document.getElementById("ptyperow").hidden=false;
+    updatePtypeButtons();
+  } else {
+    document.getElementById("ptyperow").hidden=true;
   }
   drop.hidden=false;
   const list=orgListFor(type);
@@ -457,27 +484,36 @@ async function setType(type, code){
   buildOrgOptions("");
   await loadOrg(pick.code);
 }
+// Provider-type sub-filter: re-scope the dropdown to the chosen type, then select
+// its first org so the chart never blanks.
+function setPtype(pt){
+  if(pt===PTYPE || CURRENT_TYPE!=="provider") return;
+  PTYPE=pt; updatePtypeButtons(); closeOrgPanel();
+  const list=orgListFor("provider"); buildOrgOptions("");
+  if(list.length){ document.getElementById("orglabel").textContent=`${list[0].name} (${list[0].code})`; loadOrg(list[0].code); }
+}
+function updatePtypeButtons(){
+  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>b.classList.toggle("active", b.dataset.ptype===PTYPE));
+}
 // Picker list: orgs of this type EXCLUDING negligible-activity ones flagged
 // hidden in index.json (computed each build). Hidden orgs stay direct-linkable
-// (see setType) — they're just out of the picker and default lists.
+// (see setType). Providers are further scoped by the provider-type filter.
 function orgListFor(type){
-  return window._idx.filter(o=>o.level===type && !o.hidden).sort((a,b)=>a.name.localeCompare(b.name));
+  let list=window._idx.filter(o=>o.level===type && !o.hidden);
+  if(type==="provider") list=list.filter(o=>ptypeOf(o)===PTYPE);   // provider-type filter (ODS role)
+  return list.sort((a,b)=>a.name.localeCompare(b.name));
 }
-// Classify an org for the grouped picker. Mirrors pipeline-side reasoning off the
-// org NAME: a provider is an "NHS Trust" if its name carries TRUST + NHS (or the
-// spelled-out / abbreviated forms), else "Other" (private/community/LLP etc.);
-// a commissioner is an "ICB" if its name says "INTEGRATED CARE BOARD", else
-// "Other" (the specialised/national commissioning hubs). The data classifies
-// cleanly: 173 trusts vs 28 other providers, 42 ICBs vs 8 hubs, no ambiguous cases.
+// Commissioner sub-grouping off the org NAME: ICB vs Other (national hubs).
+// Providers are scoped by the ODS-role provider-type FILTER, so they need no
+// name-based grouping inside the list (the old name heuristic was the murky part).
 function orgGroupOf(o){
   if(o.former) return "Former organisations";   // closed/superseded per ODS — own group, still selectable
   const u=(o.name||"").toUpperCase();
   if(o.level==="icb") return u.includes("INTEGRATED CARE BOARD") ? "ICB" : "Other";
-  const isTrust=(u.includes("TRUST") && (u.includes("NHS")||u.includes("NATIONAL HEALTH SERVICE"))) || u.includes("NHS FT");
-  return isTrust ? "NHS Trust" : "Other";
+  return "Current";
 }
-// Searchable, GROUPED option list (NHS Trust / ICB first, then Other). Substring
-// match on name OR code, applied within each group.
+// Searchable, GROUPED option list. Providers: type filter scopes the list, so just
+// split current vs Former (no redundant type header). Commissioners: ICB/Other/Former.
 function buildOrgOptions(q){
   const host=document.getElementById("orgoptions"); host.innerHTML="";
   q=(q||"").trim().toLowerCase();
@@ -485,13 +521,15 @@ function buildOrgOptions(q){
   if(!list.length){ host.innerHTML='<div class="fgroup first">No matches</div>'; return; }
   // Former (closed/superseded per ODS) orgs bucketed last but still SELECTABLE —
   // history stays viewable (valuable right after a merger). Inactivity hides later.
-  const order = (CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Other"]).concat(["Former organisations"]);
+  const groups = CURRENT_TYPE==="icb"
+    ? [["ICB","ICB"],["Other","Other"],["Former organisations","Former organisations"]]
+    : [["Current",null],["Former organisations","Former organisations"]];
   let first=true;
-  for(const grp of order){
-    const items=list.filter(o=>orgGroupOf(o)===grp);
+  for(const [key,label] of groups){
+    const items = key==="Current" ? list.filter(o=>!o.former) : list.filter(o=>orgGroupOf(o)===key);
     if(!items.length) continue;
-    const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=grp;
-    host.appendChild(h); first=false;
+    if(label){ const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=label; host.appendChild(h); }
+    first=false;
     items.forEach(o=>{ const b=document.createElement("button");
       b.className="fopt"+(CURRENT && CURRENT.code===o.code ? " active":"");
       b.setAttribute("role","option"); b.textContent=`${o.name} (${o.code})`;

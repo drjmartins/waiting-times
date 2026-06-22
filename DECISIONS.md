@@ -6,6 +6,45 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-22 — BUILT (paused pre-deploy): provider-TYPE picker filter, BOTH dashboards (Code)
+
+Confirm-data-first then build. A provider-type sub-filter scopes the org dropdown on the Providers view
+(England/Commissioners unaffected): segmented [NHS Trusts | Independent Sector], **default NHS Trusts**
+(independent-sector opt-in). Built, re-rendered, tested (51 pass); NOT deployed (user pauses pre-deploy).
+
+DATA CONFIRM (per dashboard, by ODS PRIMARY role; reversed the going-in assumption):
+ - Cancer 201 providers → 173 NHS Trust / 28 Independent Sector / **0 residue** — a CLEAN two-way split.
+   The name-based "Other" (~28) that earlier looked murky is, by ODS role, ALL independent-sector
+   (RO172/RO176). The murk was the NAME heuristic, not the data.
+ - RTT 594 → 171 NHS Trust / 422 IS / **1 residue**: 8KL73 ENDOCARE DIAGNOSTICS, role RO157
+   "NON-NHS ORGANISATION" (and already hidden). 
+ - DECISION (user-confirmed): define the split as NHS trust (RO197/RO107) vs non-NHS-trust (everything
+   else), so the lone RO157 org + any future odd role fold into Independent Sector → BOTH dashboards are a
+   clean two-way split, **no "Other" bucket**. Result: cancer 173/28, RTT 171/423.
+
+BUILD:
+ - pipeline_common/ods.py: added RO107 (Care Trust) to ROLES; emits `nhs_trust_codes` (primary role in
+   TRUST_ROLES=RO197/RO107, all statuses, 556 codes) into the shared cache; `tag_provider_type(entry,
+   trust_codes)` tags only independents (`ptype:"independent"`; absent => NHS trust = default view; empty
+   trust set => untagged = fail-open). refresh_or_cache() now returns the FULL data dict {orgs,
+   nhs_trust_codes,...}; both run.py pass orgs + trust_codes into the builds. Org-type split is pure ODS
+   role data — no name heuristic.
+ - Both builds tag provider index entries with ptype (ICBs never tagged). Cancer 173/28, RTT 171/423; no
+   ICB tagged.
+ - Front end (both, identical): new "Provider type" segmented control between the type buttons and the
+   dropdown, shown for Providers only, default NHS Trusts. orgListFor filters providers by PTYPE; the
+   redundant name-based NHS-Trust/Independent picker sub-grouping is REPLACED by the filter (picker now
+   shows Current + Former only for providers; ICBs keep ICB/Other/Former). DEEP-LINK SAFETY: setType
+   follows a requested org's ptype (filter switches to show the linked org, never hides it); setPtype
+   re-scopes + selects the first org so the chart never blanks.
+ - independent-sector providers are now opt-in on the default view (the ~32 young IS clinics no longer
+   clutter the default RTT list — intended).
+ - +1 test (tag_provider_type: trust untagged / non-trust independent / empty-set fail-open). 51 pass.
+
+VERIFIED (re-render both): default Providers → "NHS Trusts" active, first trust (Airedale RCF); switch to
+Independent Sector → list re-scopes (RTT: ACES… ; cancer: Assura/Ellenor/HCA…); deep-link ?org=NPR01 (RTT)
+/ ?org=NYT (cancer) → filter AUTO-SWITCHES to Independent and shows the linked org. Open: deploy on say-so.
+
 ## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: ODS org-status feature + Part A RTT copy (Code)
 
 Shipped together in one watched workflow_dispatch (run 27948177203, build 10m32s + deploy 16s, BOTH GREEN;

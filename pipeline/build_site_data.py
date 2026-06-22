@@ -468,15 +468,17 @@ def _build_downloads(df, out_dir):
     return files
 
 
-def build(df, out_dir=config.SITE_DATA_DIR, classification=None):
+def build(df, out_dir=config.SITE_DATA_DIR, classification=None, trust_codes=None):
     # Fail loudly if a composite group's composition description has drifted from
     # the actual cancer_groups mapping before we emit it into meta.json (v7).
     cancer_groups.assert_composition_consistent()
     os.makedirs(os.path.join(out_dir, "org"), exist_ok=True)
 
-    # Shared ODS org-status classification (current/former + succession links).
-    # Absent/empty → every org treated as current (fail-open); annotation only.
+    # Shared ODS org-status classification (current/former + succession links) +
+    # NHS-trust code set (for the provider-type filter). Absent/empty → every org
+    # treated as current and untyped (fail-open); annotation only.
     classification = classification or {}
+    trust_codes = trust_codes or set()
 
     # Negligible-activity orgs to hide from the picker (computed each build). They
     # still get per-org files written and stay in index.json flagged hidden=true,
@@ -502,6 +504,8 @@ def build(df, out_dir=config.SITE_DATA_DIR, classification=None):
             if code in hidden:
                 entry["hidden"] = True   # negligible activity: out of the picker, still direct-linkable
             ods.annotate_entry(entry, classification.get(code))
+            if level == "provider":
+                ods.tag_provider_type(entry, trust_codes)
             index.append(entry)
     index.sort(key=lambda r: r["name"])
     with open(os.path.join(out_dir, "index.json"), "w") as f:

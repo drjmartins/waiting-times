@@ -58,10 +58,12 @@ def run_real():
     if todo:
         discover.save_manifest(manifest)
 
-    # Shared ODS org-status classification (current/former + succession links);
-    # fail-soft to the last-known committed cache on any ODS outage (never raises).
-    classification = ods.refresh_or_cache()
-    meta = build.run(classification=classification)   # runs BOTH gates, then writes site/rtt/data
+    # Shared ODS org-status classification (current/former + succession links) +
+    # NHS-trust code set for the provider-type filter; fail-soft to the last-known
+    # committed cache on any ODS outage (never raises).
+    ods_data = ods.refresh_or_cache()
+    meta = build.run(classification=ods_data["orgs"],          # runs BOTH gates, then writes site/rtt/data
+                     trust_codes=set(ods_data.get("nhs_trust_codes") or []))
     print(f"Rebuilt RTT site data: {meta['counts']} | "
           f"recon={meta['reconciliation'].get('checked')} "
           f"tf_recon_maxΔ={meta['tf_reconciliation']['max_abs_delta']}")

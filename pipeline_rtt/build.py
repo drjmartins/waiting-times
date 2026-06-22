@@ -226,8 +226,9 @@ def _negligible(by_month, all_months, code, classification):
     return peak < config.PICKER_MIN_PROVIDER_WAITLIST
 
 
-def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=None):
+def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=None, trust_codes=None):
     classification = classification or {}   # ODS org-status; absent → current (fail-open)
+    trust_codes = trust_codes or set()      # NHS-trust code set for the provider-type filter
     zips = sorted(f for f in os.listdir(raw_dir) if f.endswith(".zip"))
     if not zips:
         raise RuntimeError(f"no zips in {raw_dir}")
@@ -288,6 +289,8 @@ def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=Non
         if level == "provider" and _negligible(by_month, all_months, code, classification):
             entry["hidden"] = True
         ods.annotate_entry(entry, classification.get(code))
+        if level == "provider":
+            ods.tag_provider_type(entry, trust_codes)
         index.append(entry)
 
     index.sort(key=lambda e: (e["level"], e["name"]))

@@ -33,6 +33,10 @@
   .typebtn:last-child{border-right:0}
   .typebtn:hover{background:var(--grid)}
   .typebtn.active{background:var(--org);color:#fff}
+  /* Provider-type sub-filter (Providers view only) — sits between the type buttons and the dropdown. */
+  .ptyperow{margin:0 0 6px}
+  .ptyperow[hidden]{display:none}
+  .ptyperow label{margin-bottom:4px}
   .orgbtnwrap{display:inline-block;vertical-align:middle}
   .orgbtnwrap .filterbtn{min-width:380px}
   .filterbtn[disabled],.orgbtnwrap[hidden]{display:none}
@@ -171,6 +175,14 @@
         <button type="button" class="typebtn" data-type="provider">Providers</button>
         <button type="button" class="typebtn" data-type="icb">Commissioners</button>
       </div>
+      <!-- Provider-type sub-filter: scopes the org dropdown (Providers view only). Default NHS Trusts. -->
+      <div class="ptyperow" id="ptyperow" hidden>
+        <label>Provider type</label>
+        <div class="typebtns" id="ptypebtns">
+          <button type="button" class="typebtn ptypebtn" data-ptype="trust">NHS Trusts</button>
+          <button type="button" class="typebtn ptypebtn" data-ptype="independent">Independent Sector</button>
+        </div>
+      </div>
       <div class="orgrow">
         <div class="fdrop orgbtnwrap" id="orgdrop">
           <button id="orgbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
@@ -264,6 +276,8 @@ const THRESH = 10;                       // pipeline RELIABILITY_THRESHOLD (pct1
 let META=null, NATIONAL=null, CURRENT=null;
 let MEASURE=DEFAULT_MEASURE;             // pct18 | waitlist | longwait  (the three cards)
 let CURRENT_TYPE="national";             // national | provider | icb
+let PTYPE="trust";                       // provider-type filter: trust | independent (default NHS Trusts)
+const ptypeOf = o => o.ptype==="independent" ? "independent" : "trust";  // absent => NHS trust
 let LWTHRESH=52;                         // long-waiter threshold (52|65|78|104), shown for the longwait measure
 const RANGE_MONTHS={"3y":36,"12m":12,"all":Infinity};
 let RANGE="3y";
@@ -321,7 +335,8 @@ async function init(){
     "&#9888; Community services moved out of RTT reporting in February 2024; "+
     "figures before that month are not directly comparable.";
 
-  document.querySelectorAll(".typebtn").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
+  document.querySelectorAll("#typebtns .typebtn").forEach(b=>b.addEventListener("click",()=>setType(b.dataset.type)));
+  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>b.addEventListener("click",()=>setPtype(b.dataset.ptype)));
   document.getElementById("orgbtn").addEventListener("click", toggleOrgPanel);
   document.getElementById("orgsearch").addEventListener("input", e=>buildOrgOptions(e.target.value));
   document.getElementById("orgsearch").addEventListener("keydown", dropSearchKey);
@@ -360,13 +375,25 @@ async function init(){
 /* ---------- org picker (reused from the cancer dashboard) ---------- */
 async function setType(type, code){
   CURRENT_TYPE=type;
-  document.querySelectorAll(".typebtn").forEach(b=>b.classList.toggle("active", b.dataset.type===type));
+  document.querySelectorAll("#typebtns .typebtn").forEach(b=>b.classList.toggle("active", b.dataset.type===type));
   closeOrgPanel();
   const drop=document.getElementById("orgdrop");
   if(type==="national"){
+    document.getElementById("ptyperow").hidden=true;
     drop.hidden=true;
     document.getElementById("orglabel").textContent="England — all-England";
     await loadNational(); return;
+  }
+  // Provider-type filter shows for Providers only. DEEP-LINK SAFETY: when a specific
+  // org is requested, the filter FOLLOWS that org's type so the link is never hidden;
+  // otherwise default to NHS Trusts.
+  if(type==="provider"){
+    const e=code && window._idx.find(o=>o.code===code);
+    PTYPE = e ? ptypeOf(e) : "trust";
+    document.getElementById("ptyperow").hidden=false;
+    updatePtypeButtons();
+  } else {
+    document.getElementById("ptyperow").hidden=true;
   }
   drop.hidden=false;
   const list=orgListFor(type);
@@ -377,34 +404,48 @@ async function setType(type, code){
   buildOrgOptions("");
   await loadOrg(pick.code);
 }
-function orgListFor(type){
-  return window._idx.filter(o=>o.level===type && !o.hidden).sort((a,b)=>a.name.localeCompare(b.name));
+// Provider-type sub-filter: re-scope the dropdown to the chosen type, then select
+// its first org so the chart never blanks.
+function setPtype(pt){
+  if(pt===PTYPE || CURRENT_TYPE!=="provider") return;
+  PTYPE=pt; updatePtypeButtons(); closeOrgPanel();
+  const list=orgListFor("provider"); buildOrgOptions("");
+  if(list.length){ document.getElementById("orglabel").textContent=`${list[0].name} (${list[0].code})`; loadOrg(list[0].code); }
 }
-// Classify for the grouped picker, off the org NAME: NHS Trust vs Independent
-// sector (providers); ICB vs Other (commissioners — the national hubs).
+function updatePtypeButtons(){
+  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>b.classList.toggle("active", b.dataset.ptype===PTYPE));
+}
+function orgListFor(type){
+  let list=window._idx.filter(o=>o.level===type && !o.hidden);
+  if(type==="provider") list=list.filter(o=>ptypeOf(o)===PTYPE);   // provider-type filter
+  return list.sort((a,b)=>a.name.localeCompare(b.name));
+}
+// Commissioner sub-grouping off the org NAME: ICB vs Other (the national hubs).
+// (Providers are scoped by the ODS-role provider-type FILTER, so they need no
+// name-based NHS-Trust/Independent grouping inside the list.)
 function orgGroupOf(o){
   if(o.former) return "Former organisations";   // closed/superseded per ODS — own group, still selectable
   const u=(o.name||"").toUpperCase();
   if(o.level==="icb") return u.includes("INTEGRATED CARE BOARD") ? "ICB" : "Other";
-  const isTrust=(u.includes("TRUST") && (u.includes("NHS")||u.includes("NATIONAL HEALTH SERVICE")));
-  return isTrust ? "NHS Trust" : "Independent sector";
+  return "Current";
 }
 function buildOrgOptions(q){
   const host=document.getElementById("orgoptions"); host.innerHTML="";
   q=(q||"").trim().toLowerCase();
   const list=orgListFor(CURRENT_TYPE).filter(o=> !q || o.name.toLowerCase().includes(q) || o.code.toLowerCase().includes(q));
   if(!list.length){ host.innerHTML='<div class="fgroup first">No matches</div>'; return; }
-  // Former (closed/superseded per ODS) orgs are bucketed last but stay SELECTABLE —
-  // their history is still viewable (valuable right after a merger when the
-  // successor is data-thin). Prolonged inactivity later hides them via the build.
-  const base = CURRENT_TYPE==="icb" ? ["ICB","Other"] : ["NHS Trust","Independent sector"];
-  const order = [...base, "Former organisations"];
+  // Providers: the type filter already scopes the list, so just split current vs
+  // Former (no redundant type header). Commissioners keep ICB / Other / Former.
+  // Former orgs stay SELECTABLE — their history is still viewable after a merger.
+  const groups = CURRENT_TYPE==="icb"
+    ? [["ICB","ICB"],["Other","Other"],["Former organisations","Former organisations"]]
+    : [["Current",null],["Former organisations","Former organisations"]];
   let first=true;
-  for(const grp of order){
-    const items=list.filter(o=>orgGroupOf(o)===grp);
+  for(const [key,label] of groups){
+    const items = key==="Current" ? list.filter(o=>!o.former) : list.filter(o=>orgGroupOf(o)===key);
     if(!items.length) continue;
-    const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=grp;
-    host.appendChild(h); first=false;
+    if(label){ const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=label; host.appendChild(h); }
+    first=false;
     items.forEach(o=>{ const b=document.createElement("button");
       b.className="fopt"+(CURRENT && CURRENT.code===o.code ? " active":"");
       b.setAttribute("role","option"); b.textContent=`${o.name} (${o.code})`;

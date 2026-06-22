@@ -49,6 +49,16 @@ def test_annotate_entry_former_formed_and_noop():
     assert e == {"code": "RJ1"}
 
 
+def test_tag_provider_type():
+    trust = {"RJ1", "RCF"}
+    # NHS trust -> untagged (absent => trust default view)
+    e = {"code": "RJ1"}; ods.tag_provider_type(e, trust); assert "ptype" not in e
+    # Non-trust (IS, or the RO157 residue, or anything future) -> independent
+    e = {"code": "NT1"}; ods.tag_provider_type(e, trust); assert e["ptype"] == "independent"
+    # Empty trust set (cold ODS + no cache) -> leave untagged (fail-open to trust view)
+    e = {"code": "NT1"}; ods.tag_provider_type(e, set()); assert "ptype" not in e
+
+
 def _cancer_df(code, level, months, total):
     """Minimal all-slice tidy frame: one org, constant monthly total."""
     return pd.DataFrame([{

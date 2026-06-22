@@ -47,9 +47,17 @@ ORD_BASE = "https://directory.spineservices.nhs.uk/ORD/2-0-0"
 # succession mechanism covers any statutory org — widen this list (e.g. a new
 # provider role) and trust/provider mergers are picked up with no other change.
 ROLES = {
-    "RO261": "ICB",        # Integrated Care Board (commissioner level)
-    "RO197": "NHS Trust",  # NHS Trust + NHS Foundation Trust (provider level)
+    "RO261": "ICB",         # Integrated Care Board (commissioner level)
+    "RO197": "NHS Trust",   # NHS Trust + NHS Foundation Trust (provider level)
+    "RO107": "Care Trust",  # Care Trust (a handful; grouped with NHS Trusts)
 }
+
+# Provider-TYPE split (for the picker's NHS-Trusts/Independent-Sector filter):
+# an org whose PRIMARY role is one of these is an "NHS trust"; every other provider
+# (independent-sector RO172/RO176, the odd RO157 non-NHS org, anything future) is
+# treated as non-NHS-trust = "independent". Defined as a positive trust set so the
+# residue always lands in independent — no "Other" bucket. See DECISIONS 2026-06-22.
+TRUST_ROLES = ("RO197", "RO107")
 
 # A code is fetched in full (for its succession links) only if it is Inactive or
 # changed within this window — keeps live full-record GETs to a few dozen, not 600+.
@@ -66,7 +74,8 @@ def _get_json(url, timeout=30):
 
 
 def _role_summary(role):
-    """{code: {name, status, lastchange}} for one primary role (one API call)."""
+    """{code: {name, status, lastchange, role}} for one primary role (one API call).
+    No Status filter → returns BOTH active and inactive orgs of that primary role."""
     url = f"{ORD_BASE}/organisations?PrimaryRoleId={role}&Limit=1000"
     out = {}
     for o in _get_json(url).get("Organisations", []):
@@ -74,7 +83,8 @@ def _role_summary(role):
         if code:
             out[code] = {"name": o.get("Name", code),
                          "status": o.get("Status", "Active"),
-                         "lastchange": o.get("LastChangeDate", "")}
+                         "lastchange": o.get("LastChangeDate", ""),
+                         "role": role}
     return out
 
 
@@ -111,13 +121,16 @@ def refresh(today=None):
     cutoff = (dt.date.fromisoformat(today)
               - dt.timedelta(days=int(RECENT_CHANGE_MONTHS * 30.5))).isoformat()
 
-    # One summary call per role -> {code: {name,status,lastchange}}.
+    # One summary call per role -> {code: {name,status,lastchange,role}}.
     summary = {}
     for role in ROLES:
         summary.update(_role_summary(role))
 
     def name_of(code):
         return summary.get(code, {}).get("name", code)
+
+    # NHS-trust code set (primary role in TRUST_ROLES) for the provider-type filter.
+    nhs_trust_codes = sorted(c for c, s in summary.items() if s.get("role") in TRUST_ROLES)
 
     # Candidates for full fetch: anything Inactive or recently changed (covers a
     # merger both during the operational-overlap window and after it goes Inactive).
@@ -153,12 +166,24 @@ def refresh(today=None):
         # as_of tracks only STORED (succession-affected) orgs, so the cache commits
         # when a relevant org changes — not on every unrelated ICB/trust edit.
         max_change = max(max_change, summary[code]["lastchange"])
-    return {"source": "ODS ORD API", "as_of": max_change, "orgs": orgs}
+    return {"source": "ODS ORD API", "as_of": max_change,
+            "orgs": orgs, "nhs_trust_codes": nhs_trust_codes}
 
 
 def is_former(ce):
     """True if this org's classification record marks it former/superseded."""
     return bool(ce and ce.get("status") == "former")
+
+
+def tag_provider_type(entry, trust_codes):
+    """Tag a PROVIDER index entry with its type for the picker filter. Lean: only
+    independents are flagged (`ptype:"independent"`); absent => NHS trust (the
+    default view). Defined off the positive trust set so any non-trust role (IS,
+    the lone RO157 non-NHS org, anything future) lands in independent — no Other
+    bucket. trust_codes empty (e.g. cold ODS + no cache) => leave untagged so the
+    default NHS-trust view still shows everything (fail-open, never hides)."""
+    if trust_codes and entry.get("code") not in trust_codes:
+        entry["ptype"] = "independent"
 
 
 def annotate_entry(entry, ce):
@@ -190,7 +215,7 @@ def load(path=CACHE_PATH):
                 return json.load(f)
         except Exception as e:
             print(f"  ODS: cache unreadable ({e}); treating as empty")
-    return {"source": "ODS ORD API", "as_of": "", "orgs": {}}
+    return {"source": "ODS ORD API", "as_of": "", "orgs": {}, "nhs_trust_codes": []}
 
 
 def _write(data, path=CACHE_PATH):
@@ -200,24 +225,27 @@ def _write(data, path=CACHE_PATH):
 
 def refresh_or_cache(path=CACHE_PATH, today=None):
     """Fetch live and persist; on ANY failure fall back to the committed cache.
-    Returns the orgs dict {code: {...}} (empty if neither source is available).
-    Never raises — the data update must not crash on an ODS outage."""
+    Returns the FULL data dict {orgs, nhs_trust_codes, as_of, ...} (empty-ish if
+    neither source is available). Never raises — the data update must not crash on
+    an ODS outage."""
     try:
         data = refresh(today=today)
         _write(data, path)
         n_former = sum(1 for v in data["orgs"].values() if v["status"] == "former")
         print(f"  ODS: classified {len(data['orgs'])} succession-affected orgs "
-              f"({n_former} former), as_of {data['as_of'] or 'n/a'}")
-        return data["orgs"]
+              f"({n_former} former), {len(data['nhs_trust_codes'])} NHS-trust codes, "
+              f"as_of {data['as_of'] or 'n/a'}")
+        return data
     except Exception as e:
         cached = load(path)
         print(f"  ODS: live fetch failed ({e}); using last-known cache "
-              f"({len(cached['orgs'])} orgs, as_of {cached.get('as_of') or 'n/a'})")
-        return cached["orgs"]
+              f"({len(cached['orgs'])} orgs, {len(cached.get('nhs_trust_codes') or [])} "
+              f"trust codes, as_of {cached.get('as_of') or 'n/a'})")
+        return cached
 
 
 if __name__ == "__main__":
     # Standalone refresh (handy for CI / manual checks). Never fails the caller.
-    orgs = refresh_or_cache()
-    formers = sorted(c for c, v in orgs.items() if v["status"] == "former")
+    data = refresh_or_cache()
+    formers = sorted(c for c, v in data["orgs"].items() if v["status"] == "former")
     print(f"former: {formers}")

@@ -68,15 +68,17 @@ def run_real():
     if store is None or len(store) == 0:
         print("No data in store and nothing to fetch; skipping build.")
         return
-    # Shared ODS org-status classification (current/former + succession links).
-    # Fail-soft: on any ODS outage this returns the last-known committed cache and
-    # never raises, so the data update can't crash on the new external dependency.
-    classification = ods.refresh_or_cache()
+    # Shared ODS org-status classification (current/former + succession links) plus
+    # the NHS-trust code set for the provider-type filter. Fail-soft: on any ODS
+    # outage this returns the last-known committed cache and never raises, so the
+    # data update can't crash on the new external dependency.
+    ods_data = ods.refresh_or_cache()
     # Always rebuild the site from the current store, even on a no-op fetch:
     # the download slices and comparison JSONs are build artefacts (gitignored,
     # not in the checkout), so the Pages artefact would otherwise ship without
     # them on any run that found no new data.
-    meta = build_site_data.build(store, classification=classification)
+    meta = build_site_data.build(store, classification=ods_data["orgs"],
+                                 trust_codes=set(ods_data.get("nhs_trust_codes") or []))
     print(f"{'Rebuilt' if todo else 'Rebuilt (no new data)'} site data: "
           f"{meta['n_orgs']} orgs, {len(meta['months'])} months.")
 
