@@ -2,7 +2,22 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-22 (Claude Code session; provider-type picker filter DEPLOYED + live-verified)._
+_Last updated: 2026-06-22 (Claude Code session; provider-type empty-set guards + data cache-bust DEPLOYED)._
+
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27962238975, build+deploy GREEN; CI commit a11c663)
+- **Provider-type hardening + cache-bust, BOTH dashboards.** Follow-up to a reported "RTT Independent Sector
+  empty" — root cause was a stale browser/CDN cache skew (new index.html + cached pre-`ptype` index.json);
+  the deployed data was correct (423 RTT independents tagged, all matched). Shipped two fail-loud guards +
+  the real recurrence-fix:
+  - **Guards:** `ods.assert_independents_tagged` makes a dashboard with providers fail the build if it tags
+    ZERO independents while an ODS trust set is present (silent match failure); both real `run.py`
+    entrypoints refuse to build if `nhs_trust_codes` is empty (transient ODS failure). Synthetic/tests skip.
+  - **Cache-bust:** data files (except meta.json) fetched via `durl()` with `?v=<token>`, token = dynamic
+    `meta.built_at` digits; meta.json fetched `no-store`. `?v=` is part of the cache key, so a new
+    index.html can never pair with a stale index.json. 52 tests.
+- **Live checks:** RTT Independent Sector populated (423 tagged / 381 visible), cancer unchanged (28 / 11
+  visible); data requests carry `?v=<built_at token>` (meta.json stays bare/no-store); CI ODS live fetch ran
+  (556 trust codes), both RTT gates passed, no guard tripped. recon + ODS fail-soft intact.
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27958596878, build+deploy GREEN; CI commit f7adeee)
 - **Provider-TYPE picker filter, BOTH dashboards.** A segmented [NHS Trusts | Independent Sector] control

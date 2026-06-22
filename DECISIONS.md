@@ -6,7 +6,7 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
-## 2026-06-22 — RTT "Independent Sector empty": diagnosis + empty-set guards + CACHE-BUST (Code)
+## 2026-06-22 — DEPLOYED: RTT "Independent Sector empty" diagnosis + empty-set guards + CACHE-BUST (Code)
 
 Reported: live RTT shows ALL providers under NHS Trusts, Independent empty (cancer fine). INVESTIGATED —
 the matching is NOT broken and the deployed data is CORRECT:
@@ -43,10 +43,13 @@ cached index.json (bare, or an older ?v) can NEVER satisfy the new build's index
 ?v=20260622141518988596 on national/index/org/breakdown; meta.json stays bare/no-store; page renders (381
 independents). compare.html left as-is (separate page, no ptype dependency, lower risk).
 
-VERIFIED: both builds pass the guard on real data (cancer 28 / RTT 423 independent); re-render shows RTT
-Independent Sector POPULATED (381 visible) and cancer unchanged (11 visible / 28 tagged); both guards
-demonstrated firing on the bad inputs; synthetic/test path safely skips; cache-bust tokens present on all
-data URLs. Deploying guards + cache-bust together.
+DEPLOYED + LIVE-VERIFIED (run 27962238975, build+deploy GREEN; CI commit a11c663). CI: ODS live fetch ran
+for both pipelines (556 trust codes), both RTT gates passed, NO "refusing to publish" (both guards passed on
+real data). Live: RTT Independent Sector POPULATED (423 tagged / 381 visible), cancer unchanged (28 tagged /
+11 visible); data requests carry ?v=<built_at token> (e.g. index.json?v=20260622151047991743) while
+meta.json stays bare/no-store; token differs per build → a cached stale index.json (different cache key)
+can't pair with the new HTML. Both guards demonstrated firing on bad inputs; synthetic/test path skips.
+recon + TF-sum gates + ODS fail-soft intact.
 
 ## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: provider-TYPE picker filter, BOTH dashboards (Code)
 
