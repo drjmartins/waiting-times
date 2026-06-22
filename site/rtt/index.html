@@ -328,7 +328,7 @@ function footerHTML(M){
   const latest=fullMonth(M.months[M.months.length-1]), built=isoDate(M.built_at);
   return `Data source: <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/" target="_blank" rel="noopener">NHS England Referral to Treatment (RTT) waiting times statistics</a>, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
     `Data to ${latest}. Last updated ${built}.<br><br>`+
-    `Some independent-sector providers with very little recent activity are hidden. Non-English-commissioned activity is also excluded.`;
+    `Providers with very little recent activity (no month reaching 100 on the waiting list in the past year) are hidden. Non-English-commissioned activity is also excluded.`;
 }
 
 async function init(){

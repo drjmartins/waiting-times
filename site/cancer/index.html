@@ -386,7 +386,7 @@ function footerHTML(META){
   return `Data source: <a href="https://www.england.nhs.uk/statistics/statistical-work-areas/cancer-waiting-times/" target="_blank" rel="noopener">NHS England Cancer Waiting Times statistics</a>, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
     `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
     // Transparency note for the picker hiding (see build_site_data._negligible_orgs).
-    `Some organisations are hidden from the selectors because they have too little recent cancer activity to give a reliable picture — for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume.`;
+    `Organisations with very little recent activity (for providers, no standard reaching at least 10 patients in a single month over the last year; for commissioners, very low recent total volume) are hidden.`;
   // (The Oct-2023 comparability note now lives in the amber banner below the chart
   //  + the in-chart marker, so the old third footer line would be redundant.)
 }
