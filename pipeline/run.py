@@ -73,6 +73,10 @@ def run_real():
     # outage this returns the last-known committed cache and never raises, so the
     # data update can't crash on the new external dependency.
     ods_data = ods.refresh_or_cache()
+    if not ods_data.get("nhs_trust_codes"):
+        raise RuntimeError("ODS classification returned no NHS-trust codes (live fetch AND committed "
+                           "cache both empty) — refusing to build a provider-type split that would "
+                           "mis-show every provider under the NHS-Trusts default.")
     # Always rebuild the site from the current store, even on a no-op fetch:
     # the download slices and comparison JSONs are build artefacts (gitignored,
     # not in the checkout), so the Pages artefact would otherwise ship without

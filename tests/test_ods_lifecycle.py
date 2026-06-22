@@ -13,6 +13,7 @@ Guards:
      hide. This is the bug fix: thin-because-new must not be auto-hidden.
 """
 import pandas as pd
+import pytest
 
 from pipeline import build_site_data as b
 from pipeline import config as ccfg
@@ -57,6 +58,19 @@ def test_tag_provider_type():
     e = {"code": "NT1"}; ods.tag_provider_type(e, trust); assert e["ptype"] == "independent"
     # Empty trust set (cold ODS + no cache) -> leave untagged (fail-open to trust view)
     e = {"code": "NT1"}; ods.tag_provider_type(e, set()); assert "ptype" not in e
+
+
+def test_assert_independents_tagged_guard():
+    # Populated trust set + providers but ZERO independents tagged → fail loud
+    # (this is the silent-match-failure / empty-tag case fail-open used to hide).
+    idx = [{"level": "provider", "code": "RJ1"}, {"level": "provider", "code": "RCF"}]
+    with pytest.raises(RuntimeError):
+        ods.assert_independents_tagged(idx, "X", {"RJ1", "RCF"})
+    # At least one independent present → OK, returns the count.
+    idx2 = idx + [{"level": "provider", "code": "NT1", "ptype": "independent"}]
+    assert ods.assert_independents_tagged(idx2, "X", {"RJ1", "RCF"}) == 1
+    # Empty trust set (synthetic/dev/tests — typing not attempted) → skipped, no raise.
+    assert ods.assert_independents_tagged(idx, "X", set()) == 0
 
 
 def _cancer_df(code, level, months, total):

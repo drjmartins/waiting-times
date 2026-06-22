@@ -62,6 +62,10 @@ def run_real():
     # NHS-trust code set for the provider-type filter; fail-soft to the last-known
     # committed cache on any ODS outage (never raises).
     ods_data = ods.refresh_or_cache()
+    if not ods_data.get("nhs_trust_codes"):
+        raise RuntimeError("ODS classification returned no NHS-trust codes (live fetch AND committed "
+                           "cache both empty) — refusing to build a provider-type split that would "
+                           "mis-show every provider under the NHS-Trusts default.")
     meta = build.run(classification=ods_data["orgs"],          # runs BOTH gates, then writes site/rtt/data
                      trust_codes=set(ods_data.get("nhs_trust_codes") or []))
     print(f"Rebuilt RTT site data: {meta['counts']} | "

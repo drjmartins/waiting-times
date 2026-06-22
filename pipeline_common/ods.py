@@ -175,6 +175,26 @@ def is_former(ce):
     return bool(ce and ce.get("status") == "former")
 
 
+def assert_independents_tagged(index, label, trust_codes):
+    """Fail-loud paired check for the provider-type split (the guard fail-open was
+    missing). When an ODS NHS-trust set IS present, a dashboard with providers MUST
+    tag at least one independent — zero means the provider-code↔ODS match silently
+    failed, which would mis-show every provider under the NHS-Trusts default and
+    pass every other gate. Skipped when trust_codes is empty (synthetic/dev/tests,
+    where typing isn't attempted); the real-run entrypoints separately refuse to
+    build on an empty trust set. Returns the independent count on success."""
+    if not trust_codes:
+        return 0
+    provs = [e for e in index if e.get("level") == "provider"]
+    indep = [e for e in provs if e.get("ptype") == "independent"]
+    if provs and not indep:
+        raise RuntimeError(
+            f"{label}: 0 of {len(provs)} providers tagged independent despite a "
+            f"{len(trust_codes)}-code ODS NHS-trust set — provider-code↔ODS match failed; "
+            f"refusing to publish (every provider would show under the NHS-Trusts default).")
+    return len(indep)
+
+
 def tag_provider_type(entry, trust_codes):
     """Tag a PROVIDER index entry with its type for the picker filter. Lean: only
     independents are flagged (`ptype:"independent"`); absent => NHS trust (the

@@ -327,6 +327,12 @@
 
 <script>
 const DATA = "data/";
+// Cache-bust: every data file (except meta.json itself) is fetched with a build-version
+// token derived from meta.built_at, so a new index.html can never pair with a browser-
+// or CDN-cached index.json from a previous build. meta.json is fetched no-store so the
+// token always reflects the latest deployed build (it's tiny). Set in init().
+let DV="";
+const durl = path => DATA+path+(DV?(path.includes("?")?"&":"?")+"v="+DV:"");
 const NATIONAL_CODE = "__NATIONAL__";
 const DEFAULT_STD = "CMB62";            // 62-day combined is the most-watched
 const THRESH = 10;                      // pipeline RELIABILITY_THRESHOLD: denom < this = low-reliability
@@ -386,10 +392,11 @@ function footerHTML(META){
 }
 
 async function init(){
-  META = await (await fetch(DATA+"meta.json")).json();
+  META = await (await fetch(DATA+"meta.json",{cache:"no-store"})).json();
+  DV = (META.built_at||"").replace(/\D/g,"");   // build-version token for all other data fetches
   document.getElementById("foot").innerHTML = footerHTML(META);
-  NATIONAL = await (await fetch(DATA+"national.json")).json();
-  const idx = await (await fetch(DATA+"index.json")).json();
+  NATIONAL = await (await fetch(durl("national.json"))).json();
+  const idx = await (await fetch(durl("index.json"))).json();
   window._idx = idx;
   document.getElementById("breaknote").innerHTML = "&#9888; "+META.note;
   // Org type buttons + searchable org dropdown
@@ -581,7 +588,7 @@ async function loadNational(){
   render();
 }
 async function loadOrg(code){
-  CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
+  CURRENT = await (await fetch(durl("org/"+code+".json"))).json();
   CURRENT.isNational=false;
   BREAKDOWN=null; resetSliceForSwitch();   // breakdown is per-org; refetch lazily
   renderOrgNote(code);
@@ -730,14 +737,14 @@ function sparkSVG(s){
 
 /* ---- breakdown filtering (v6: group-aware route + all-cancers-only modality) ---- */
 async function loadNationalBreakdown(){
-  if(!NATIONAL_BREAKDOWN) NATIONAL_BREAKDOWN = await (await fetch(DATA+"national.breakdown.json")).json();
+  if(!NATIONAL_BREAKDOWN) NATIONAL_BREAKDOWN = await (await fetch(durl("national.breakdown.json"))).json();
   return NATIONAL_BREAKDOWN;
 }
 // Load-on-demand: only called when the user first opens a filter, picks a group, or a deep link.
 async function ensureBreakdown(){
   await loadNationalBreakdown();
   if(CURRENT.isNational){ BREAKDOWN = NATIONAL_BREAKDOWN; return; }
-  if(!BREAKDOWN) BREAKDOWN = await (await fetch(DATA+"org/"+CURRENT.code+".breakdown.json")).json();
+  if(!BREAKDOWN) BREAKDOWN = await (await fetch(durl("org/"+CURRENT.code+".breakdown.json"))).json();
 }
 
 // The routes offered for the current GROUP + standard, read from the loaded

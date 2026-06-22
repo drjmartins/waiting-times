@@ -294,6 +294,8 @@ def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=Non
         index.append(entry)
 
     index.sort(key=lambda e: (e["level"], e["name"]))
+    # Fail-loud paired check: a populated ODS trust set must tag >0 independents.
+    ods.assert_independents_tagged(index, "RTT", trust_codes)
     with open(os.path.join(out_dir, "index.json"), "w") as f:
         json.dump(index, f, separators=(",", ":"))
     with open(os.path.join(out_dir, "national.json"), "w") as f:

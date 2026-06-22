@@ -270,6 +270,12 @@
 
 <script>
 const DATA = "data/";
+// Cache-bust: every data file (except meta.json itself) is fetched with a build-version
+// token derived from meta.built_at, so a new index.html can never pair with a browser-
+// or CDN-cached index.json from a previous build. meta.json is fetched no-store so the
+// token always reflects the latest deployed build (it's tiny). Set in init().
+let DV="";
+const durl = path => DATA+path+(DV?(path.includes("?")?"&":"?")+"v="+DV:"");
 const NATIONAL_CODE = "__NATIONAL__";
 const DEFAULT_MEASURE = "pct18";
 const THRESH = 10;                       // pipeline RELIABILITY_THRESHOLD (pct18 only; ~never trips at all-TF level)
@@ -326,10 +332,11 @@ function footerHTML(M){
 }
 
 async function init(){
-  META = await (await fetch(DATA+"meta.json")).json();
+  META = await (await fetch(DATA+"meta.json",{cache:"no-store"})).json();
+  DV = (META.built_at||"").replace(/\D/g,"");   // build-version token for all other data fetches
   document.getElementById("foot").innerHTML = footerHTML(META);
-  NATIONAL = await (await fetch(DATA+"national.json")).json();
-  const idx = await (await fetch(DATA+"index.json")).json();
+  NATIONAL = await (await fetch(durl("national.json"))).json();
+  const idx = await (await fetch(durl("index.json"))).json();
   window._idx = idx;
   document.getElementById("breaknote").innerHTML =
     "&#9888; Community services moved out of RTT reporting in February 2024; "+
@@ -479,7 +486,7 @@ async function loadNational(){
   render();
 }
 async function loadOrg(code){
-  CURRENT = await (await fetch(DATA+"org/"+code+".json")).json();
+  CURRENT = await (await fetch(durl("org/"+code+".json"))).json();
   CURRENT.isNational=false;
   BREAKDOWN=null;                       // breakdown is per-org; refetch lazily
   renderOrgNote(code);
@@ -531,9 +538,9 @@ function render(){
 
 /* ---------- treatment-function breakdown (load-on-demand, like cancer) ---------- */
 async function ensureBreakdown(){
-  if(!NATIONAL_BREAKDOWN) NATIONAL_BREAKDOWN = await (await fetch(DATA+"national.breakdown.json")).json();
+  if(!NATIONAL_BREAKDOWN) NATIONAL_BREAKDOWN = await (await fetch(durl("national.breakdown.json"))).json();
   if(CURRENT.isNational){ BREAKDOWN = NATIONAL_BREAKDOWN; return; }
-  if(!BREAKDOWN) BREAKDOWN = await (await fetch(DATA+"org/"+CURRENT.code+".breakdown.json")).json();
+  if(!BREAKDOWN) BREAKDOWN = await (await fetch(durl("org/"+CURRENT.code+".breakdown.json"))).json();
 }
 const isSliced = () => TF!==null;
 function tfName(code){ const t=(META.treatment_functions||[]).find(x=>x.code===code); return t?t.name:code; }

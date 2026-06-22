@@ -508,6 +508,8 @@ def build(df, out_dir=config.SITE_DATA_DIR, classification=None, trust_codes=Non
                 ods.tag_provider_type(entry, trust_codes)
             index.append(entry)
     index.sort(key=lambda r: r["name"])
+    # Fail-loud paired check: a populated ODS trust set must tag >0 independents.
+    ods.assert_independents_tagged(index, "CWT", trust_codes)
     with open(os.path.join(out_dir, "index.json"), "w") as f:
         json.dump(index, f, separators=(",", ":"))
     n_hidden = {

@@ -6,6 +6,48 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-22 — RTT "Independent Sector empty": diagnosis + empty-set guards + CACHE-BUST (Code)
+
+Reported: live RTT shows ALL providers under NHS Trusts, Independent empty (cancer fine). INVESTIGATED —
+the matching is NOT broken and the deployed data is CORRECT:
+ - Live RTT index.json tags 423 providers `independent`; all 171 non-independent providers are GENUINELY in
+   the ODS nhs_trust_codes set (matched, ZERO fall-through). Cancer 173 matched / 28 independent. Code forms
+   match fine (RTT mixes 3-char trusts like RCF + 5-char IS like NPR01; the ODS set has both).
+ - Fresh headless load of the LIVE site renders 381 independents in the RTT dropdown; live index.html
+   contains the filter logic. So server-side artefacts are correct.
+ - CAUSE = client-side STALE-CACHE SKEW: a browser-cached PRE-ptype index.json (from the previous deploy)
+   paired with the new index.html → every provider untagged → fail-open → "all NHS Trusts". A hard refresh
+   resolves it. (No cron ran between deploy and the report; nothing regressed server-side.)
+ - The symptom ("all NHS Trusts") requires UNTAGGED providers, which at BUILD time happens only if
+   nhs_trust_codes is empty — note a total code-form MISMATCH would instead tag everything INDEPENDENT, the
+   opposite. So the real latent build risk is an EMPTY trust set (transient ODS failure + no cache), which
+   would silently ship the all-default and pass every existing gate. That is the gap fail-open left.
+
+GUARD ADDED (the paired check fail-open was missing), two layers, both fail-loud BEFORE publish:
+ - ods.assert_independents_tagged(index, label, trust_codes): when a trust set IS present, a dashboard with
+   providers MUST tag >0 independents — else raise (catches a populated-set match failure). Called in both
+   builds after the index is assembled. Skipped when trust_codes is empty (synthetic/dev/tests, where
+   typing isn't attempted) so it can't false-fire.
+ - both real run.py entrypoints: refuse to build if refresh_or_cache returns an empty nhs_trust_codes (live
+   fetch AND committed cache both empty) — catches the actual empty-set production case the build guard
+   skips. Together: neither an empty trust set NOR a zero-match can silently ship the all-NHS-Trust default.
+ - +1 test (guard raises on populated-set/zero-independent; OK with an independent present; skips on empty
+   set). 52 pass. NOT changing the tagging logic (it's correct on both dashboards).
+
+CACHE-BUST ADDED (the actual recurrence-fix, BOTH dashboards): every data file except meta.json is fetched
+via durl(path) which appends `?v=<token>` where token = meta.built_at digits (DYNAMIC — changes every build
+that changes the data; no hand-bumped string). meta.json is fetched `{cache:"no-store"}` so the token always
+reflects the latest deployed build (tiny file). Because `?v=` is part of the HTTP cache key, a browser/CDN-
+cached index.json (bare, or an older ?v) can NEVER satisfy the new build's index.json?v=<new token> request
+→ a new index.html structurally cannot pair with a stale index.json. Verified locally: requests carry
+?v=20260622141518988596 on national/index/org/breakdown; meta.json stays bare/no-store; page renders (381
+independents). compare.html left as-is (separate page, no ptype dependency, lower risk).
+
+VERIFIED: both builds pass the guard on real data (cancer 28 / RTT 423 independent); re-render shows RTT
+Independent Sector POPULATED (381 visible) and cancer unchanged (11 visible / 28 tagged); both guards
+demonstrated firing on the bad inputs; synthetic/test path safely skips; cache-bust tokens present on all
+data URLs. Deploying guards + cache-bust together.
+
 ## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: provider-TYPE picker filter, BOTH dashboards (Code)
 
 Confirm-data-first then build + deploy (run 27958596878, build+deploy GREEN; CI commit f7adeee). A
