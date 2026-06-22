@@ -6,6 +6,42 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: scope the "Formed" note to genuine recent formations, BOTH dashboards (Code)
+(Deployed run 27964831412, build+deploy GREEN; CI commit pending. Live: RTT RTH/R1L/QRL → no note, Z9B2Z →
+Formed note, QNQ → Former note unchanged; cancer RTH → no note, QNQ → Former unchanged. CI: ODS live fetch
+(556 trust codes), recon OK, TF-sum maxΔ=0, provider-type guards passed. Footer-accuracy reword handled
+separately — report-first.)
+
+Bug: the "Formed / new organisation … earlier months not available" note fired on ANY current org with
+predecessor links, regardless of age — wrongly showing on long-established trusts (e.g. Oxford University
+Hospitals RTH, formed 2011, full history since Apr-2022). Fix keys off the DATA, leaving the Closed/Former
+note UNCHANGED (asymmetric — a closed org's history IS here and pointing to successors is always useful).
+
+FINDING (contradicts the brief's assumption, surfaced from the data): the brief's rule — show when
+(data series truncated past the Apr-2022 floor) AND (has predecessor links) — STILL over-fires. ~13 cancer
+"providers" are long-established MENTAL-HEALTH / AMBULANCE trusts (Essex Partnership f.2017, Sussex
+Partnership, London Ambulance, Kent & Medway, …) whose CANCER series merely starts late (little cancer
+activity), yet they DO carry old-merger predecessor links — so truncation+predecessors alone would put a
+misleading "Formed" note on them (same bug class). The brief expected late-reporters to lack predecessor
+links; the data shows they don't.
+
+REFINED RULE (achieves the brief's intent; deviation flagged): show the Formed note only when BOTH —
+ (a) series_truncated: data starts > floor + ~2-month margin (keyed off DATA, no ODS date); AND
+ (b) formed_recently: the org has a predecessor that ITSELF closed within the data window (closed >= floor)
+     — a genuine recent HANDOFF, using the reliable succession CLOSE-dates (not the sparsely-populated /
+     unreliable ODS formation date the brief warned against; opened is None for most of the false positives).
+ Both are required: truncation alone over-fires on late-reporting established trusts; the handoff alone
+ would fire on a boundary GAINER like QRL (gained Frimley territory but kept full history → not truncated).
+
+VERIFIED (rebuild + re-render both): formed-note orgs went 74-candidates → cancer 0 (the 6 new 2026 ICBs
+aren't in cancer data yet — publication lag; all 13 MH/ambulance false positives gone), RTT 6 (exactly the
+new 2026 ICBs D7T5G/S0E4D/S1Y5D/S9B9J/T6Y0W/Z9B2Z). RTH Oxford → NO note (both); R1L Essex Partnership → no
+note; QRL → no note (boundary gainer, full history); QNQ/Frimley → Former note UNCHANGED (both); Z9B2Z →
+Formed note shows. G6V2S (real 2024 MH-trust merger) correctly absent — not in RTT data (no elective
+pathways), so not a false negative. 53 tests pass (added series_truncated / formed_recently / QRL-gainer +
+former-asymmetry cases). Shared logic in pipeline_common/ods.py; both builds pass formed_ok. Open: deploy
+on say-so.
+
 ## 2026-06-22 — DEPLOYED: RTT "Independent Sector empty" diagnosis + empty-set guards + CACHE-BUST (Code)
 
 Reported: live RTT shows ALL providers under NHS Trusts, Independent empty (cancer fine). INVESTIGATED —

@@ -2,7 +2,21 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-22 (Claude Code session; provider-type empty-set guards + data cache-bust DEPLOYED)._
+_Last updated: 2026-06-22 (Claude Code session; "Formed" note scoped to genuine recent formations DEPLOYED)._
+
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27964831412, build+deploy GREEN)
+- **"Formed / new organisation" note scoped to genuine recent formations, BOTH dashboards.** It previously
+  fired on any current org with predecessor links (wrongly on e.g. Oxford RTH, formed 2011). Now shows only
+  when BOTH: the DATA series is truncated (starts > Apr-2022 floor + ~2mo) AND a predecessor itself closed
+  within the data window (a real handoff — uses reliable succession close-dates, not the sparse ODS
+  formation date). Both needed: truncation alone over-fires on late-reporting MH/ambulance trusts (which
+  carry old-merger predecessor links); the handoff alone fires on a boundary gainer (QRL). Closed/Former
+  note unchanged (asymmetric). Live: RTT RTH/R1L/QRL no note, Z9B2Z Formed note, QNQ Former unchanged;
+  cancer RTH no note, QNQ Former unchanged. Formed notes now = RTT 6 (the 2026 ICBs) / cancer 0 (until April
+  CWT lands). 53 tests. See DECISIONS 2026-06-22.
+- **PENDING (report-first, not yet built): footer-accuracy reword** on both dashboards — the RTT footer's
+  "independent-sector providers … are hidden" is misleading now that hiding is org-type-agnostic (NHS trusts
+  hidden too) and independents are behind the provider-type opt-in. Wording proposed; awaiting approval.
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27962238975, build+deploy GREEN; CI commit a11c663)
 - **Provider-type hardening + cache-bust, BOTH dashboards.** Follow-up to a reported "RTT Independent Sector
