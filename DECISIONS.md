@@ -6,6 +6,36 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: ODS org-status feature + Part A RTT copy (Code)
+
+Shipped together in one watched workflow_dispatch (run 27948177203, build 10m32s + deploy 16s, BOTH GREEN;
+CI committed rebuilt data as aa3c52b). User accepted the ~32 newly-surfaced IS clinics as-is and left
+YOUNG_WINDOW_MONTHS=12 simple. Pushed to master, rebased over two intervening cron data commits.
+
+EXPLICIT live verification (headless render + curl + CI log — not assumed):
+ - Both dashboards + data 200. meta.built_at = today on both.
+ - ODS fetch RAN IN CI for BOTH pipeline steps ("ODS: classified 416 succession-affected orgs (344 former),
+   as_of 2026-05-07") — the LIVE path, not the cache-fallback message.
+ - Both RTT fail-loud gates intact + passing: recon OK @2025-04 (pct18 0.5973, waitlist 7,389,065), TF-sum
+   24,776 org-months reconcile exactly (max|Δ|=0). Cancer rebuilt (no new data; still Mar-2026).
+ - QNQ/Frimley: in "Former organisations" group, SELECTABLE, 48 months history to Mar-2026, note "Closed
+   April 2026 … see related: NHS Thames Valley / Surrey & Sussex / Hampshire & IoW (= S0E4D, S9B9J, QRL)".
+ - Z9B2Z (West & North London): current, NOT hidden, SHOWN from its single Apr-2026 month, "Formed April
+   2026 … drawing on the areas of NHS North Central London + NHS North West London" note. All 6 new RTT
+   codes present + shown.
+ - "Former organisations" picker group renders on BOTH dashboards (ICB type, search "essex").
+ - Part A copy live on RTT: subtitle "… & waiting lists", reworded Feb-2024 banner, trimmed footer with
+   DYNAMIC dates ("Data to April 2026. Last updated 22 June 2026").
+ - UN-HIDE-ONLY confirmed live: RTT hidden 96→64, cancer 66→59; live_hidden ⊆ before_hidden on both;
+   ZERO previously-visible orgs wrongly dropped.
+ - FAIL-SOFT re-confirmed: simulated ODS outage (unresolvable host) → fell back to the committed 416-org
+   ods_classification.json, never raised, QNQ still classified, build path runs.
+ - Classification cache = committed BUILD INPUT at repo root (CI git-adds it); deliberately NOT in the Pages
+   artefact (site/) — the classification reaches users baked into index.json, the cache only fail-soft-seeds
+   the next build. (Confirmed /ods_classification.json is 404 on Pages, present on origin/master.)
+ - Cancer's 6 new ICB codes still absent (data ends Mar-2026 = publication lag); they appear automatically
+   when April CWT publishes. Both dashboards key ICBs on the same ODS codes.
+
 ## 2026-06-22 — BUILT (paused pre-deploy): self-updating ODS org-status feature, BOTH dashboards (Code) — SUPERSEDES the pooling proposal below
 
 User killed pooling entirely (too risky/messy — incl. the clean Z9B2Z case). New direction: a fully

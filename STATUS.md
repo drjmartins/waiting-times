@@ -2,17 +2,25 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-22 (Claude Code session; ODS org-status feature BUILT, paused pre-deploy)._
+_Last updated: 2026-06-22 (Claude Code session; ODS org-status feature + RTT copy DEPLOYED + live-verified)._
 
-## ⏸ BUILT, NOT YET DEPLOYED (deploy together, on user's say-so)
-- **Part A — RTT copy ×3** (`site/rtt/index.html`): Feb-2024 banner reworded; footer trimmed (dynamic
-  dates confirmed); subtitle "… & waiting lists". Re-rendered + verified.
-- **Self-updating ODS org-status feature, BOTH dashboards** (supersedes the ICB-pooling proposal — pooling
-  dropped). Three lifecycle states (current / former-but-selectable / hidden) driven by ODS ORD succession
-  links via the shared `pipeline_common/ods.py` (fail-soft to a committed `ods_classification.json`).
-  Former orgs → "Former organisations" picker group + generic auto change-note; young new orgs shown from
-  month one (hiding gated on succession-link supersession, not ODS Status). 50 tests pass. See DECISIONS
-  2026-06-22. Open knob: YOUNG_WINDOW_MONTHS=12 (surfaces ~32 new IS clinics in RTT — tighten if desired).
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27948177203, build+deploy GREEN; CI commit aa3c52b)
+- **Self-updating ODS org-status feature, BOTH dashboards** + **Part A RTT copy ×3** shipped together in one
+  watched workflow_dispatch. Three lifecycle states (current / former-but-selectable / hidden) from ODS ORD
+  succession links via shared `pipeline_common/ods.py` (FORMER = succession-link-passed, NOT Status); young
+  orgs shown from month one; fail-soft to committed `ods_classification.json`. 50 tests pass.
+- **Live checks (all explicit, headless + curl):** both dashboards 200; ODS fetch ran in CI for BOTH
+  pipelines ("classified 416 orgs, 344 former, as_of 2026-05-07" — live path, not fallback); both RTT
+  fail-loud gates intact (recon OK, TF-sum max|Δ|=0); QNQ/Frimley in Former group, selectable, 48mo history
+  to Mar-2026, related-orgs note (→ S0E4D/S9B9J/QRL); Z9B2Z young, shown from its single Apr-2026 month, NOT
+  hidden, "Formed" note; "Former organisations" picker group renders on each; Part A banner/footer/subtitle
+  live with dynamic dates ("Data to April 2026. Last updated 22 June 2026"); un-hide-only confirmed
+  (RTT 96→64, cancer 66→59, live_hidden ⊆ before_hidden, 0 wrongly-dropped); fail-soft re-confirmed
+  (simulated outage → committed-cache fallback, no crash). Classification cache is a committed BUILD INPUT
+  at repo root (not in the Pages artefact — it reaches users baked into index.json).
+- Note: cancer data ends Mar-2026 (publication lag), so its 6 new ICB codes appear automatically when April
+  CWT publishes; RTT already carries them. YOUNG_WINDOW_MONTHS=12 left simple per user (new IS clinics
+  accepted as honest current providers).
 
 ## RTT dashboard (second dashboard, /rtt/) — increments 1 & 2 BUILT, NOT deployed ⏸
 Parallel stack to the cancer one: `pipeline_rtt/` (config + build), `tests_rtt/` (9 tests),
