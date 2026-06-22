@@ -487,6 +487,8 @@ def build(df, out_dir=config.SITE_DATA_DIR, classification=None, trust_codes=Non
     hidden = _negligible_orgs(df, classification)
 
     # Per-org files + index
+    all_months = sorted(df["month"].unique())
+    first_months = _first_months(df)        # for the data-keyed 'Formed' note gate
     index = []
     for (code, name, level), g in df.groupby(["org_code", "org_name", "org_level"]):
         if _is_placeholder(code, name):
@@ -503,7 +505,12 @@ def build(df, out_dir=config.SITE_DATA_DIR, classification=None, trust_codes=Non
             entry = {"code": code, "name": name, "level": level, "region": region}
             if code in hidden:
                 entry["hidden"] = True   # negligible activity: out of the picker, still direct-linkable
-            ods.annotate_entry(entry, classification.get(code))
+            # 'Formed' note only when the DATA series is genuinely truncated AND a
+            # predecessor recently closed (a real handoff, not an old merger).
+            ce = classification.get(code)
+            formed_ok = (ods.series_truncated(first_months.get(code, ""), all_months)
+                         and ods.formed_recently(ce, classification, all_months[0]))
+            ods.annotate_entry(entry, ce, formed_ok=formed_ok)
             if level == "provider":
                 ods.tag_provider_type(entry, trust_codes)
             index.append(entry)

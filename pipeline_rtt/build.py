@@ -288,7 +288,12 @@ def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=Non
         entry = {"code": code, "name": name, "level": level, "region": "England"}
         if level == "provider" and _negligible(by_month, all_months, code, classification):
             entry["hidden"] = True
-        ods.annotate_entry(entry, classification.get(code))
+        # 'Formed' note only when the DATA series is genuinely truncated AND a
+        # predecessor recently closed (a real handoff, not an old merger).
+        ce = classification.get(code)
+        formed_ok = (ods.series_truncated(min(by_month) if by_month else "", all_months)
+                     and ods.formed_recently(ce, classification, all_months[0]))
+        ods.annotate_entry(entry, ce, formed_ok=formed_ok)
         if level == "provider":
             ods.tag_provider_type(entry, trust_codes)
         index.append(entry)

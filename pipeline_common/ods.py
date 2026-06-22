@@ -206,11 +206,49 @@ def tag_provider_type(entry, trust_codes):
         entry["ptype"] = "independent"
 
 
-def annotate_entry(entry, ce):
+def series_truncated(first_month, all_months, margin=2):
+    """True if the org's DATA series starts more than `margin` months after the
+    dataset floor — i.e. genuinely short. This (not the ODS formation date) is the
+    real signal for the 'Formed' note, whose only job is to explain a short series:
+    a long-established org (e.g. a 2011 trust) has full history here and must NOT
+    get the note. Margin lets an org starting right at/near the floor count as
+    full-history."""
+    if not first_month or not all_months:
+        return False
+    months = sorted(all_months)
+    cutoff = months[min(margin, len(months) - 1)]
+    return first_month > cutoff
+
+
+def formed_recently(ce, classification, floor):
+    """True if this current org has a predecessor that ITSELF closed within the data
+    window (its `closed` >= floor) — a genuine recent handoff. Distinguishes a real
+    recent formation (the 2026 ICB mergers; a 2024 trust merger) from a long-
+    established org that merely absorbed an OLD merger years ago (e.g. a 2017 mental-
+    health trust whose data here is short for activity reasons, not formation). Uses
+    the reliable succession close-dates, NOT the sparsely-populated ODS formation
+    date. Pair with series_truncated — both are required (truncation alone over-fires
+    on late-reporting established trusts; the handoff alone would fire on a boundary
+    gainer like QRL that kept full history)."""
+    if not ce:
+        return False
+    for p in ce.get("predecessors", []):
+        pe = classification.get(p["code"])
+        if pe and pe.get("status") == "former" and (pe.get("closed") or "") >= floor:
+            return True
+    return False
+
+
+def annotate_entry(entry, ce, formed_ok=True):
     """Stamp a dashboard index entry with the ODS lifecycle fields the front-ends
     use for the Former-organisations group + generic reciprocal change notes.
     `ce` is this org's classification record (or None → leave as a current org).
-    Shared by BOTH dashboards so the picker behaves identically."""
+    Shared by BOTH dashboards so the picker behaves identically.
+
+    `formed_ok` gates the 'Formed' (newly-formed) note ONLY: it should be the
+    org's data-series-truncation flag (see series_truncated). The 'Former'/Closed
+    note is ASYMMETRIC — always stamped regardless of date, because a closed org's
+    history IS in the dashboard and pointing to its successors is always useful."""
     if not ce:
         return
     if ce.get("status") == "former":
@@ -220,7 +258,7 @@ def annotate_entry(entry, ce):
         if ce.get("successors"):            # "Closed … — see related organisations: …"
             entry["related"] = ce["successors"]
             entry["reltype"] = "superseded"
-    elif ce.get("predecessors"):            # newly-formed org: "Formed … — see related: …"
+    elif formed_ok and ce.get("predecessors"):  # newly-formed AND short series → "Formed … — see related: …"
         entry["related"] = ce["predecessors"]
         entry["reltype"] = "formed"
         if ce.get("opened"):

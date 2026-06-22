@@ -60,6 +60,47 @@ def test_tag_provider_type():
     e = {"code": "NT1"}; ods.tag_provider_type(e, set()); assert "ptype" not in e
 
 
+def test_series_truncated_and_formed_note_gate():
+    months = [f"2022-{m:02d}" for m in range(4, 13)] + [f"2023-{m:02d}" for m in range(1, 13)]
+    months += [f"2024-{m:02d}" for m in range(1, 13)] + [f"2025-{m:02d}" for m in range(1, 5)]
+    floor = months[0]  # 2022-04
+    # Full-history org (starts at floor) -> NOT truncated (Oxford case)
+    assert ods.series_truncated(floor, months) is False
+    # Within the 2-month margin -> still NOT truncated
+    assert ods.series_truncated("2022-06", months) is False
+    # Genuinely short series -> truncated
+    assert ods.series_truncated("2024-11", months) is True
+
+    ce = {"status": "current", "predecessors": [{"code": "RHV", "name": "x"}], "opened": None}
+    # Long-established org with predecessors but full history -> NO 'Formed' note
+    e = {"code": "RTH"}
+    ods.annotate_entry(e, ce, formed_ok=ods.series_truncated(floor, months))
+    assert "reltype" not in e and "related" not in e
+    # Genuinely recent org with predecessors -> 'Formed' note shows
+    e = {"code": "G6V2S"}
+    ods.annotate_entry(e, ce, formed_ok=ods.series_truncated("2024-11", months))
+    assert e["reltype"] == "formed"
+
+    # formed_recently: needs a predecessor that itself closed within the data window.
+    classn = {"NEW": {"status": "current", "predecessors": [{"code": "OLD", "name": "o"}]},
+              "OLD": {"status": "former", "closed": "2024-11-01"},
+              "MH":  {"status": "current", "predecessors": [{"code": "GONE", "name": "g"}]},
+              "GONE": {"status": "former", "closed": "2017-04-01"},  # old merger, before floor
+              "GAIN": {"status": "current", "predecessors": [{"code": "OLD", "name": "o"}]}}
+    assert ods.formed_recently(classn["NEW"], classn, floor) is True    # recent handoff
+    assert ods.formed_recently(classn["MH"], classn, floor) is False    # old merger, pre-floor close
+    # QRL-type boundary gainer: recent handoff BUT full history → truncation gate blocks the note
+    e = {"code": "GAIN"}
+    formed_ok = ods.series_truncated(floor, months) and ods.formed_recently(classn["GAIN"], classn, floor)
+    ods.annotate_entry(e, classn["GAIN"], formed_ok=formed_ok)
+    assert "reltype" not in e   # not truncated → no note despite a recent predecessor
+    # ASYMMETRY: a FORMER org is annotated regardless of formed_ok
+    e = {"code": "QNQ"}
+    ods.annotate_entry(e, {"status": "former", "closed": "2026-04-01",
+                           "successors": [{"code": "S0E4D", "name": "x"}]}, formed_ok=False)
+    assert e["former"] is True and e["reltype"] == "superseded"
+
+
 def test_assert_independents_tagged_guard():
     # Populated trust set + providers but ZERO independents tagged → fail loud
     # (this is the silent-match-failure / empty-tag case fail-open used to hide).
