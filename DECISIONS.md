@@ -6,11 +6,16 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
-## 2026-06-22 — BUILT (paused pre-deploy): provider-TYPE picker filter, BOTH dashboards (Code)
+## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: provider-TYPE picker filter, BOTH dashboards (Code)
 
-Confirm-data-first then build. A provider-type sub-filter scopes the org dropdown on the Providers view
-(England/Commissioners unaffected): segmented [NHS Trusts | Independent Sector], **default NHS Trusts**
-(independent-sector opt-in). Built, re-rendered, tested (51 pass); NOT deployed (user pauses pre-deploy).
+Confirm-data-first then build + deploy (run 27958596878, build+deploy GREEN; CI commit f7adeee). A
+provider-type sub-filter scopes the org dropdown on the Providers view (England/Commissioners unaffected):
+segmented [NHS Trusts | Independent Sector], **default NHS Trusts** (independent-sector opt-in). 51 tests.
+LIVE-VERIFIED on both: ptype tags present (cancer 173/28, RTT 171/423, no ICB tagged); default Providers =
+NHS Trusts (Airedale RCF); switch → Independent re-scopes (RTT About Health HQ NPR01 / cancer Assura NYT);
+deep-link ?org=NPR01 / ?org=NYT → filter AUTO-SWITCHES to Independent and shows the org. CI log: ODS live
+fetch ran for both pipelines (556 trust codes, as_of 2026-05-07 — not the fallback); both RTT gates intact
+(recon OK, TF-sum max|Δ|=0); ODS fail-soft path unchanged.
 
 DATA CONFIRM (per dashboard, by ODS PRIMARY role; reversed the going-in assumption):
  - Cancer 201 providers → 173 NHS Trust / 28 Independent Sector / **0 residue** — a CLEAN two-way split.

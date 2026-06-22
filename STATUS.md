@@ -2,7 +2,22 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-22 (Claude Code session; ODS org-status feature + RTT copy DEPLOYED + live-verified)._
+_Last updated: 2026-06-22 (Claude Code session; provider-type picker filter DEPLOYED + live-verified)._
+
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27958596878, build+deploy GREEN; CI commit f7adeee)
+- **Provider-TYPE picker filter, BOTH dashboards.** A segmented [NHS Trusts | Independent Sector] control
+  scopes the org dropdown on the Providers view only (England/Commissioners unaffected), **default NHS
+  Trusts** (independent-sector opt-in, so the ~32 young IS clinics drop off the default RTT list). Split is
+  by ODS PRIMARY role — NHS trust (RO197/RO107) vs non-NHS-trust (everything else; the lone RO157 "non-NHS
+  org" and any future odd role fold into Independent Sector → no "Other" bucket). Both dashboards a clean
+  two-way split: cancer 173/28, RTT 171/423. Deep-link safety: a `?org=` link follows the org's type so the
+  filter never hides it. `pipeline_common/ods.py` emits `nhs_trust_codes` (556) into the shared cache; builds
+  tag provider index entries `ptype:"independent"` (absent => NHS trust, fail-open). 51 tests.
+- **Live checks:** ptype tags present (cancer 173/28, RTT 171/423, no ICB tagged); default Providers = NHS
+  Trusts (Airedale RCF) on each; switch → Independent re-scopes (RTT NPR01 / cancer NYT); deep-link
+  ?org=NPR01 / ?org=NYT → filter auto-switches to Independent and shows the org. CI: ODS live fetch ran for
+  both pipelines (not the fallback); both RTT gates intact (recon OK, TF-sum max|Δ|=0); ODS fail-soft path
+  unchanged.
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27948177203, build+deploy GREEN; CI commit aa3c52b)
 - **Self-updating ODS org-status feature, BOTH dashboards** + **Part A RTT copy ×3** shipped together in one
