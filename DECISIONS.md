@@ -6,6 +6,67 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-23 — BUILT (not deployed): consistency-cluster round — RTT region, soft-hidden comparator, compare-this-trust link (Code)
+
+Three small builds + a nav report. All local-verified (headless render + curl), tests 53→55, paused before deploy.
+
+**1. RTT region in provider picker (BUILT).** Premise correction: the RTT org records carried a `region`
+FIELD but it was a hardcoded placeholder ("England" for all 594 providers — the RTT "Full CSV" source has
+no provider region, only a Commissioner Parent/ICB). So this needed a real source, not just UI wiring.
+Decision: reuse the region the CANCER dashboard already derived (its Parent_Org-based region, the
+authoritative NHS source), keyed by org code — so an RTT trust's region is identical to the same trust's
+cancer region by construction ("same field"). New shared helper `pipeline_common/regions.py:load_region_map`
+reads the committed `site/cancer/data/index.json` and returns {code: region} for non-England codes; RTT
+`build.py` applies it to PROVIDERS only (ICBs stay "England", matching cancer). Fail-open: missing cancer
+index → {} → everything defaults to "England" (regions just don't show that build). Front-end RTT `render()`
+now sets the `#orgname` byline with cancer's exact logic (the element/CSS/`.orgrow` layout already matched).
+Rebuilt from local zips: both gates green (SPN pct18 0.5973 / waitlist 7,389,065; TF-sum max|Δ|=0); 162/594
+providers got a real region, **0 mismatches** vs cancer across 163 shared codes; RTT-only independents (e.g.
+NPR01) + ICBs + National show nothing, exactly like region-less cancer providers. Verified: RCF → "North
+East and Yorkshire" beside the dropdown.
+
+**2. Soft-hide the CWT comparator (BUILT).** Added one CSS rule `.compare-soft-hidden{display:none!important}`
+in cancer/index.html and wrapped the header "Compare Providers (Beta)" link + its trailing `|` separator in
+that class. compare.html stays live (direct URL still 200s) — just not reachable by clicking. **Reversal =
+delete that one CSS rule** (un-hides BOTH the header link and the per-org link from #3 together). Verified:
+header now reads "RTT Waiting Times Dashboard → | All dashboards", no dangling separator, 0 visible
+compare links.
+
+**3. Compare-this-trust link (BUILT, soft-hidden).** Per-org "Compare this trust →" link added to the
+cancer `.orgrow`, using the SAME `.compare-soft-hidden` class so it un-hides with #2 (no rework). JS
+`syncCompareLink()` keeps it PROVIDER-ONLY (hidden for National/ICB via the `hidden` attribute, which takes
+over once the soft-hide class is removed) and sets href = `compare.html?org=<code>&std=<std>`. compare.html
+gained a minimal `?org=` consumer: captures it in init, scopes the funnel to that trust's NHS region once
+(unless an explicit `?scope=` is also given), and draws a gold emphasis ring + bold name label on the
+trust's point in BOTH the funnel and percentile views. Kept additive/isolated so it doesn't disturb the
+in-flight comparator iteration. Verified via direct URL: `?org=RCF` → scope auto-set to "North East and
+Yorkshire", Airedale ringed + labelled.
+
+**4. NAVIGATION — Option A BUILT (user chose A, incl. landing).** A single consistent monospace `.dashnav`
+strip on ALL THREE pages: `Cancer · RTT · All dashboards`, same order/separators (`·`) everywhere, current
+page rendered as bold non-link text with `aria-current="page"` (landing marks "All dashboards"; cancer marks
+"Cancer"; rtt marks "RTT"). Old per-page arrow grammar (cancer trailing `→`, rtt leading `←`) and `|`
+separators dropped. The soft-hidden "Compare Providers (Beta)" link rides at the end of the cancer strip
+inside `.compare-soft-hidden`, so deleting that one CSS rule restores BOTH it and the per-org compare link.
+~7 lines CSS + a 4-line `<nav>` per page; static files, no templating, so the strip is duplicated across 3
+files (acceptable at 2 dashboards). UPGRADE PATH: when a 3rd dashboard lands, replace the strip with Option
+B — a shared persistent top bar + segmented switcher (matching the Providers/Commissioners toggle) — and at
+that point consider injecting it via the render step to avoid 3-file drift. Verified all three: current
+marked, correct cross-links, Compare link in markup but not visible on cancer.
+
+(original report) Current top nav: landing has NO switcher (only
+two cards + a footer); cancer shows `[Compare(hidden)] | RTT Waiting Times Dashboard → | All dashboards`
+(trailing → grammar, no current-page marker); rtt shows `← Cancer Waiting Times Dashboard | All dashboards`
+(leading ← grammar, no marker). Inconsistencies: mismatched arrow grammar, no "you are here" on either, no
+unified switcher, landing absent from any header band. Option A (light touch): one consistent monospace
+header strip on both dashboards (and optionally landing) listing the same ordered peers with the current
+page marked (non-link, bold) and unified separators — ~15 lines/page, near-zero risk. Option B (fuller):
+a shared persistent top bar on all 3 pages with a segmented [Cancer | RTT] switcher (active segment filled,
+matching the existing Providers/Commissioners toggle grammar) + brand label — more native-feeling, scales to
+3+ dashboards, but must be duplicated/kept-in-sync across 3 static files (no templating). **Recommendation:
+A now** (closes the actual inconsistencies cheaply, reversible, clean upgrade path), move to **B when a third
+dashboard lands**. User to choose before build.
+
 ## 2026-06-22 — DEPLOYED + LIVE-VERIFIED: footer-accuracy reword, BOTH dashboards (Code)
 
 Hiding is org-type-AGNOSTIC (verified live: the inactivity rule keys on recent activity, not type —

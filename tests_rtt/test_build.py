@@ -137,6 +137,31 @@ def test_payload_shape():
     assert p["measures"]["waitlist"]["value"] == [10, 10]
     assert p["measures"]["longwait"]["w52"] == [4, 3]
     assert p["measures"]["pct18"]["target"] == config.STANDARD_TARGET
+    assert p["region"] == "England"   # default when no region supplied
+
+
+def test_payload_region_passthrough():
+    by_month = {"2025-04": {"within18": 7, "total": 10, "w52": 3, "w65": 1, "w78": 0, "w104": 0}}
+    p = build.build_org_payload("RCF", "AIREDALE", "provider", by_month, region="North East and Yorkshire")
+    assert p["region"] == "North East and Yorkshire"
+
+
+def test_region_map_reuses_cancer_index(tmp_path):
+    # RTT has no provider region of its own; it reuses the cancer dashboard's
+    # (Parent_Org-derived) region, keyed by org code. Real regions map through;
+    # "England" / region-less / ICB-only codes do not.
+    import json
+    from pipeline_common import regions
+    idx = tmp_path / "index.json"
+    idx.write_text(json.dumps([
+        {"code": "RCF", "level": "provider", "region": "North East and Yorkshire"},
+        {"code": "RXX", "level": "provider", "region": "England"},   # region-less provider
+        {"code": "QWO", "level": "icb", "region": "England"},        # ICB -> never mapped
+    ]))
+    m = regions.load_region_map(str(idx))
+    assert m == {"RCF": "North East and Yorkshire"}
+    # fail-open: missing file -> empty map (build defaults everything to "England")
+    assert regions.load_region_map(str(tmp_path / "nope.json")) == {}
 
 
 def _nat_payload(pct, wl, w52, w65, w78, w104):

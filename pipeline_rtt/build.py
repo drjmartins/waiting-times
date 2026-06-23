@@ -23,6 +23,7 @@ from collections import defaultdict
 
 from . import config
 from pipeline_common import ods
+from pipeline_common import regions
 
 
 # --- wait-band column resolution -------------------------------------------
@@ -139,7 +140,7 @@ def process_zip(path, store, bd_store, names, tf_names):
     return month
 
 
-def build_org_payload(code, name, level, by_month):
+def build_org_payload(code, name, level, by_month, region="England"):
     """Assemble one org's JSON from its {month: metrics} dict."""
     months = sorted(by_month)
     pct_perf, pct_w, pct_t, status = [], [], [], []
@@ -152,7 +153,7 @@ def build_org_payload(code, name, level, by_month):
         wl.append(m["total"])
         w52.append(m["w52"]); w65.append(m["w65"]); w78.append(m["w78"]); w104.append(m["w104"])
     return {
-        "code": code, "name": name, "level": level, "region": "England",
+        "code": code, "name": name, "level": level, "region": region,
         "months": months,
         "measures": {
             "pct18": {"performance": pct_perf, "within_target": pct_w,
@@ -229,6 +230,9 @@ def _negligible(by_month, all_months, code, classification):
 def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=None, trust_codes=None):
     classification = classification or {}   # ODS org-status; absent → current (fail-open)
     trust_codes = trust_codes or set()      # NHS-trust code set for the provider-type filter
+    # Provider NHS region, reused from the cancer dashboard (the RTT source has none).
+    # Fail-open: {} if the cancer index is missing → providers default to "England".
+    region_map = regions.load_region_map(config.CANCER_INDEX_PATH)
     zips = sorted(f for f in os.listdir(raw_dir) if f.endswith(".zip"))
     if not zips:
         raise RuntimeError(f"no zips in {raw_dir}")
@@ -280,12 +284,15 @@ def run(raw_dir=config.RAW_DIR, out_dir=config.SITE_DATA_DIR, classification=Non
             national_bd = bd_payload
             continue
         name = names.get((level, code), code)
-        payload = build_org_payload(code, name, level, by_month)
+        # Region only for providers (matches cancer, where ICBs stay "England");
+        # unknown providers fail-open to "England" → front end shows no region.
+        region = region_map.get(code, "England") if level == "provider" else "England"
+        payload = build_org_payload(code, name, level, by_month, region=region)
         with open(os.path.join(org_dir, f"{code}.json"), "w") as f:
             json.dump(payload, f, separators=(",", ":"))
         with open(os.path.join(org_dir, f"{code}.breakdown.json"), "w") as f:
             json.dump(bd_payload, f, separators=(",", ":"))
-        entry = {"code": code, "name": name, "level": level, "region": "England"}
+        entry = {"code": code, "name": name, "level": level, "region": region}
         if level == "provider" and _negligible(by_month, all_months, code, classification):
             entry["hidden"] = True
         # 'Formed' note only when the DATA series is genuinely truncated AND a

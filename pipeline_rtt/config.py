@@ -93,6 +93,10 @@ YOUNG_WINDOW_MONTHS = 12
 RAW_DIR = "data_rtt/raw"
 SITE_DATA_DIR = "site/rtt/data"
 MANIFEST_PATH = "data_rtt/manifest.json"
+# The RTT source has no provider region; we reuse the region the cancer dashboard
+# already derived (Parent_Org) by reading its committed index, keyed by org code.
+# Fail-open: absent/unreadable -> no regions populated this build (see regions.py).
+CANCER_INDEX_PATH = "site/cancer/data/index.json"
 
 # Full month name -> number, for parsing the "RTT-March-2026" Period field.
 MONTHS = {

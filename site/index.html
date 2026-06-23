@@ -28,6 +28,13 @@
   footer{margin-top:40px;border-top:1px solid var(--line);padding-top:16px;
     font-size:12.5px;color:var(--ink-soft)}
   footer a{color:var(--org)}
+  /* Shared dashboard nav strip — identical structure/grammar on landing, /cancer/
+     and /rtt/. The current page is non-link marked text (aria-current="page"). */
+  .dashnav{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;margin-top:10px}
+  .dashnav a{color:var(--org);text-decoration:none}
+  .dashnav a:hover{text-decoration:underline}
+  .dashnav .current{color:var(--ink);font-weight:bold}
+  .dashnav .sep{color:var(--line);margin:0 8px}
 </style>
 </head>
 <body>
@@ -35,6 +42,11 @@
   <header>
     <h1>NHS Waiting Times Dashboards</h1>
     <div class="sub">England &middot; independent tools built on NHS England open data</div>
+    <nav class="dashnav" aria-label="Dashboards">
+      <a href="cancer/">Cancer</a><span class="sep">&middot;</span>
+      <a href="rtt/">RTT</a><span class="sep">&middot;</span>
+      <span class="current" aria-current="page">All dashboards</span>
+    </nav>
   </header>
   <div class="cards">
     <a class="card" href="cancer/">

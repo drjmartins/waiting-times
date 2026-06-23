@@ -2,7 +2,27 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-22 (Claude Code session; footer-accuracy reword DEPLOYED + live-verified)._
+_Last updated: 2026-06-23 (Claude Code session; consistency-cluster round — deploying)._
+
+## ⏳ DEPLOYING 2026-06-23 — consistency-cluster round (4 changes, built + local-verified)
+Bundled into one watched workflow_dispatch (live-verify pending):
+- **RTT region in the provider picker.** The RTT source has no provider region (it wrote "England" for all);
+  now it REUSES the cancer dashboard's authoritative (Parent_Org-derived) region, keyed by org code, via new
+  shared `pipeline_common/regions.py` reading committed `site/cancer/data/index.json`. So an RTT trust's
+  region == the same trust's cancer region by construction. Providers only (ICBs stay "England", matching
+  cancer); fail-open to "England" if the cancer index is absent. Front-end byline reuses cancer's exact
+  logic. Rebuilt: both gates green (SPN pct18 0.5973 / waitlist 7.39M; TF-sum max|Δ|=0); 162/594 providers
+  got a real region, **0 mismatches** across 163 shared codes; independents/ICBs/National show none.
+- **CWT comparator soft-hidden.** One CSS rule `.compare-soft-hidden{display:none!important}` hides the header
+  "Compare Providers (Beta)" link; compare.html stays live at its URL. Reversal = delete that one rule.
+- **Compare-this-trust link (built, soft-hidden).** Per-org cancer link `compare.html?org=<code>&std=<std>`,
+  provider-only (JS), hidden via the SAME class so it un-hides with the comparator (no rework). compare.html
+  consumes `?org=`: scopes the funnel to the trust's region + rings/labels its point (funnel + percentile).
+- **Navigation — Option A across all 3 pages.** Consistent `.dashnav` strip `Cancer · RTT · All dashboards`
+  on landing/cancer/rtt, current page bold non-link (`aria-current`), unified `·` separators. Upgrade path to
+  a segmented switcher (Option B) noted for when a 3rd dashboard lands. 55 tests pass.
+
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27966254999, build+deploy GREEN)
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-22 (run 27966254999, build+deploy GREEN)
 - **Footer accuracy reword, BOTH dashboards.** Hiding is org-type-agnostic (the inactivity rule keys on

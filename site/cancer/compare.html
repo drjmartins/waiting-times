@@ -100,6 +100,10 @@
 <script>
 const DATA="data/", C=DATA+"compare/";
 let CAT=null, M=null;
+// Optional ?org=<code> deep-link from a per-org page: pre-select that trust —
+// scope the funnel to its NHS region and visually call out its point. Captured in
+// init(); the scope is applied once (so the user can then change it freely).
+let HILITE=null, hiliteScoped=false;
 const fmt = p => (p*100).toFixed(1)+"%";
 const z95key="p95", z998key="p998";
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -126,8 +130,9 @@ async function init(){
   const scopeSel=document.getElementById("scope");
   [["England","England"]].concat(CAT.regions.map(r=>[r,r])).forEach(([v,t])=>{
     const o=document.createElement("option");o.value=v;o.textContent=t;scopeSel.appendChild(o);});
-  // optional deep-link: ?std=CMB31&m=<measure-file>&scope=North West
+  // optional deep-link: ?std=CMB31&m=<measure-file>&scope=North West&org=<code>
   const q=new URLSearchParams(location.search);
+  HILITE = q.get("org") || null;          // pre-select a trust (scope + highlight)
   stdSel.value = (q.get("std") && stds.includes(q.get("std"))) ? q.get("std") : "CMB62";
   stdSel.onchange=()=>{populateBreakdown();load();};
   document.getElementById("bd").onchange=load;
@@ -171,6 +176,14 @@ function meta(m){return CAT.measures.find(x=>x.file===document.getElementById("b
 
 function render(){
   const scopeSel=document.getElementById("scope");
+  // First render after an ?org= deep-link: scope the funnel to that trust's region
+  // (unless the link also set an explicit scope). Once only — the user can re-scope.
+  if(HILITE && !hiliteScoped){
+    hiliteScoped=true;
+    const t=(M.trusts||[]).find(x=>x.code===HILITE);
+    if(t && t.region && CAT.regions.includes(t.region) && !new URLSearchParams(location.search).get("scope"))
+      scopeSel.value=t.region;
+  }
   let scope=scopeSel.value;
   const info=meta();
   // fallback: too few threshold-clearing trusts in the chosen region
@@ -274,13 +287,21 @@ function funnelSVG(inScope, rest, phi){
   // points. Single neutral hue. FILL = direction (filled below the England line,
   // hollow above); SIZE = how far beyond the limits. No good/bad colour scale.
   const HUE="var(--org)";
+  // Emphasis halo + label for the ?org= deep-linked trust, so it stands out among
+  // its peers. Drawn behind the point's own marker (caller appends the marker after).
+  const hiDecor=(t,cx,cy)=>{
+    if(t.code!==HILITE) return "";
+    const lx=Math.min(cx+10,W-P.r-4), anchor=cx>W-120?"end":"start";
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="9" fill="none" stroke="var(--target)" stroke-width="2"/>`+
+           `<text x="${(cx>W-120?cx-12:cx+12).toFixed(1)}" y="${(cy-11).toFixed(1)}" font-size="10.5" font-weight="bold" fill="var(--ink)" text-anchor="${anchor}">${t.name.replace(/&/g,"&amp;")}</text>`;
+  };
   const pt=(t,faint)=>{
     const cx=x(t.total),cy=y(t.performance);
     const d=JSON.stringify({n:t.name,p:t.performance,t:t.total,r:t.region}).replace(/"/g,'&quot;');
     if(faint)  // rest of England (region scope): faint grey context
       return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.8" fill="#cfd8db" opacity=".5"/>`;
     if(t.sub_threshold)  // funnel-only, unreliable: muted hollow ring, no direction/emphasis
-      return `<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#fff" stroke="var(--nat)" stroke-width="1.1" opacity=".8"/>`;
+      return hiDecor(t,cx,cy)+`<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#fff" stroke="var(--nat)" stroke-width="1.1" opacity=".8"/>`;
     const [l95,h95]=limit(p0,z95,t.total,phi),[l998,h998]=limit(p0,z998,t.total,phi);
     let lvl=0;
     if(t.performance<l998||t.performance>h998) lvl=2;
@@ -288,7 +309,7 @@ function funnelSVG(inScope, rest, phi){
     const r=[3.2,4.8,6.2][lvl], op=[.55,.92,1][lvl], sw=[1.1,1.5,1.9][lvl];
     const below = t.performance < p0;                  // direction
     const fill = below ? HUE : "#fff";                 // filled = below line, hollow = above
-    return `<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}" stroke="${HUE}" stroke-width="${sw}" opacity="${op}"/>`;
+    return hiDecor(t,cx,cy)+`<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}" stroke="${HUE}" stroke-width="${sw}" opacity="${op}"/>`;
   };
   const restPts=rest.map(t=>pt(t,true)).join("");
   const scopePts=inScope.map(t=>pt(t,false)).join("");
@@ -316,7 +337,9 @@ function percentileSVG(clear){
           `<text x="${xx}" y="${H-20}" font-size="9" fill="var(--ink-soft)" text-anchor="middle">${lab}</text>`;});
   grid+=`<text x="${(P.l+W-P.r)/2}" y="${H-4}" font-size="10.5" fill="var(--ink-soft)" text-anchor="middle">trusts ranked low → high performance</text>`;
   const dots=clear.map((t,i)=>{const d=JSON.stringify({n:t.name,p:t.performance,t:t.total,r:t.region}).replace(/"/g,'&quot;');
-    return `<circle class="pt" data-d="${d}" cx="${x(i).toFixed(1)}" cy="${y(t.performance).toFixed(1)}" r="3.4" fill="var(--org)" opacity=".8"/>`;}).join("");
+    const hi=t.code===HILITE;   // ?org= deep-linked trust: gold emphasis ring
+    const halo=hi?`<circle cx="${x(i).toFixed(1)}" cy="${y(t.performance).toFixed(1)}" r="7" fill="none" stroke="var(--target)" stroke-width="2"/>`:"";
+    return halo+`<circle class="pt" data-d="${d}" cx="${x(i).toFixed(1)}" cy="${y(t.performance).toFixed(1)}" r="3.4" fill="var(--org)" opacity=".8"/>`;}).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="100%">${grid}${dots}</svg>`;
 }
 
