@@ -3,14 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NHS Cancer Waiting Times Dashboard</title>
+<title>Compare Providers — NHS Cancer Waiting Times Dashboard</title>
 <style>
   :root{
     --ink:#11202b; --ink-soft:#4a5a64; --line:#d7e0e3; --paper:#fbfcfc;
-    --panel:#ffffff; --org:#0f7d8c; --nat:#9aa7ad; --target:#c8881d;
+    --panel:#ffffff; --org:#0f7d8c; --nat:#838f95; --target:#c8881d;
     --good:#2f7d4f; --bad:#b23b3b; --grid:#eef3f4; --warn:#b23b3b;
   }
   *{box-sizing:border-box}
+  .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .pt{cursor:pointer}
+  .pt:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   body{margin:0;background:var(--paper);color:var(--ink);
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;line-height:1.5}
   .wrap{max-width:1040px;margin:0 auto;padding:32px 24px 80px}
@@ -19,12 +23,13 @@
   .sub{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;
     text-transform:uppercase;letter-spacing:.14em;color:var(--ink-soft)}
   nav{font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:8px}
-  nav a{color:var(--org);text-decoration:none} nav a:hover{text-decoration:underline}
+  nav a{color:var(--org);text-decoration:underline}
   .controls{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin:22px 0 6px}
   label{display:block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:5px}
   select{font:inherit;font-size:15px;padding:8px 10px;border:1px solid var(--line);
-    border-radius:5px;background:#fff;min-width:240px}
+    border-radius:5px;background:#fff;min-width:min(240px,100%);max-width:calc(100vw - 48px)}
+  .controls > div{max-width:100%}
   .period{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--ink-soft);margin:2px 0 0}
   .note{background:#fff7e8;border:1px solid #f0dcae;border-left:3px solid var(--target);
     padding:10px 13px;font-size:13.5px;color:#6b561f;border-radius:0 4px 4px 0;margin:14px 0}
@@ -67,7 +72,7 @@
   <div class="period" id="period"></div>
 
   <div class="note" id="breaknote"></div>
-  <div class="note fallback" id="fallback" style="display:none"></div>
+  <div class="note fallback" id="fallback" role="status" style="display:none"></div>
 
   <div class="card">
     <h3 id="funtitle">Funnel plot</h3>
@@ -96,6 +101,8 @@
   <footer id="foot"></footer>
 </div>
 <div class="tip" id="tip"></div>
+<!-- Polite live region: announces the funnel/percentile view on each re-render. -->
+<div id="live" class="vh" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 const DATA="data/", C=DATA+"compare/";
@@ -105,6 +112,10 @@ let CAT=null, M=null;
 // init(); the scope is applied once (so the user can then change it freely).
 let HILITE=null, hiliteScoped=false;
 const fmt = p => (p*100).toFixed(1)+"%";
+const xmlEsc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const escAttr = s => xmlEsc(s).replace(/"/g,"&quot;");
+function announce(msg){ const l=document.getElementById("live"); if(!l) return;
+  l.textContent=""; setTimeout(()=>{ l.textContent=msg; },30); }
 const z95key="p95", z998key="p998";
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const fullMonth = m => {const[y,mm]=m.split("-");return MONTHS[+mm-1]+" "+y;};
@@ -214,13 +225,15 @@ function render(){
     `${effScope} · England line ${fmt(M.national.performance)} · `+
     `${adjusted?`overdispersion-adjusted limits (φ=${phiTxt})`:`unadjusted binomial limits`} · `+
     `${inScope.length} trusts (${inScope.filter(t=>!t.sub_threshold).length} above the ≥${CAT.threshold} threshold) · ${M.period_label}`;
-  document.getElementById("funnel").innerHTML = funnelSVG(inScope, rest, phi);
+  document.getElementById("funnel").innerHTML = funnelSVG(inScope, rest, phi)
+    + funnelTableHTML(inScope, M.national.performance, M.z[z95key], M.z[z998key], phi);
 
   const clear = inScope.filter(t=>!t.sub_threshold).sort((a,b)=>a.performance-b.performance);
   document.getElementById("pctmeta").textContent =
     `${clear.length} threshold-clearing trusts in ${effScope}, ranked. Sub-threshold trusts are excluded here `+
     `(a tiny denominator gives a falsely-precise percentile) but still appear in the funnel.`;
-  document.getElementById("pct").innerHTML = percentileSVG(clear);
+  document.getElementById("pct").innerHTML = percentileSVG(clear) + pctTableHTML(clear);
+  announce(`${M.label}, ${effScope}: funnel plot of ${inScope.length} trusts and percentile ranking of ${clear.length} threshold-clearing trusts updated. Data tables are available below each chart.`);
 
   const t=CAT.targets[M.standard];
   const nUnits = M.overdispersion ? M.overdispersion.n_units : 0;
@@ -298,10 +311,13 @@ function funnelSVG(inScope, rest, phi){
   const pt=(t,faint)=>{
     const cx=x(t.total),cy=y(t.performance);
     const d=JSON.stringify({n:t.name,p:t.performance,t:t.total,r:t.region}).replace(/"/g,'&quot;');
+    const reg=t.region?`, ${t.region}`:"";
     if(faint)  // rest of England (region scope): faint grey context
       return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.8" fill="#cfd8db" opacity=".5"/>`;
-    if(t.sub_threshold)  // funnel-only, unreliable: muted hollow ring, no direction/emphasis
-      return hiDecor(t,cx,cy)+`<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#fff" stroke="var(--nat)" stroke-width="1.1" opacity=".8"/>`;
+    if(t.sub_threshold){  // funnel-only, unreliable: muted hollow ring, no direction/emphasis
+      const lab=`${t.name}: ${fmt(t.performance)}, ${t.total.toLocaleString()} patients${reg}, sub-threshold`;
+      return hiDecor(t,cx,cy)+`<circle class="pt" data-d="${d}" tabindex="0" role="img" aria-label="${escAttr(lab)}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#fff" stroke="var(--nat)" stroke-width="1.1" opacity=".8"/>`;
+    }
     const [l95,h95]=limit(p0,z95,t.total,phi),[l998,h998]=limit(p0,z998,t.total,phi);
     let lvl=0;
     if(t.performance<l998||t.performance>h998) lvl=2;
@@ -309,11 +325,37 @@ function funnelSVG(inScope, rest, phi){
     const r=[3.2,4.8,6.2][lvl], op=[.55,.92,1][lvl], sw=[1.1,1.5,1.9][lvl];
     const below = t.performance < p0;                  // direction
     const fill = below ? HUE : "#fff";                 // filled = below line, hollow = above
-    return hiDecor(t,cx,cy)+`<circle class="pt" data-d="${d}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}" stroke="${HUE}" stroke-width="${sw}" opacity="${op}"/>`;
+    const lab=`${t.name}: ${fmt(t.performance)}, ${t.total.toLocaleString()} patients${reg}, ${below?"below":"above"} the England line${lvl?(", beyond "+(lvl===2?"99.8%":"95%")+" limits"):", within limits"}`;
+    return hiDecor(t,cx,cy)+`<circle class="pt" data-d="${d}" tabindex="0" role="img" aria-label="${escAttr(lab)}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}" fill="${fill}" stroke="${HUE}" stroke-width="${sw}" opacity="${op}"/>`;
   };
   const restPts=rest.map(t=>pt(t,true)).join("");
   const scopePts=inScope.map(t=>pt(t,false)).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" id="funsvg">${grid}${curve998}${curve95}${centre}${tline}${restPts}${scopePts}</svg>`;
+  const nClear=inScope.filter(t=>!t.sub_threshold).length;
+  const aria=`Funnel plot: ${M.label}. ${inScope.length} trusts plotted by patient volume against percentage within standard, `+
+    `relative to the England line at ${fmt(p0)} with 95% and 99.8% control limits. ${nClear} clear the reliability threshold. `+
+    `Full figures are in the data table below the chart.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" id="funsvg" role="img" aria-label="${escAttr(aria)}">`+
+    `<title>${xmlEsc(M.label)} — funnel plot</title><desc>${xmlEsc(aria)}</desc>`+
+    `${grid}${curve998}${curve95}${centre}${tline}${restPts}${scopePts}</svg>`;
+}
+// Visually-hidden table mirroring the trusts plotted in the funnel (in-scope only),
+// with denominator + outlier status as TEXT.
+function funnelTableHTML(inScope, p0, z95, z998, phi){
+  let rows="";
+  inScope.forEach(t=>{
+    let status;
+    if(t.sub_threshold) status="Sub-threshold (shown in funnel, excluded from ranking)";
+    else{
+      const [l95,h95]=limit(p0,z95,t.total,phi),[l998,h998]=limit(p0,z998,t.total,phi);
+      let lvl="within control limits";
+      if(t.performance<l998||t.performance>h998) lvl="beyond 99.8% limits";
+      else if(t.performance<l95||t.performance>h95) lvl="beyond 95% limits";
+      status=`${t.performance<p0?"Below":"Above"} the England line, ${lvl}`;
+    }
+    rows+=`<tr><td>${xmlEsc(t.name)}</td><td>${t.region||"—"}</td><td>${fmt(t.performance)}</td><td>${t.total.toLocaleString()}</td><td>${status}</td></tr>`;
+  });
+  return `<div class="vh"><table><caption>Data table: ${xmlEsc(M.label)} funnel plot — ${inScope.length} trusts in scope.</caption>`+
+    `<thead><tr><th scope="col">Trust</th><th scope="col">Region</th><th scope="col">% within standard</th><th scope="col">Patients in period</th><th scope="col">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function percentileSVG(clear){
@@ -339,8 +381,17 @@ function percentileSVG(clear){
   const dots=clear.map((t,i)=>{const d=JSON.stringify({n:t.name,p:t.performance,t:t.total,r:t.region}).replace(/"/g,'&quot;');
     const hi=t.code===HILITE;   // ?org= deep-linked trust: gold emphasis ring
     const halo=hi?`<circle cx="${x(i).toFixed(1)}" cy="${y(t.performance).toFixed(1)}" r="7" fill="none" stroke="var(--target)" stroke-width="2"/>`:"";
-    return halo+`<circle class="pt" data-d="${d}" cx="${x(i).toFixed(1)}" cy="${y(t.performance).toFixed(1)}" r="3.4" fill="var(--org)" opacity=".8"/>`;}).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${grid}${dots}</svg>`;
+    const lab=`Rank ${i+1} of ${n}: ${t.name}, ${fmt(t.performance)}, ${t.total.toLocaleString()} patients${t.region?(", "+t.region):""}`;
+    return halo+`<circle class="pt" data-d="${d}" tabindex="0" role="img" aria-label="${escAttr(lab)}" cx="${x(i).toFixed(1)}" cy="${y(t.performance).toFixed(1)}" r="3.4" fill="var(--org)" opacity=".8"/>`;}).join("");
+  const aria=`Percentile view: ${n} threshold-clearing trusts ranked from lowest to highest percentage within standard. `+
+    `Full figures are in the data table below the chart.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${escAttr(aria)}">`+
+    `<title>Percentile view</title><desc>${xmlEsc(aria)}</desc>${grid}${dots}</svg>`;
+}
+function pctTableHTML(clear){
+  let rows=""; clear.forEach((t,i)=>{ rows+=`<tr><td>${i+1}</td><td>${xmlEsc(t.name)}</td><td>${t.region||"—"}</td><td>${fmt(t.performance)}</td><td>${t.total.toLocaleString()}</td></tr>`; });
+  return `<div class="vh"><table><caption>Data table: percentile view — ${clear.length} threshold-clearing trusts ranked low to high.</caption>`+
+    `<thead><tr><th scope="col">Rank</th><th scope="col">Trust</th><th scope="col">Region</th><th scope="col">% within standard</th><th scope="col">Patients in period</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 // shared hover tooltip
@@ -355,6 +406,16 @@ document.addEventListener("mousemove",e=>{
   if(tip.style.opacity==="1"){tip.style.left=(e.clientX+12)+"px";tip.style.top=(e.clientY+12)+"px";}
 });
 document.addEventListener("mouseout",e=>{if(e.target.closest&&e.target.closest(".pt"))tip.style.opacity=0;});
+// Keyboard parity: show the same tooltip when a point receives focus, positioned at
+// the point itself (the tip is position:fixed, so use viewport coordinates).
+document.addEventListener("focusin",e=>{
+  const c=e.target.closest&&e.target.closest(".pt"); if(!c)return;
+  const d=JSON.parse(c.getAttribute("data-d"));
+  tip.innerHTML=`${d.n}<br>${fmt(d.p)} · ${d.t.toLocaleString()} patients<br>${d.r||""}`;
+  const r=c.getBoundingClientRect();
+  tip.style.left=(r.left+r.width/2+12)+"px"; tip.style.top=(r.top+12)+"px"; tip.style.opacity=1;
+});
+document.addEventListener("focusout",e=>{if(e.target.closest&&e.target.closest(".pt"))tip.style.opacity=0;});
 
 init();
 </script>

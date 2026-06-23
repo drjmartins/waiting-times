@@ -6,6 +6,186 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-23 — WCAG 2.1 AA accessibility pass DEPLOYING — full line nudge chosen, whole pass shipped together (Claude Code)
+
+User chose **Option A (full nudge)** from the trade-off render. All three faint reference LINES wired to their
+~3:1 values in the shared palette, one variable per line: low-reliability/provisional `--org-muted #6db0ba →
+#4f9aa6` (2.45→3.23:1), England grey `--nat #9aa7ad → #838f95` (2.47→3.32:1), milestone `--milestone #b8a06a →
+#a08a52` (2.54→3.36:1). Applied to cancer + rtt; compare.html got the `--nat` nudge (its centre England line +
+sub-threshold rings). **1.4.11 is now a clean pass for the lines**, so the earlier "lean on shape+dash+legend
+redundancy" conformance stance is MOOT / no longer load-bearing (the redundancy remains as belt-and-braces, not
+as the argument). Hierarchy holds because the primary SOLID org line (`--org #0f7d8c`) is untouched — the nudged
+lines are still lighter/dashed/dotted and read as secondary (render-verified headless on Airedale 62-day +
+England 18-week).
+
+Deployed as ONE pass with everything from the two prior 2026-06-23 entries (the four HIGH fixes + no-cost MEDIUMs
++ decoupled dark text labels). Commit + push + watched workflow_dispatch; STATUS.md updated. Live-verification
+results (run number, criteria re-confirmed, reconciliation/ODS/provider-type guards) recorded once the watched
+run lands.
+
+## 2026-06-23 — WCAG 2.1 AA fixes BUILT + verified (no-visual-cost track); line trade-off rendered both ways — NOT DEPLOYED, awaiting line decision (Claude Code)
+
+Built every no-visual-cost fix from the audit across all four pages; render-verified headless (2× Chrome) +
+55 tests still pass. NOT deployed — paused for the user to pick the one real trade-off (faint line colours)
+from the side-by-side render. Two tracks:
+
+**BUILT NOW (shipped to working tree, both dashboards where shared):**
+- **1.1.1 chart text alternatives.** Every chart `<svg>` now `role="img"` + `<title>`/`<desc>` + a generated
+  `aria-label` summarising the on-screen slice. PLUS a visually-hidden `<table>` per big chart / funnel /
+  percentile, built from the SAME clipped series the chart draws (can't diverge), with provisional /
+  low-reliability flags as TEXT, respecting the current measure/group/TF/route/range/England-overlay. Verified:
+  cancer big table 36 rows (matches the 3y/all window), RTT rate+count tables, compare funnel 157 / percentile
+  139 rows. Sparklines got `role="img"` + latest-figure-and-trend `aria-label`.
+  - GOTCHA fixed in verification: a `<table class="vh">` ignores `width:1px` (auto table layout) and rendered
+    full-width → 787px horizontal overflow at 320px. Fix: wrap each table in a `<div class="vh">` (a block div
+    respects width:1px and clips the table); the table no longer contributes to scrollWidth.
+- **2.1.1 keyboard tooltips.** The transparent `.pt.hit` SVG points are now `tabindex=0` + per-point `aria-label`;
+  the same tooltip the hover shows now also fires on `focus` (and hides on `blur`), with a visible focus ring
+  (`.pt.hit:focus-visible`). Applies to both big charts + the funnel/percentile (compare positions the fixed
+  tip from the point's bounding rect on focus). Verified: focusing a point shows the tip (cancer display:block;
+  compare tip opacity→1).
+- **4.1.2 name/role/value.** Segmented toggles (England/Providers/Commissioners, provider-type, time-range,
+  long-waiter threshold) now carry `aria-pressed` reflecting the active state (set wherever `.active` is
+  toggled); their containers got `role="group"` + a label. Summary cards got `role="button"` + `aria-pressed`.
+  Listbox options got `aria-selected`. Fixed the illegal listbox: `role="listbox"` moved OFF the panel (which
+  contained the search input) ONTO the options-only container, with `aria-controls`/`aria-label` wiring and the
+  search inputs labelled. Expand modal: `role="dialog"` + `aria-modal` + accessible name, focus moved to the
+  close button on open, focus trap on Tab, background `.wrap` set `inert`+`aria-hidden`, focus returned to the
+  Expand trigger on close. Verified: dialog role/aria-modal present, wrap inert while open, focus returns to
+  `#expandbtn` on close, option `aria-selected=true` on the active org.
+- **4.1.3 status messages.** Added a polite `#live` region per page; chart re-renders + empty/"no data" states +
+  the compare region-fallback note announce a concise summary. (`#fallback` also got `role="status"`.)
+- **1.4.10 reflow @320px.** Relaxed the fixed min-widths (`min(360px,100%)`/`min(380px,100%)` + `max-width`),
+  capped compare's native `<select>` with `max-width:calc(100vw - 48px)` + `.controls > div{max-width:100%}`
+  (native selects size to their widest option), and let `.fgrp`/`.rangewrap` wrap so the long-waiter label+buttons
+  don't overflow. Verified 0px horizontal overflow at 320px on all three (RTT longwait included).
+- **1.4.1 link underline.** `.dashnav a` (landing/cancer/rtt) and compare's `nav a` now underlined (footer/source
+  links already underlined by default — left as-is). compare `<title>` de-duplicated (2.4.2).
+- **1.4.3 TEXT decoupling (no line change).** New `--target-text:#9a6600` (4.9:1) for the amber "below target"
+  card label + the SVG "target NN.N%" label; `--milestone-text:#75632f` (5.9:1) for RTT milestone labels; the
+  cancer low-reliability latest FIGURE (`b.muted`) switched from muted teal to `--ink` (keeps its n<10 caveat +
+  muted sparkline). The amber/tan/teal LINE colours are untouched here.
+
+**RENDERED BOTH WAYS (the one decision left to the user):** an Artifact compares the faint reference LINES at
+(A) as-shipped vs (B) a gentle nudge to ~3:1 — the SAME real chart captured twice, only line colours differ.
+Nudge palette: low-rel/provisional `#6db0ba→#4f9aa6` (2.45→3.23:1), England grey `#9aa7ad→#838f95`
+(2.47→3.32:1), milestone `#b8a06a→#a08a52` (2.54→3.36:1). Artifact:
+https://claude.ai/code/artifact/521e8392-4453-4951-a905-ce92cac703d0 — side-by-side + flip-in-place per chart,
+plus Option A (clean 1.4.11 pass, slight hierarchy compression) vs Option B (leave faint, document the
+shape+dash+legend redundancy as the conformance basis) and a middle path (nudge milestones only). AWAITING the
+user's pick; the chosen line colours are a one-variable-per-line change in the shared palette.
+
+## 2026-06-23 — WCAG 2.1 AA accessibility audit — REPORT ONLY, no fixes yet (Claude Code)
+
+Audited all four live pages — landing (`site/index.html`), `/cancer/`, `/rtt/`, and `compare.html` (soft-hidden
+but live) — against WCAG 2.1 AA. Audience is professional (NHS managers/analysts/clinicians), so NO plain-language
+work; pure accessibility. Contrast ratios MEASURED (sRGB, WCAG formula). Fixes proposed but NOT built — user to
+decide the design trade-offs (faint-state criteria) first. Verdict: **4 high-severity gaps, several medium.**
+
+### Verdict by criterion
+- **1.1.1 Non-text content — FAIL (HIGH, all pages).** Biggest gap, as predicted. Every chart is bare inline
+  `<svg>` with NO `role="img"`, NO `<title>`/`<desc>`/`aria-label`, and NO data-table alternative: the two big
+  time-series charts, the funnel + percentile plots (compare.html), and the card sparklines. A screen-reader user
+  gets nothing (or a jumble of loose axis `<text>`). Sparklines are partly mitigated (the latest figure is real
+  text on the card); the big charts and funnel are a total loss. Fix: add `role="img"` + a generated `aria-label`
+  summarising the series (latest value, target, direction), AND a visually-hidden `<table>` of the on-screen
+  months/values per chart (regenerated in renderBig/renderRate/renderCount/funnelSVG). No visual-design cost.
+- **1.4.3 Contrast (minimum) — PARTIAL FAIL (MEDIUM).** Body text and most UI pass comfortably. The deliberately
+  faint states are where it breaks. MEASURED on white/paper:
+  - ink `#11202b` 16.6:1 ✓; ink-soft `#4a5a64` (labels, eyebrows, monospace bylines, axes, footer) 7.0–7.2:1 ✓
+    — the muted bylines/eyebrows are FINE, contrary to the worry.
+  - org teal `#0f7d8c` links/headings 4.7–4.9:1 ✓ (small-text pass, just clears 4.5). BUT teal text on the
+    active-option tint `rgba(15,125,140,.10)` ≈ 4.2:1 — minor FAIL.
+  - **Amber "▼ below NN% target" card label (`.vs.under` `#c8881d`, ~11px) = 3.00:1 — FAIL** (needs 4.5). Both
+    dashboards. Paired with a ▼ glyph so not colour-alone, but contrast fails.
+  - **Amber "target NN.N%" SVG margin label (`#c8881d`, 10px) = 3.00:1 — FAIL.** Big charts (both) + funnel.
+  - **RTT recovery-milestone labels (`#b8a06a`, 9px) = 2.54:1 — FAIL.**
+  - **Cancer low-reliability latest figure (`b.muted` `#6db0ba`, 27px bold = LARGE text, 3:1 threshold) =
+    2.45:1 — FAIL even at the large-text bar.**
+  - Passing text worth recording: good green `#2f7d4f` 5.0:1 ✓, card "n=…, low reliability" `#8a6d1f` 4.9:1 ✓,
+    amber/red note boxes 6.6–8.3:1 ✓, tooltip text on dark ink 10–16:1 ✓, white-on-teal active button 4.85:1 ✓.
+- **1.4.11 Non-text contrast (meaningful graphics, 3:1) — FAIL (MEDIUM).** The faint CHART LINES/markers fall
+  below 3:1 vs white: low-reliability/provisional muted teal `#6db0ba` 2.45:1; grey England line `#9aa7ad`
+  2.47:1; milestone line `#b8a06a` 2.54:1. Amber target line 3.0:1 (borderline ✓). Gridlines `#eef3f4` 1.12:1
+  and control borders `#d7e0e3` 1.34:1 are decorative/non-essential (gridlines exempt; control identity is also
+  carried by text labels). NOTE the get-out: these series ALSO encode state by shape+dash + legend, so colour is
+  not the sole carrier — a defensible argument that 1.4.11 (which targets graphics "required to understand")
+  is softened. Document the stance rather than necessarily darkening.
+- **1.4.1 Use of colour — MOSTLY PASS, one FAIL (MEDIUM).** Charts pair colour with shape+dash (provisional =
+  open circle + dashed; low-reliability = open square + dotted; final = filled solid; England = solid grey vs
+  teal) ✓. Cards pair colour with ✓/▼ glyphs ✓. Funnel uses fill (direction) + size (severity), not hue ✓. The
+  org-lifecycle "related org" links are underlined ✓. **FAIL: the footer source links (and dashnav/card links)
+  are teal with `text-decoration:none`** — distinguished from surrounding text by colour ONLY; inline footer
+  links vs surrounding ink-soft = 1.47:1 (well under the 3:1 that would let colour-alone pass), and underline
+  appears only on `:hover` (not keyboard/touch/persistent). Fix: persistent underline on in-prose links.
+- **2.1.1 Keyboard — MOSTLY PASS, one FAIL (HIGH).** All real controls are keyboard-operable: native
+  select/checkbox/inputs (compare.html), the custom dropdown TRIGGERS are `<button>`s, panel options are
+  `<button role=option>` (reachable by Tab, Enter activates; search box focuses on open, Enter = first match,
+  Esc closes), segmented buttons are `<button>`, cards are `div tabindex=0` with Enter/Space handlers, expand
+  toggles + Esc, download menu. **FAIL: chart tooltips are `mouseenter`/`mouseover`-only** — the per-point
+  exact data (month, %, numerator/denominator, final vs provisional) is revealed on hover with no keyboard
+  path; SVG points have no tabindex/role and the data exists nowhere else. Affects all four pages.
+- **2.4.7 Focus visible — PASS (with caveat, LOW).** No `outline:none` and no custom focus CSS anywhere, so
+  the UA default focus ring is intact on every focusable element (verified: zero `:focus`/`outline` rules).
+  Caveat: relies entirely on browser defaults; the default ring can be low-contrast on the teal active button
+  and inside dropdown panels. Recommend an explicit `:focus-visible` ring (2px, ≥3:1) — robustness, not a
+  current failure.
+- **2.4.3 Focus order / modal — FAIL (MEDIUM).** The expand modal MOVES the live panel into the overlay, so
+  focus happens to ride along on the moved node (rough return-on-close), and Esc/backdrop close work. BUT: focus
+  is not explicitly sent to the dialog, there is NO focus trap, and the background is neither `inert` nor
+  `aria-hidden` — keyboard/SR users can Tab out into the page behind the modal. Fix: trap focus, focus the close
+  button on open, restore on close, hide the background.
+- **4.1.2 Name/role/value — FAIL (HIGH).** Custom controls don't expose state to a screen reader:
+  - Dropdowns: `aria-expanded` IS toggled correctly ✓, but the panel is `role="listbox"` containing a search
+    `<input>` (invalid listbox child) and the options carry NO `aria-selected` — the chosen org/group/route/TF
+    is a visual `.active` class only. Arrow-key listbox navigation isn't implemented either.
+  - Segmented toggles (England/Providers/Commissioners, provider-type, time-range, long-waiter threshold): no
+    `role`/`aria-pressed`/`aria-selected`; the active state is colour-only and invisible to SR.
+  - Summary cards: `<div tabindex=0>` with no `role` and no selected-state exposure (they're a tab/switcher).
+  - Expand modal: container has no `role="dialog"`, `aria-modal`, or accessible name; download trigger lacks
+    `role="menu"`.
+  - Good, keep: `aria-current="page"` on nav ✓; native checkbox+`<label>` "Show England" ✓; compare.html native
+    `<select>` + `<label for>` ✓ (its controls are MORE accessible than the dashboards' custom ones).
+  Fixes are non-visual (add `aria-pressed`/`aria-selected`, dialog semantics) — no design cost.
+- **4.1.3 Status messages — FAIL (MEDIUM).** Chart re-renders on every control change, the "No data published"
+  / empty-slice states, the compare.html region-fallback note, and live-filtered option counts all appear with
+  no `aria-live` region — SR users get no feedback that anything changed (compounding 1.1.1). Fix: a polite
+  live region announcing the active slice + a one-line summary.
+- **1.4.10 Reflow (320px) — FAIL (MEDIUM).** Charts scale cleanly (`viewBox` + `width:100%`). BUT fixed
+  min-widths force horizontal scroll at 320px (content box ≈ 272px after 24px padding): cancer/rtt org button
+  `.orgbtnwrap .filterbtn{min-width:380px}` and `select,input[type=search]{min-width:360px}`. Fix: cap with
+  `min-width:min(360px,100%)` / `max-width:100%`. compare.html (`select{min-width:240px}`) is OK.
+- **1.4.4 Resize text (200%) — PASS (borderline).** Sizes are px but browser zoom scales them, the viewport
+  meta does NOT disable zoom, and controls wrap; usable at 200%. The same fixed min-widths could clip at very
+  high zoom on small screens — fold into the 1.4.10 fix.
+- **Minor:** compare.html `<title>` duplicates the cancer-index title (2.4.2); heading order has card `<h3>`s
+  before the chart `<h2>` (1.3.1/2.4.6); no `<main>` landmark (1.3.1 best-practice).
+
+### Shared-component note
+Cancer and RTT share the palette and nearly all front-end mechanics (picker, segmented controls, cards,
+dropdowns, big-chart renderer, expand/export, tooltips). So almost every fix lands in BOTH: SVG text
+alternative, keyboard tooltips, `aria-selected`/`aria-pressed`, dialog semantics, live region, and the
+min-width reflow cap all apply to both dashboards. The amber/muted contrast values are identical across both
+(same vars). compare.html is the odd one out (native selects, simpler) — it needs the SVG/keyboard fixes but
+its form controls are already fine.
+
+### Design trade-offs to settle BEFORE any build (these touch the tuned chart language)
+1. **Faint lines vs 1.4.11 (3:1).** Darkening `--org-muted`/`--nat`/`--milestone` to clear 3:1 makes the
+   de-emphasised states less faint — directly against the intent. Defensible alternative: KEEP the lines faint
+   and lean on the existing shape+dash+legend redundancy (argue colour isn't the sole carrier), documenting the
+   stance. Or nudge only enough to reach ~3:1 (a small darken still reads as "muted" beside the strong teal).
+2. **Amber/muted TEXT labels have a HARD bar (4.5:1 small / 3:1 large) with no shape get-out.** Recommended:
+   DECOUPLE label colour from line colour — keep the target/milestone LINES their tuned amber/tan but render
+   their TEXT labels in a darker tone (ink-soft or a darkened amber) so the line stays faint while the text
+   passes. Same for the cancer low-reliability latest figure: keep the figure in dark ink (it already carries a
+   "n=…, low reliability" text caveat + a muted sparkline), rather than colouring the 27px number itself muted.
+3. **In-prose link underline (1.4.1).** Persistent underline on footer/source + dashnav links is a small visual
+   change to a deliberately clean look — user to confirm scope (footer-only vs all).
+Items not touching the visual language (do regardless): SVG text alternatives, keyboard tooltip access,
+`aria-selected`/`aria-pressed`/dialog semantics, live region, reflow min-width cap, explicit focus-visible.
+
+---
+
 ## 2026-06-23 — DEPLOYED + LIVE-VERIFIED: consistency-cluster round — RTT region, soft-hidden comparator, compare-this-trust link, nav A (Code)
 
 DEPLOYED run 28019834569 (build+deploy GREEN; CI commit 9dbac27). Live-verified on the deployed site (curl +

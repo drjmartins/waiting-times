@@ -7,10 +7,18 @@
 <style>
   :root{
     --ink:#11202b; --ink-soft:#4a5a64; --line:#d7e0e3; --paper:#fbfcfc;
-    --panel:#ffffff; --org:#0f7d8c; --org-muted:#6db0ba; --nat:#9aa7ad; --target:#c8881d;
-    --good:#2f7d4f; --bad:#b23b3b; --grid:#eef3f4; --milestone:#b8a06a;
+    --panel:#ffffff; --org:#0f7d8c; --org-muted:#4f9aa6; --nat:#838f95; --target:#c8881d;
+    --good:#2f7d4f; --bad:#b23b3b; --grid:#eef3f4; --milestone:#a08a52;
+    /* Text-label tones for the amber target + tan milestones, decoupled from the
+       (deliberately faint) LINE colours so the labels clear 4.5:1. */
+    --target-text:#9a6600; --milestone-text:#75632f;
   }
   *{box-sizing:border-box}
+  /* Screen-reader-only: the data-table alternative to each chart + the live region. */
+  .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  /* Keyboard focus ring for the focusable SVG data points. */
+  .pt.hit:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   body{margin:0;background:var(--paper);color:var(--ink);
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
     line-height:1.5}
@@ -23,15 +31,14 @@
   label{display:block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:5px}
   select,input[type=search]{font:inherit;font-size:15px;padding:8px 10px;
-    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:360px}
+    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:min(360px,100%);max-width:100%}
   .orgname{font-size:13px;color:var(--ink-soft);display:inline-block;margin:0 0 0 12px;vertical-align:middle}
   .orgname:empty{display:none}
   .orgname b{color:var(--ink)}
   /* Shared dashboard nav strip — identical structure/grammar on landing, /cancer/
      and /rtt/. The current page is non-link marked text (aria-current="page"). */
   .dashnav{font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:8px}
-  .dashnav a{color:var(--org);text-decoration:none}
-  .dashnav a:hover{text-decoration:underline}
+  .dashnav a{color:var(--org);text-decoration:underline}
   .dashnav .current{color:var(--ink);font-weight:bold}
   .dashnav .sep{color:var(--line);margin:0 8px}
   .typebtns{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px}
@@ -45,7 +52,7 @@
   .ptyperow[hidden]{display:none}
   .ptyperow label{margin-bottom:4px}
   .orgbtnwrap{display:inline-block;vertical-align:middle}
-  .orgbtnwrap .filterbtn{min-width:380px}
+  .orgbtnwrap .filterbtn{min-width:min(380px,100%);max-width:100%}
   .filterbtn[disabled],.orgbtnwrap[hidden]{display:none}
   .filterpanel .dropsearch{display:block;width:100%;min-width:0;font:inherit;font-size:14px;padding:7px 9px;
     margin-bottom:6px;border:1px solid var(--line);border-radius:5px}
@@ -74,7 +81,7 @@
   .scard .figure{display:flex;align-items:baseline;gap:8px;margin:6px 0 2px}
   .scard .figure b{font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1;color:var(--ink);font-family:inherit}
   .scard .figure .vs{font-size:11px;color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace}
-  .scard .figure .vs.meets{color:var(--good)} .scard .figure .vs.under{color:var(--target)}
+  .scard .figure .vs.meets{color:var(--good)} .scard .figure .vs.under{color:var(--target-text)}
   .scard .spark{margin-top:6px}
   .scard .mon{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--ink-soft);margin-top:3px}
   .scard.nodata{opacity:.72}
@@ -106,7 +113,7 @@
   .filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 8px}
   .filterbar .flabel{font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)}
-  .fgrp{display:inline-flex;align-items:center;gap:8px}
+  .fgrp{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
   .fgrp[hidden]{display:none}
   .fdrop{position:relative}
   .filterbtn{font:inherit;font-size:14px;padding:6px 12px;border:1px solid var(--line);
@@ -114,7 +121,8 @@
   .filterbtn:hover{border-color:#bcccd1}
   .filterbtn.sliced{border-color:var(--org);color:var(--org);font-weight:600;box-shadow:0 1px 6px rgba(15,125,140,.10)}
   .filterbtn .caret{float:right;color:var(--ink-soft);margin-left:8px}
-  .filterpanel{position:absolute;z-index:8;top:calc(100% + 4px);left:0;min-width:280px;max-width:340px;
+  .filterpanel{position:absolute;z-index:8;top:calc(100% + 4px);left:0;
+    min-width:min(280px,calc(100vw - 32px));max-width:min(340px,calc(100vw - 32px));
     max-height:340px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:6px;
     box-shadow:0 6px 22px rgba(17,32,43,.16);padding:6px}
   .filterpanel[hidden]{display:none}
@@ -150,7 +158,7 @@
   .modal-host .bigpanel{border:0;padding:8px 6px 4px}
 
   /* Segmented controls (time range + long-waiter threshold) */
-  .rangewrap{margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+  .rangewrap{margin-left:auto;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
   .segbtns{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
   .segbtn{font:inherit;font-size:12.5px;padding:5px 11px;border:0;border-right:1px solid var(--line);
     background:#fff;cursor:pointer;color:var(--ink-soft);white-space:nowrap}
@@ -176,28 +184,29 @@
 
   <div class="controls">
     <div>
-      <label>Organisation</label>
-      <div class="typebtns" id="typebtns">
-        <button type="button" class="typebtn" data-type="national">England</button>
-        <button type="button" class="typebtn" data-type="provider">Providers</button>
-        <button type="button" class="typebtn" data-type="icb">Commissioners</button>
+      <label id="orgtypelabel">Organisation</label>
+      <div class="typebtns" id="typebtns" role="group" aria-labelledby="orgtypelabel">
+        <button type="button" class="typebtn" data-type="national" aria-pressed="false">England</button>
+        <button type="button" class="typebtn" data-type="provider" aria-pressed="false">Providers</button>
+        <button type="button" class="typebtn" data-type="icb" aria-pressed="false">Commissioners</button>
       </div>
       <!-- Provider-type sub-filter: scopes the org dropdown (Providers view only). Default NHS Trusts. -->
       <div class="ptyperow" id="ptyperow" hidden>
-        <label>Provider type</label>
-        <div class="typebtns" id="ptypebtns">
-          <button type="button" class="typebtn ptypebtn" data-ptype="trust">NHS Trusts</button>
-          <button type="button" class="typebtn ptypebtn" data-ptype="independent">Independent Sector</button>
+        <label id="ptypelabel">Provider type</label>
+        <div class="typebtns" id="ptypebtns" role="group" aria-labelledby="ptypelabel">
+          <button type="button" class="typebtn ptypebtn" data-ptype="trust" aria-pressed="false">NHS Trusts</button>
+          <button type="button" class="typebtn ptypebtn" data-ptype="independent" aria-pressed="false">Independent Sector</button>
         </div>
       </div>
       <div class="orgrow">
         <div class="fdrop orgbtnwrap" id="orgdrop">
-          <button id="orgbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+          <button id="orgbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="orgoptions">
             <span id="orglabel">England — all-England</span><span class="caret">&#9662;</span></button>
-          <div id="orgpanel" class="filterpanel" role="listbox" hidden>
+          <div id="orgpanel" class="filterpanel" hidden>
             <input id="orgsearch" class="dropsearch" type="search" autocomplete="off"
+              aria-label="Filter organisations" aria-controls="orgoptions"
               placeholder="Type a trust or ICB name or code&hellip;">
-            <div id="orgoptions"></div>
+            <div id="orgoptions" role="listbox" aria-label="Organisations"></div>
           </div>
         </div>
         <div class="orgname" id="orgname"></div>
@@ -230,19 +239,19 @@
       <span class="fgrp" id="tfwrap">
         <span class="flabel">Treatment function</span>
         <div class="fdrop">
-          <button id="tfbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+          <button id="tfbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="tfoptions">
             <span id="tflabel">All treatment functions</span><span class="caret">&#9662;</span></button>
-          <div id="tfpanel" class="filterpanel" role="listbox" hidden></div>
+          <div id="tfpanel" class="filterpanel" hidden></div>
         </div>
       </span>
       <!-- Long-waiter threshold sub-control: shows ONLY for the "Long waiters" measure -->
       <span class="fgrp" id="threshwrap" hidden>
-        <span class="flabel">Waiting over</span>
-        <span class="segbtns" id="threshbtns">
-          <button type="button" class="segbtn" data-th="52">52 wks</button>
-          <button type="button" class="segbtn" data-th="65">65 wks</button>
-          <button type="button" class="segbtn" data-th="78">78 wks</button>
-          <button type="button" class="segbtn" data-th="104">104 wks</button>
+        <span class="flabel" id="threshlabel">Waiting over</span>
+        <span class="segbtns" id="threshbtns" role="group" aria-labelledby="threshlabel">
+          <button type="button" class="segbtn" data-th="52" aria-pressed="false">52 wks</button>
+          <button type="button" class="segbtn" data-th="65" aria-pressed="false">65 wks</button>
+          <button type="button" class="segbtn" data-th="78" aria-pressed="false">78 wks</button>
+          <button type="button" class="segbtn" data-th="104" aria-pressed="false">104 wks</button>
         </span>
       </span>
       <span class="fgrp" id="engwrap">
@@ -251,10 +260,10 @@
       <span id="slicehint" class="slicehint"></span>
       <span class="rangewrap" id="rangewrap">
         <span class="flabel">Time range</span>
-        <span class="segbtns" id="rangebtns">
-          <button type="button" class="segbtn" data-range="3y">3 years</button>
-          <button type="button" class="segbtn" data-range="12m">12 months</button>
-          <button type="button" class="segbtn" data-range="all">All</button>
+        <span class="segbtns" id="rangebtns" role="group" aria-label="Time range">
+          <button type="button" class="segbtn" data-range="3y" aria-pressed="false">3 years</button>
+          <button type="button" class="segbtn" data-range="12m" aria-pressed="false">12 months</button>
+          <button type="button" class="segbtn" data-range="all" aria-pressed="false">All</button>
         </span>
       </span>
     </div>
@@ -267,13 +276,16 @@
   <footer id="foot"></footer>
 </div>
 
-<div id="chartmodal" class="modal" hidden>
+<div id="chartmodal" class="modal" role="dialog" aria-modal="true" aria-label="Expanded chart" hidden>
   <div class="modal-backdrop" id="modalbackdrop"></div>
   <div class="modal-inner">
-    <button type="button" class="modal-close" id="modalclose" title="Close (Esc)">&#10005;</button>
+    <button type="button" class="modal-close" id="modalclose" title="Close (Esc)" aria-label="Close expanded chart">&#10005;</button>
     <div class="modal-host" id="modalhost"></div>
   </div>
 </div>
+
+<!-- Polite live region: announces chart updates + empty states to screen readers. -->
+<div id="live" class="vh" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 const DATA = "data/";
@@ -389,7 +401,8 @@ async function init(){
 /* ---------- org picker (reused from the cancer dashboard) ---------- */
 async function setType(type, code){
   CURRENT_TYPE=type;
-  document.querySelectorAll("#typebtns .typebtn").forEach(b=>b.classList.toggle("active", b.dataset.type===type));
+  document.querySelectorAll("#typebtns .typebtn").forEach(b=>{ const on=b.dataset.type===type;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); });
   closeOrgPanel();
   const drop=document.getElementById("orgdrop");
   if(type==="national"){
@@ -427,7 +440,8 @@ function setPtype(pt){
   if(list.length){ document.getElementById("orglabel").textContent=`${list[0].name} (${list[0].code})`; loadOrg(list[0].code); }
 }
 function updatePtypeButtons(){
-  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>b.classList.toggle("active", b.dataset.ptype===PTYPE));
+  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>{ const on=b.dataset.ptype===PTYPE;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); });
 }
 function orgListFor(type){
   let list=window._idx.filter(o=>o.level===type && !o.hidden);
@@ -461,8 +475,10 @@ function buildOrgOptions(q){
     if(label){ const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=label; host.appendChild(h); }
     first=false;
     items.forEach(o=>{ const b=document.createElement("button");
-      b.className="fopt"+(CURRENT && CURRENT.code===o.code ? " active":"");
-      b.setAttribute("role","option"); b.textContent=`${o.name} (${o.code})`;
+      const on=CURRENT && CURRENT.code===o.code;
+      b.className="fopt"+(on?" active":"");
+      b.setAttribute("role","option"); b.setAttribute("aria-selected", on?"true":"false");
+      b.textContent=`${o.name} (${o.code})`;
       b.onclick=()=>selectOrg(o); host.appendChild(b); });
   }
 }
@@ -583,10 +599,12 @@ function openTFPanel(){
   const p=document.getElementById("tfpanel"); p.innerHTML="";
   const s=document.createElement("input"); s.className="dropsearch"; s.type="search";
   s.placeholder="Type to filter treatment functions…"; s.autocomplete="off";
+  s.setAttribute("aria-label","Filter treatment functions"); s.setAttribute("aria-controls","tfoptions");
   s.addEventListener("input",()=>renderTFOptions(s.value));
   s.addEventListener("keydown",e=>{ if(e.key==="Enter"){const f=p.querySelector(".fopt");if(f){e.preventDefault();f.click();}} else if(e.key==="Escape") closeTFPanel(); });
   p.appendChild(s);
-  const opts=document.createElement("div"); opts.id="tfoptions"; p.appendChild(opts);
+  const opts=document.createElement("div"); opts.id="tfoptions";
+  opts.setAttribute("role","listbox"); opts.setAttribute("aria-label","Treatment functions"); p.appendChild(opts);
   renderTFOptions("");
   p.hidden=false; document.getElementById("tfbtn").setAttribute("aria-expanded","true");
   setTimeout(()=>s.focus(),0);
@@ -597,6 +615,7 @@ function renderTFOptions(q){
   q=(q||"").trim().toLowerCase(); const match=t=>!q||t.toLowerCase().includes(q);
   const opt=(label,code,on)=>{ const b=document.createElement("button");
     b.className="fopt"+(on?" active":""); b.textContent=label; b.setAttribute("role","option");
+    b.setAttribute("aria-selected", on?"true":"false");
     b.onclick=()=>selectTF(code); return b; };
   const hdr=(t,first)=>{ const g=document.createElement("div"); g.className="fgroup"+(first?" first":""); g.textContent=t; return g; };
   if(match("all treatment functions")){ host.appendChild(hdr("Overview",true));
@@ -657,6 +676,8 @@ function renderCards(){
   for(const m of MEASURES){
     const card=document.createElement("div");
     card.tabIndex=0; card.dataset.key=m.key;
+    card.setAttribute("role","button");
+    card.setAttribute("aria-pressed", m.key===MEASURE?"true":"false");
     const pick=()=>{ if(MEASURE!==m.key){ MEASURE=m.key; renderCards(); renderBig(); } };
     // Eyebrow shows the treatment function when one is sliced, else nothing (the
     // "INCOMPLETE" pathway label was RTT jargon and has been dropped).
@@ -712,7 +733,9 @@ function sparkRate(s){
   let path="";
   for(let i=0;i<k-1;i++)
     path+=`<path d="M${x(i).toFixed(1)} ${y(vals[i]).toFixed(1)} L${x(i+1).toFixed(1)} ${y(vals[i+1]).toFixed(1)}" fill="none" stroke="var(--org)" stroke-width="1.8"/>`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
+  const trend=vals[k-1]>vals[0]?"rising":vals[k-1]<vals[0]?"falling":"broadly flat";
+  const slab=`Trend sparkline: ${trend} over the last ${k} months, latest ${fmtPct(vals[k-1])} versus the ${targetPct()} target.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escAttr(slab)}">
     <line x1="${P}" y1="${ty}" x2="${W-P}" y2="${ty}" stroke="var(--target)" stroke-dasharray="3 2" stroke-width="1.1"/>
     ${path}<circle cx="${x(k-1).toFixed(1)}" cy="${y(vals[k-1]).toFixed(1)}" r="2.8" fill="${meets?'var(--org)':'var(--target)'}"/></svg>`;
 }
@@ -726,7 +749,9 @@ function sparkCount(s){
   let path="";
   for(let i=0;i<k-1;i++)
     path+=`<path d="M${x(i).toFixed(1)} ${y(vals[i]).toFixed(1)} L${x(i+1).toFixed(1)} ${y(vals[i+1]).toFixed(1)}" fill="none" stroke="var(--org)" stroke-width="1.8"/>`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${path}
+  const trend=vals[k-1]>vals[0]?"rising":vals[k-1]<vals[0]?"falling":"broadly flat";
+  const slab=`Trend sparkline: ${trend} over the last ${k} months, latest ${commas(vals[k-1])}.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escAttr(slab)}">${path}
     <circle cx="${x(k-1).toFixed(1)}" cy="${y(vals[k-1]).toFixed(1)}" r="2.8" fill="var(--org)"/></svg>`;
 }
 
@@ -735,8 +760,10 @@ function setRange(r){ if(RANGE===r || !(r in RANGE_MONTHS)) return; RANGE=r; ren
 function setThresh(t){ if(LWTHRESH===t) return; LWTHRESH=t; renderCards(); renderBig(); }
 function setShowEngland(on){ if(SHOW_ENGLAND===on) return; SHOW_ENGLAND=on; renderBig(); }
 function syncControls(){
-  document.querySelectorAll("#rangebtns .segbtn").forEach(b=>b.classList.toggle("active", b.dataset.range===RANGE));
-  document.querySelectorAll("#threshbtns .segbtn").forEach(b=>b.classList.toggle("active", +b.dataset.th===LWTHRESH));
+  document.querySelectorAll("#rangebtns .segbtn").forEach(b=>{ const on=b.dataset.range===RANGE;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); });
+  document.querySelectorAll("#threshbtns .segbtn").forEach(b=>{ const on=+b.dataset.th===LWTHRESH;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); });
   document.getElementById("threshwrap").hidden = (MEASURE!=="longwait");
   // England overlay: % measure only (counts can't share a linear scale with the
   // 7M national total), and never on the England tab itself.
@@ -776,7 +803,8 @@ const titleSuffix = () => isSliced() ? " — "+tfName(TF) : "";
 function emptyChart(title){
   document.getElementById("bigttl").textContent = title;
   document.getElementById("legend").innerHTML="";
-  document.getElementById("chartbox").innerHTML=`<div class="emptyslice">No data published for this treatment function at this organisation.</div>`;
+  document.getElementById("chartbox").innerHTML=`<div class="emptyslice" role="status">No data published for this treatment function at this organisation.</div>`;
+  announce("No data published for this treatment function at this organisation.");
 }
 /* ----- % within 18 weeks (rate chart): 92% target + 65/70% recovery milestones ----- */
 function renderRate(){
@@ -804,8 +832,9 @@ function renderRate(){
   const orgGroup=[org_].concat(hasLow?[low_]:[]).join(sep);
   const refGroup=(nat?[nat_]:[]).concat([tgt_], showMs?[ms_]:[]).join(sep);
   document.getElementById("legend").innerHTML = orgGroup + bar + refGroup;
-  document.getElementById("chartbox").innerHTML = rateSVG(s,nat,showMs) + `<div class="tip" id="tip"></div>`;
+  document.getElementById("chartbox").innerHTML = rateSVG(s,nat,showMs) + rateTableHTML(s,nat) + `<div class="tip" id="tip"></div>`;
   attachTips(s, "rate");
+  announce(rateSummary(s,nat));
 }
 function rateScales(s,nat,showMs){
   const xs=s.months,n=xs.length;
@@ -833,11 +862,11 @@ function rateSVG(s,nat,showMs){
     if(mm.target<lo||mm.target>hi) continue;
     const my=y(mm.target);
     ms+=`<line x1="${P.l}" y1="${my.toFixed(1)}" x2="${W-P.r}" y2="${my.toFixed(1)}" stroke="var(--milestone)" stroke-dasharray="2 3" stroke-width="1.1"/>`+
-        `<text x="${W-3}" y="${(my-3).toFixed(1)}" font-size="9" text-anchor="end" fill="var(--milestone)">${xmlEsc(mm.label)}</text>`;
+        `<text x="${W-3}" y="${(my-3).toFixed(1)}" font-size="9" text-anchor="end" fill="var(--milestone-text)">${xmlEsc(mm.label)}</text>`;
   }
   const ty=y(s.target);
   const tline=`<line x1="${P.l}" y1="${ty.toFixed(1)}" x2="${W-P.r}" y2="${ty.toFixed(1)}" stroke="var(--target)" stroke-dasharray="5 4" stroke-width="1.4"/>`+
-    `<text x="${W-3}" y="${(ty+3.5).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--target)">${targetPct()} target</text>`;
+    `<text x="${W-3}" y="${(ty+3.5).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--target-text)">${targetPct()} target</text>`;
   let natpath="";
   if(nat){
     const nm={}; nat.months.forEach((mo,j)=>nm[mo]=nat.performance[j]);
@@ -860,9 +889,13 @@ function rateSVG(s,nat,showMs){
     const cx=+x(i).toFixed(1), cy=+y(s.performance[i]).toFixed(1);
     const mk = low ? `<rect class="pt" data-i="${i}" x="${(cx-3.1).toFixed(1)}" y="${(cy-3.1).toFixed(1)}" width="6.2" height="6.2" fill="#fff" stroke="var(--org-muted)" stroke-width="1.6"/>`
                    : `<circle class="pt" data-i="${i}" cx="${cx}" cy="${cy}" r="3.2" fill="var(--org)"/>`;
-    pts+=mk+`<circle class="pt hit" data-i="${i}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
+    const lab=`${tipMonth(s.months[i])}: ${fmtPct(s.performance[i])}, ${commas(s.within_target[i])} of ${commas(s.total[i])} within 18 weeks${low?", low reliability, n="+(+s.total[i]):""}`;
+    pts+=mk+`<circle class="pt hit" data-i="${i}" tabindex="0" role="img" aria-label="${escAttr(lab)}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${mark}${ms}${natpath}${tline}${line}${xAxisSVG(xs,x)}${pts}</svg>`;
+  const aria=rateSummary(s,nat);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${escAttr(aria)}">`+
+    `<title>${xmlEsc(document.getElementById("bigttl").textContent)}</title><desc>${xmlEsc(aria)}</desc>`+
+    `${g}${mark}${ms}${natpath}${tline}${line}${xAxisSVG(xs,x)}${pts}</svg>`;
 }
 
 /* ----- count chart (waiting list / long waiters): numeric auto-scaling axis, no target ----- */
@@ -879,8 +912,9 @@ function renderCount(){
   document.getElementById("legend").innerHTML =
     item(`stroke="var(--org)" stroke-width="2.4"`,`fill="var(--org)"`,CURRENT.isNational?"England":"this organisation") +
     `<span class="lgsep">&middot;</span><span class="lgitem" style="color:var(--ink-soft)">${xmlEsc(s.unit)}</span>`;
-  document.getElementById("chartbox").innerHTML = countSVG(s) + `<div class="tip" id="tip"></div>`;
+  document.getElementById("chartbox").innerHTML = countSVG(s) + countTableHTML(s) + `<div class="tip" id="tip"></div>`;
   attachTips(s, "count");
+  announce(countSummary(s));
 }
 // "nice" top tick at 1/2/5 x 10^k >= max
 function niceTop(max){
@@ -910,12 +944,55 @@ function countSVG(s){
   let pts="";
   for(let i=0;i<n;i++){
     const cx=+x(i).toFixed(1), cy=+y(+s.value[i]).toFixed(1);
+    const lab=`${tipMonth(s.months[i])}: ${commas(s.value[i])} ${s.label}`;
     pts+=`<circle class="pt" data-i="${i}" cx="${cx}" cy="${cy}" r="3.2" fill="var(--org)"/>`+
-      `<circle class="pt hit" data-i="${i}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
+      `<circle class="pt hit" data-i="${i}" tabindex="0" role="img" aria-label="${escAttr(lab)}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${mark}${line}${xAxisSVG(xs,x)}${pts}</svg>`;
+  const aria=countSummary(s);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${escAttr(aria)}">`+
+    `<title>${xmlEsc(document.getElementById("bigttl").textContent)}</title><desc>${xmlEsc(aria)}</desc>`+
+    `${g}${mark}${line}${xAxisSVG(xs,x)}${pts}</svg>`;
 }
 
+/* ---------- chart text alternatives (summaries + visually-hidden data tables) ---------- */
+// Summaries describe the on-screen slice (title already carries org/TF/measure).
+function rateSummary(s,nat){
+  const last=s.performance.length-1, cur=s.performance[last], meets=cur>=s.target;
+  const title=document.getElementById("bigttl").textContent, who=CURRENT.isNational?"England":CURRENT.name;
+  return `${title}, ${who}. Line chart of the monthly percentage within 18 weeks, ${tipMonth(s.months[0])} to ${tipMonth(s.months[last])}. `+
+    `Latest ${tipMonth(s.months[last])}: ${fmtPct(cur)}, ${meets?"at or above":"below"} the ${targetPct()} target`+
+    (nat?"; England comparison shown":"")+`. Full figures are in the data table below the chart.`;
+}
+function countSummary(s){
+  const last=s.value.length-1;
+  const title=document.getElementById("bigttl").textContent, who=CURRENT.isNational?"England":CURRENT.name;
+  return `${title}, ${who}. Line chart of ${s.label} by month, ${tipMonth(s.months[0])} to ${tipMonth(s.months[last])}. `+
+    `Latest ${tipMonth(s.months[last])}: ${commas(s.value[last])}. Full figures are in the data table below the chart.`;
+}
+// Tables mirror EXACTLY the clipped on-screen series so they can't diverge.
+function rateTableHTML(s,nat){
+  const natBy={}; if(nat) nat.months.forEach((mo,j)=>natBy[mo]=nat.performance[j]);
+  const title=document.getElementById("bigttl").textContent, who=CURRENT.isNational?"England":CURRENT.name;
+  let head=`<tr><th scope="col">Month</th><th scope="col">% within 18 weeks</th>`+
+    `<th scope="col">Within 18 weeks / total</th><th scope="col">Data status</th>`+(nat?`<th scope="col">England %</th>`:``)+`</tr>`;
+  let rows="";
+  for(let i=0;i<s.performance.length;i++){
+    const low=(+s.total[i])<THRESH;
+    const stat= low?`Final, low reliability (n=${+s.total[i]}, under ${THRESH})`:"Final";
+    const nv=nat?(natBy[s.months[i]]!=null?fmtPct(natBy[s.months[i]]):"—"):null;
+    rows+=`<tr><td>${tipMonth(s.months[i])}</td><td>${fmtPct(s.performance[i])}</td>`+
+      `<td>${commas(s.within_target[i])} of ${commas(s.total[i])}</td><td>${stat}</td>`+(nat?`<td>${nv}</td>`:``)+`</tr>`;
+  }
+  return `<div class="vh"><table><caption>Data table: ${xmlEsc(title)}, ${xmlEsc(who)} — the figures plotted above.</caption>`+
+    `<thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+}
+function countTableHTML(s){
+  const title=document.getElementById("bigttl").textContent, who=CURRENT.isNational?"England":CURRENT.name;
+  let rows="";
+  for(let i=0;i<s.value.length;i++) rows+=`<tr><td>${tipMonth(s.months[i])}</td><td>${commas(s.value[i])}</td></tr>`;
+  return `<div class="vh"><table><caption>Data table: ${xmlEsc(title)}, ${xmlEsc(who)} — ${xmlEsc(s.label)}, the figures plotted above.</caption>`+
+    `<thead><tr><th scope="col">Month</th><th scope="col">${xmlEsc(s.unit)}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 function legendSwatch(lineAttrs, markAttrs, square){
   const mark = !markAttrs ? ``
     : square ? `<rect x="10.5" y="2.5" width="7" height="7" ${markAttrs}/>`
@@ -927,6 +1004,11 @@ function legendSwatch(lineAttrs, markAttrs, square){
 function attachTips(s, kind){
   const box=document.getElementById("chartbox");
   box.querySelectorAll(".pt").forEach(c=> c.addEventListener("mouseenter",()=>showTip(+c.dataset.i, s, kind)));
+  // Keyboard parity: focusable hit targets show the same tooltip on focus.
+  box.querySelectorAll(".pt.hit").forEach(c=>{
+    c.addEventListener("focus",()=>showTip(+c.dataset.i, s, kind));
+    c.addEventListener("blur",hideTip);
+  });
   box.addEventListener("mouseleave",hideTip);
 }
 function showTip(i, s, kind){
@@ -953,6 +1035,18 @@ function hideTip(){const t=document.getElementById("tip"); if(t)t.style.display=
 let EXPANDED=false, _panelHome=null;
 function setExpandLabel(){ const b=document.getElementById("expandbtn");
   if(b) b.innerHTML = EXPANDED ? "&#10529; Exit full screen" : "&#10530; Expand"; }
+function modalFocusables(){
+  const inner=document.querySelector("#chartmodal .modal-inner"); if(!inner) return [];
+  return [...inner.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.getClientRects().length);
+}
+function modalTrap(e){
+  if(!EXPANDED || e.key!=="Tab") return;
+  const f=modalFocusables(); if(!f.length) return;
+  const first=f[0], last=f[f.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+}
 function openModal(){
   if(EXPANDED) return;
   const panel=document.getElementById("bigpanel");
@@ -960,7 +1054,10 @@ function openModal(){
   document.getElementById("modalhost").appendChild(panel);
   document.getElementById("chartmodal").hidden=false;
   document.body.style.overflow="hidden";
+  const wrap=document.querySelector(".wrap"); if(wrap){ wrap.setAttribute("aria-hidden","true"); wrap.inert=true; }
+  document.addEventListener("keydown", modalTrap, true);
   EXPANDED=true; setExpandLabel(); renderBig();
+  setTimeout(()=>{ const c=document.getElementById("modalclose"); if(c) c.focus(); },0);
 }
 function closeModal(){
   if(!EXPANDED) return;
@@ -968,7 +1065,10 @@ function closeModal(){
   if(_panelHome) _panelHome.parent.insertBefore(panel, _panelHome.next);
   document.getElementById("chartmodal").hidden=true;
   document.body.style.overflow="";
+  const wrap=document.querySelector(".wrap"); if(wrap){ wrap.removeAttribute("aria-hidden"); wrap.inert=false; }
+  document.removeEventListener("keydown", modalTrap, true);
   EXPANDED=false; setExpandLabel(); renderBig();
+  const eb=document.getElementById("expandbtn"); if(eb) eb.focus();
 }
 function toggleExpand(){ EXPANDED ? closeModal() : openModal(); }
 
@@ -983,6 +1083,9 @@ function resolvePalette(str){
   return str.replace(/var\((--[a-z-]+)\)/g, (m,k)=>{ const v=cs.getPropertyValue(k).trim(); return v||m; });
 }
 function xmlEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s){ return xmlEsc(s).replace(/"/g,"&quot;"); }
+function announce(msg){ const l=document.getElementById("live"); if(!l) return;
+  l.textContent=""; setTimeout(()=>{ l.textContent=msg; },30); }
 function humanName(name){
   const keep=new Set(["NHS","FT","ICB","UHB","HMP"]), small=new Set(["AND","OF","THE","FOR"]);
   return name.split(/\s+/).map(w=>{ const u=w.toUpperCase();

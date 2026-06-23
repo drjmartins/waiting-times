@@ -9,10 +9,20 @@
     /* Clinical chart-paper palette: cool slate ink, a single signal-amber for
        the target line, restrained teal for the org series. */
     --ink:#11202b; --ink-soft:#4a5a64; --line:#d7e0e3; --paper:#fbfcfc;
-    --panel:#ffffff; --org:#0f7d8c; --org-muted:#6db0ba; --nat:#9aa7ad; --target:#c8881d;
+    --panel:#ffffff; --org:#0f7d8c; --org-muted:#4f9aa6; --nat:#838f95; --target:#c8881d;
     --good:#2f7d4f; --bad:#b23b3b; --grid:#eef3f4;
+    /* Text-label tone for the amber target, decoupled from the (deliberately faint)
+       --target LINE so the label clears 4.5:1 while the line stays faint. */
+    --target-text:#9a6600;
   }
   *{box-sizing:border-box}
+  /* Visually-hidden (screen-reader-only): the data-table alternative to each chart
+     and the polite live region. Not display:none — must stay in the a11y tree. */
+  .vh{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  /* Keyboard focus ring for the otherwise-transparent SVG data points (made
+     focusable for keyboard tooltip access). */
+  .pt.hit:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
   body{margin:0;background:var(--paper);color:var(--ink);
     font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
     line-height:1.5}
@@ -26,7 +36,7 @@
   label{display:block;font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:5px}
   select,input[type=search]{font:inherit;font-size:15px;padding:8px 10px;
-    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:360px}
+    border:1px solid var(--line);border-radius:5px;background:#fff;min-width:min(360px,100%);max-width:100%}
   .orgname{font-size:13px;color:var(--ink-soft);display:inline-block;margin:0 0 0 12px;vertical-align:middle}
   /* Empty byline (England, or a region-less provider) generates no inline box, so
      the .orgrow collapses to zero height instead of leaving a blank line. */
@@ -41,8 +51,7 @@
   /* Shared dashboard nav strip — identical structure/grammar on landing, /cancer/
      and /rtt/. The current page is non-link marked text (aria-current="page"). */
   .dashnav{font-family:ui-monospace,Menlo,monospace;font-size:12px;margin-top:8px}
-  .dashnav a{color:var(--org);text-decoration:none}
-  .dashnav a:hover{text-decoration:underline}
+  .dashnav a{color:var(--org);text-decoration:underline}
   .dashnav .current{color:var(--ink);font-weight:bold}
   .dashnav .sep{color:var(--line);margin:0 8px}
   /* Org type buttons (National / Providers / Commissioners) */
@@ -57,7 +66,7 @@
   .ptyperow[hidden]{display:none}
   .ptyperow label{margin-bottom:4px}
   .orgbtnwrap{display:inline-block;vertical-align:middle}
-  .orgbtnwrap .filterbtn{min-width:380px}
+  .orgbtnwrap .filterbtn{min-width:min(380px,100%);max-width:100%}
   .filterbtn[disabled],.orgbtnwrap[hidden]{display:none}
   /* In-panel search box for the searchable dropdowns (scoped to beat the global
      input[type=search] min-width so it fits the panel). */
@@ -97,12 +106,12 @@
   .scard .figure b{font-size:27px;font-weight:600;letter-spacing:-.02em;line-height:1;
     color:var(--ink);font-family:inherit}
   .scard .figure .vs{font-size:11px;color:var(--ink-soft);font-family:ui-monospace,Menlo,monospace}
-  .scard .figure .vs.meets{color:var(--good)} .scard .figure .vs.under{color:var(--target)}
+  .scard .figure .vs.meets{color:var(--good)} .scard .figure .vs.under{color:var(--target-text)}
   .scard .spark{margin-top:6px}
   .scard .mon{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--ink-soft);margin-top:3px}
   .scard .mon .lowtag{color:#8a6d1f}                 /* n<10 caveat, matches low-reliability hue */
   .scard.nodata{opacity:.72}
-  .scard .figure b.muted{color:var(--org-muted)}     /* thin latest figure reads as de-emphasised */
+  .scard .figure b.muted{color:var(--ink)}     /* low-reliability latest figure kept dark-ink for contrast; the n<10 caveat + muted sparkline carry the de-emphasis */
   .scard .nogroup{font-size:13px;color:var(--ink-soft);margin:10px 0 8px}
 
   /* Big chart panel */
@@ -137,14 +146,15 @@
   .filterbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 8px}
   .filterbar .flabel{font-family:ui-monospace,Menlo,monospace;font-size:11px;
     text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)}
-  .fgrp{display:inline-flex;align-items:center;gap:8px}
+  .fgrp{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
   .fgrp[hidden]{display:none}
   .fdrop{position:relative}
   .filterbtn{font:inherit;font-size:14px;padding:6px 12px;border:1px solid var(--line);
     border-radius:5px;background:#fff;cursor:pointer;color:var(--ink);min-width:200px;text-align:left}
   .filterbtn:hover{border-color:#bcccd1}
   .filterbtn .caret{float:right;color:var(--ink-soft);margin-left:8px}
-  .filterpanel{position:absolute;z-index:8;top:calc(100% + 4px);left:0;min-width:280px;max-width:340px;
+  .filterpanel{position:absolute;z-index:8;top:calc(100% + 4px);left:0;
+    min-width:min(280px,calc(100vw - 32px));max-width:min(340px,calc(100vw - 32px));
     max-height:340px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:6px;
     box-shadow:0 6px 22px rgba(17,32,43,.16);padding:6px}
   .filterpanel[hidden]{display:none}
@@ -192,7 +202,7 @@
   .modal-host .bigpanel{border:0;padding:8px 6px 4px}
 
   /* Time-range presets: a compact segmented control, right-aligned in the filterbar. */
-  .rangewrap{margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+  .rangewrap{margin-left:auto;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
   .rangebtns{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
   .rangebtn{font:inherit;font-size:12.5px;padding:5px 11px;border:0;border-right:1px solid var(--line);
     background:#fff;cursor:pointer;color:var(--ink-soft);white-space:nowrap}
@@ -223,30 +233,31 @@
 
   <div class="controls">
     <div>
-      <label>Organisation</label>
-      <div class="typebtns" id="typebtns">
-        <button type="button" class="typebtn" data-type="national">England</button>
-        <button type="button" class="typebtn" data-type="provider">Providers</button>
-        <button type="button" class="typebtn" data-type="icb">Commissioners</button>
+      <label id="orgtypelabel">Organisation</label>
+      <div class="typebtns" id="typebtns" role="group" aria-labelledby="orgtypelabel">
+        <button type="button" class="typebtn" data-type="national" aria-pressed="false">England</button>
+        <button type="button" class="typebtn" data-type="provider" aria-pressed="false">Providers</button>
+        <button type="button" class="typebtn" data-type="icb" aria-pressed="false">Commissioners</button>
       </div>
       <!-- Provider-type sub-filter: scopes the org dropdown (Providers view only). Default NHS Trusts. -->
       <div class="ptyperow" id="ptyperow" hidden>
-        <label>Provider type</label>
-        <div class="typebtns" id="ptypebtns">
-          <button type="button" class="typebtn ptypebtn" data-ptype="trust">NHS Trusts</button>
-          <button type="button" class="typebtn ptypebtn" data-ptype="independent">Independent Sector</button>
+        <label id="ptypelabel">Provider type</label>
+        <div class="typebtns" id="ptypebtns" role="group" aria-labelledby="ptypelabel">
+          <button type="button" class="typebtn ptypebtn" data-ptype="trust" aria-pressed="false">NHS Trusts</button>
+          <button type="button" class="typebtn ptypebtn" data-ptype="independent" aria-pressed="false">Independent Sector</button>
         </div>
       </div>
       <!-- Dropdown + inline region on their OWN row below the type buttons (so the
            provider view mirrors the commissioner layout: buttons, then dropdown). -->
       <div class="orgrow">
         <div class="fdrop orgbtnwrap" id="orgdrop">
-          <button id="orgbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+          <button id="orgbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="orgoptions">
             <span id="orglabel">England — all-England</span><span class="caret">&#9662;</span></button>
-          <div id="orgpanel" class="filterpanel" role="listbox" hidden>
+          <div id="orgpanel" class="filterpanel" hidden>
             <input id="orgsearch" class="dropsearch" type="search" autocomplete="off"
+              aria-label="Filter organisations" aria-controls="orgoptions"
               placeholder="Type a trust or ICB name or code&hellip;">
-            <div id="orgoptions"></div>
+            <div id="orgoptions" role="listbox" aria-label="Organisations"></div>
           </div>
         </div>
         <div class="orgname" id="orgname"></div>
@@ -268,9 +279,9 @@
   <div class="groupbar" id="groupbar">
     <span class="flabel">Cancer group</span>
     <div class="fdrop">
-      <button id="groupbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+      <button id="groupbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="groupoptions">
         <span id="grouplabel">All cancers</span><span class="caret">&#9662;</span></button>
-      <div id="grouppanel" class="filterpanel" role="listbox" hidden></div>
+      <div id="grouppanel" class="filterpanel" hidden></div>
     </div>
     <span id="grouphint" class="slicehint"></span>
   </div>
@@ -297,17 +308,17 @@
       <span class="fgrp" id="routewrap">
         <span class="flabel">Referral route</span>
         <div class="fdrop">
-          <button id="filterbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+          <button id="filterbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="filteroptions">
             <span id="filterlabel">All routes</span><span class="caret">&#9662;</span></button>
-          <div id="filterpanel" class="filterpanel" role="listbox" hidden></div>
+          <div id="filterpanel" class="filterpanel" hidden></div>
         </div>
       </span>
       <span class="fgrp" id="modwrap" hidden>
         <span class="flabel">Treatment modality</span>
         <div class="fdrop">
-          <button id="modbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false">
+          <button id="modbtn" class="filterbtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="modoptions">
             <span id="modlabel">All modalities</span><span class="caret">&#9662;</span></button>
-          <div id="modpanel" class="filterpanel" role="listbox" hidden></div>
+          <div id="modpanel" class="filterpanel" hidden></div>
         </div>
       </span>
       <span class="fgrp" id="engwrap">
@@ -316,10 +327,10 @@
       <span id="slicehint" class="slicehint"></span>
       <span class="rangewrap" id="rangewrap">
         <span class="flabel">Time range</span>
-        <span class="rangebtns" id="rangebtns">
-          <button type="button" class="rangebtn" data-range="3y">3 years</button>
-          <button type="button" class="rangebtn" data-range="12m">12 months</button>
-          <button type="button" class="rangebtn" data-range="all">All</button>
+        <span class="rangebtns" id="rangebtns" role="group" aria-label="Time range">
+          <button type="button" class="rangebtn" data-range="3y" aria-pressed="false">3 years</button>
+          <button type="button" class="rangebtn" data-range="12m" aria-pressed="false">12 months</button>
+          <button type="button" class="rangebtn" data-range="all" aria-pressed="false">All</button>
         </span>
       </span>
     </div>
@@ -338,13 +349,17 @@
 <!-- Expand overlay. The .bigpanel is moved into #modalhost on open and restored on
      close (see openModal/closeModal), so the expanded chart IS the live chart —
      route/modality dropdowns, tooltips and export all keep working. -->
-<div id="chartmodal" class="modal" hidden>
+<div id="chartmodal" class="modal" role="dialog" aria-modal="true" aria-label="Expanded chart" hidden>
   <div class="modal-backdrop" id="modalbackdrop"></div>
   <div class="modal-inner">
-    <button type="button" class="modal-close" id="modalclose" title="Close (Esc)">&#10005;</button>
+    <button type="button" class="modal-close" id="modalclose" title="Close (Esc)" aria-label="Close expanded chart">&#10005;</button>
     <div class="modal-host" id="modalhost"></div>
   </div>
 </div>
+
+<!-- Polite live region: announces chart updates + empty states to screen readers
+     (the charts themselves are role="img" with a data-table alternative). -->
+<div id="live" class="vh" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 const DATA = "data/";
@@ -479,7 +494,8 @@ async function init(){
 // never blank. `code` optionally selects a specific org (deep link).
 async function setType(type, code){
   CURRENT_TYPE=type;
-  document.querySelectorAll("#typebtns .typebtn").forEach(b=>b.classList.toggle("active", b.dataset.type===type));
+  document.querySelectorAll("#typebtns .typebtn").forEach(b=>{ const on=b.dataset.type===type;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); });
   closeOrgPanel();
   const drop=document.getElementById("orgdrop");
   if(type==="national"){
@@ -521,7 +537,8 @@ function setPtype(pt){
   if(list.length){ document.getElementById("orglabel").textContent=`${list[0].name} (${list[0].code})`; loadOrg(list[0].code); }
 }
 function updatePtypeButtons(){
-  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>b.classList.toggle("active", b.dataset.ptype===PTYPE));
+  document.querySelectorAll("#ptypebtns .ptypebtn").forEach(b=>{ const on=b.dataset.ptype===PTYPE;
+    b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); });
 }
 // Picker list: orgs of this type EXCLUDING negligible-activity ones flagged
 // hidden in index.json (computed each build). Hidden orgs stay direct-linkable
@@ -559,8 +576,10 @@ function buildOrgOptions(q){
     if(label){ const h=document.createElement("div"); h.className="fgroup"+(first?" first":""); h.textContent=label; host.appendChild(h); }
     first=false;
     items.forEach(o=>{ const b=document.createElement("button");
-      b.className="fopt"+(CURRENT && CURRENT.code===o.code ? " active":"");
-      b.setAttribute("role","option"); b.textContent=`${o.name} (${o.code})`;
+      const on=CURRENT && CURRENT.code===o.code;
+      b.className="fopt"+(on?" active":"");
+      b.setAttribute("role","option"); b.setAttribute("aria-selected", on?"true":"false");
+      b.textContent=`${o.name} (${o.code})`;
       b.onclick=()=>selectOrg(o); host.appendChild(b); });
   }
 }
@@ -699,6 +718,8 @@ function renderCards(){
     const s=cardSeries(std);
     const card=document.createElement("div");
     card.tabIndex=0; card.dataset.std=std;
+    card.setAttribute("role","button");
+    card.setAttribute("aria-pressed", std===CURRENT_STD?"true":"false");
     const title=base.label.split("(")[0].trim();
     if(grouped && !s){
       // Group not published for this standard at this org: keep the card (still a
@@ -763,7 +784,9 @@ function sparkSVG(s){
   const last=k-1;
   const dot = low(last) ? `fill="#fff" stroke="var(--org-muted)" stroke-width="1.4"`
                         : `fill="${meets?'var(--org)':'var(--target)'}"`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
+  const trend = vals[k-1]>vals[0]?"rising":vals[k-1]<vals[0]?"falling":"broadly flat";
+  const slab=`Trend sparkline: ${trend} over the last ${k} months, latest ${fmt(vals[k-1])} versus a ${fmt(s.target)} target.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="${escAttr(slab)}">
     <line x1="${P}" y1="${ty}" x2="${W-P}" y2="${ty}" stroke="var(--target)" stroke-dasharray="3 2" stroke-width="1.1"/>
     ${path}
     <circle cx="${x(last).toFixed(1)}" cy="${y(vals[last]).toFixed(1)}" r="2.8" ${dot}/>
@@ -837,7 +860,8 @@ function clipSeries(s, minMonth){
     total:sl(s.total), data_status:sl(s.data_status), within_target:sl(s.within_target)});
 }
 function setRange(r){ if(RANGE===r || !(r in RANGE_MONTHS)) return; RANGE=r; renderBig(); }
-function syncRangeUI(){ document.querySelectorAll(".rangebtn").forEach(b=>b.classList.toggle("active", b.dataset.range===RANGE)); }
+function syncRangeUI(){ document.querySelectorAll(".rangebtn").forEach(b=>{ const on=b.dataset.range===RANGE;
+  b.classList.toggle("active", on); b.setAttribute("aria-pressed", on?"true":"false"); }); }
 // --- England comparison-line toggle ---
 function setShowEngland(on){ if(SHOW_ENGLAND===on) return; SHOW_ENGLAND=on; renderBig(); }
 function syncEnglandUI(){
@@ -911,10 +935,12 @@ function openGroupPanel(){
   const p=document.getElementById("grouppanel"); p.innerHTML="";
   const s=document.createElement("input"); s.className="dropsearch"; s.type="search";
   s.placeholder="Type to filter groups…"; s.autocomplete="off";
+  s.setAttribute("aria-label","Filter cancer groups"); s.setAttribute("aria-controls","groupoptions");
   s.addEventListener("input",()=>renderGroupOptions(s.value));
   s.addEventListener("keydown",groupSearchKey);
   p.appendChild(s);
-  const opts=document.createElement("div"); opts.id="groupoptions"; p.appendChild(opts);
+  const opts=document.createElement("div"); opts.id="groupoptions";
+  opts.setAttribute("role","listbox"); opts.setAttribute("aria-label","Cancer groups"); p.appendChild(opts);
   renderGroupOptions("");
   p.hidden=false; document.getElementById("groupbtn").setAttribute("aria-expanded","true");
   setTimeout(()=>s.focus(),0);
@@ -932,6 +958,7 @@ function renderGroupOptions(q){
   const match=t=>!q||t.toLowerCase().includes(q);
   const opt=(label,val,on)=>{ const b=document.createElement("button");
     b.className="fopt"+(on?" active":""); b.textContent=label; b.setAttribute("role","option");
+    b.setAttribute("aria-selected", on?"true":"false");
     b.onclick=()=>selectGroup(val); return b; };
   const hdr=(t,first)=>{ const g=document.createElement("div"); g.className="fgroup"+(first?" first":""); g.textContent=t; return g; };
   if(match("all cancers")){ host.appendChild(hdr("Overview",true)); host.appendChild(opt("All cancers",null,!isGroupSlice())); }
@@ -956,7 +983,7 @@ async function selectGroup(group){
 // A searchable in-panel input (shared shape across the route + modality dropdowns).
 function mkSearch(placeholder, oninput){
   const s=document.createElement("input"); s.className="dropsearch"; s.type="search";
-  s.placeholder=placeholder; s.autocomplete="off";
+  s.placeholder=placeholder; s.autocomplete="off"; s.setAttribute("aria-label",placeholder);
   s.addEventListener("input",()=>oninput(s.value));
   s.addEventListener("keydown",dropSearchKey);
   return s;
@@ -980,13 +1007,14 @@ async function openPanel(){
 function buildRoutePanel(){
   const p=document.getElementById("filterpanel"); p.innerHTML="";
   const s=mkSearch("Type to filter routes…", v=>renderRouteOptions(v)); p.appendChild(s);
-  const opts=document.createElement("div"); opts.id="filteroptions"; p.appendChild(opts);
+  const opts=document.createElement("div"); opts.id="filteroptions";
+  opts.setAttribute("role","listbox"); opts.setAttribute("aria-label","Referral routes"); p.appendChild(opts);
   renderRouteOptions("");
   setTimeout(()=>s.focus(),0);
 }
 function fopt(label,on,onclick){ const b=document.createElement("button");
   b.className="fopt"+(on?" active":""); b.textContent=label; b.setAttribute("role","option");
-  b.onclick=onclick; return b; }
+  b.setAttribute("aria-selected", on?"true":"false"); b.onclick=onclick; return b; }
 function fhdr(t,first){ const g=document.createElement("div"); g.className="fgroup"+(first?" first":""); g.textContent=t; return g; }
 // Group-aware: all-cancers route dim, or the selected group's activity-filtered routes.
 function renderRouteOptions(q){
@@ -1018,7 +1046,8 @@ async function openModPanel(){
 function buildModPanel(){
   const p=document.getElementById("modpanel"); p.innerHTML="";
   const s=mkSearch("Type to filter modalities…", v=>renderModOptions(v)); p.appendChild(s);
-  const opts=document.createElement("div"); opts.id="modoptions"; p.appendChild(opts);
+  const opts=document.createElement("div"); opts.id="modoptions";
+  opts.setAttribute("role","listbox"); opts.setAttribute("aria-label","Treatment modalities"); p.appendChild(opts);
   renderModOptions("");
   setTimeout(()=>s.focus(),0);
 }
@@ -1054,8 +1083,9 @@ function renderBig(){
 
   // Empty/absent slice for this org: explain rather than draw a blank chart.
   if(!orgFull || !orgFull.performance || !orgFull.performance.length){
-    box.innerHTML=`<div class="emptyslice">No data published for this breakdown at this organisation.</div>`;
-    document.getElementById("legend").innerHTML=""; low.hidden=true; return;
+    box.innerHTML=`<div class="emptyslice" role="status">No data published for this breakdown at this organisation.</div>`;
+    document.getElementById("legend").innerHTML=""; low.hidden=true;
+    announce("No data published for this breakdown at this organisation."); return;
   }
   // Apply the rolling time-range window (fixed last-N months; "all" = no clip). The
   // org series sets the visible window; the England overlay is clipped to the SAME
@@ -1085,8 +1115,9 @@ function renderBig(){
   const orgGroup=[org_].concat(hasLow?[low_]:[],[prov_]).join(sep);
   const refGroup=(ACTIVE_NAT?[nat_,tgt_]:[tgt_]).join(sep);
   document.getElementById("legend").innerHTML = orgGroup + bar + refGroup;
-  box.innerHTML = bigSVG(org, ACTIVE_NAT) + `<div class="tip" id="tip"></div>`;
+  box.innerHTML = bigSVG(org, ACTIVE_NAT) + bigTableHTML(org, ACTIVE_NAT) + `<div class="tip" id="tip"></div>`;
   attachTips(org);
+  announce(bigSummary(org, ACTIVE_NAT));
 
   // Sub-threshold months are SHOWN but flagged, not hidden.
   if(hasLow){
@@ -1129,6 +1160,19 @@ function bigScales(s, nat){
   const y=v=>P.t+(1-(v-lo)/((hi-lo)||1))*(H-P.t-P.b);
   return {xs,n,lo,hi,x,y};
 }
+// One-line spoken summary of what the big chart currently shows (current org, group,
+// standard, range window already baked into `s`). Used for the SVG aria-label + the
+// live-region announcement.
+function bigSummary(s, nat){
+  const n=s.performance.length, last=n-1;
+  const cur=s.performance[last], meets=cur>=s.target;
+  const title=document.getElementById("bigttl").textContent;
+  const who=CURRENT.isNational?"England":CURRENT.name;
+  return `${title}, ${who}. Line chart of the monthly percentage treated within standard, `+
+    `${tipMonth(s.months[0])} to ${tipMonth(s.months[last])}. Latest ${tipMonth(s.months[last])}: `+
+    `${fmt(cur)}, ${meets?"at or above":"below"} the ${fmt(s.target)} target`+
+    (nat?`; England comparison shown`:``)+`. Full figures are in the data table below the chart.`;
+}
 function bigSVG(s, nat){
   const {W,H,P}=BG;
   const sc=bigScales(s,nat); const {xs,n,lo,hi,x,y}=sc;
@@ -1163,7 +1207,7 @@ function bigSVG(s, nat){
   // Label sits in the right margin (see BG.P.r), vertically centred on the target line,
   // right-aligned to the SVG edge — clear of the plotted series at every chart.
   const tline=`<line x1="${P.l}" y1="${ty.toFixed(1)}" x2="${W-P.r}" y2="${ty.toFixed(1)}" stroke="var(--target)" stroke-dasharray="5 4" stroke-width="1.4"/>`+
-    `<text x="${W-3}" y="${(ty+3.5).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--target)">target ${fmt(s.target)}</text>`;
+    `<text x="${W-3}" y="${(ty+3.5).toFixed(1)}" font-size="10" text-anchor="end" fill="var(--target-text)">target ${fmt(s.target)}</text>`;
   // national overlay: a faint SOLID grey reference line, aligned by MONTH (robust
   // to slices that skip months). Deliberately solid, NOT dashed: "dashed" is
   // reserved for the org series' own states (provisional = lighter teal dashed,
@@ -1219,15 +1263,49 @@ function bigSVG(s, nat){
     const mk = prv ? `<circle class="pt" data-i="${i}" cx="${cx}" cy="${cy}" r="3.4" fill="#fff" stroke="var(--org-muted)" stroke-width="1.6"/>`
              : low ? `<rect class="pt" data-i="${i}" x="${(cx-3.1).toFixed(1)}" y="${(cy-3.1).toFixed(1)}" width="6.2" height="6.2" fill="#fff" stroke="var(--org-muted)" stroke-width="1.6"/>`
                    : `<circle class="pt" data-i="${i}" cx="${cx}" cy="${cy}" r="3.2" fill="var(--org)"/>`;
-    pts+=mk+`<circle class="pt hit" data-i="${i}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
+    // Transparent hit target is keyboard-focusable and carries the same detail the
+    // hover tooltip shows, so the per-point data is reachable without a mouse.
+    const stat = prv?"provisional":(low?`final, low reliability, n=${+s.total[i]}`:"final");
+    const lab=`${tipMonth(s.months[i])}: ${fmt(s.performance[i])}, ${(+s.within_target[i]).toLocaleString()} of ${(+s.total[i]).toLocaleString()} within standard, ${stat}`;
+    pts+=mk+`<circle class="pt hit" data-i="${i}" tabindex="0" role="img" aria-label="${escAttr(lab)}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%">${g}${mark}${natpath}${tline}${line}${xl}${pts}</svg>`;
+  const aria=bigSummary(s,nat);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${escAttr(aria)}">`+
+    `<title>${xmlEsc(document.getElementById("bigttl").textContent)}</title><desc>${xmlEsc(aria)}</desc>`+
+    `${g}${mark}${natpath}${tline}${line}${xl}${pts}</svg>`;
+}
+// Visually-hidden data table mirroring EXACTLY the on-screen big-chart slice (same
+// clipped series `s` + England overlay `nat`), so the screen-reader alternative can
+// never diverge from what's drawn. Provisional / low-reliability flags are TEXT.
+function bigTableHTML(s, nat){
+  const natBy={}; if(nat) nat.months.forEach((mo,j)=>natBy[mo]=nat.performance[j]);
+  const title=document.getElementById("bigttl").textContent;
+  const who=CURRENT.isNational?"England":CURRENT.name;
+  let head=`<tr><th scope="col">Month</th><th scope="col">% within standard</th>`+
+    `<th scope="col">Within standard / total</th><th scope="col">Data status</th>`+
+    (nat?`<th scope="col">England %</th>`:``)+`</tr>`;
+  let rows="";
+  for(let i=0;i<s.performance.length;i++){
+    const prv=s.data_status[i]!=="final", low=(+s.total[i])<THRESH;
+    const stat = prv?"Provisional":(low?`Final, low reliability (n=${+s.total[i]}, under ${THRESH})`:"Final");
+    const nv = nat ? (natBy[s.months[i]]!=null?fmt(natBy[s.months[i]]):"—") : null;
+    rows+=`<tr><td>${tipMonth(s.months[i])}</td><td>${fmt(s.performance[i])}</td>`+
+      `<td>${(+s.within_target[i]).toLocaleString()} of ${(+s.total[i]).toLocaleString()}</td><td>${stat}</td>`+
+      (nat?`<td>${nv}</td>`:``)+`</tr>`;
+  }
+  return `<div class="vh"><table><caption>Data table: ${xmlEsc(title)}, ${xmlEsc(who)} — the figures plotted in the chart above.</caption>`+
+    `<thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function attachTips(s){
   const box=document.getElementById("chartbox");
   box.querySelectorAll(".pt").forEach(c=>{
     c.addEventListener("mouseenter",()=>showTip(+c.dataset.i, s));
+  });
+  // Keyboard parity: the focusable hit targets show the same tooltip on focus.
+  box.querySelectorAll(".pt.hit").forEach(c=>{
+    c.addEventListener("focus",()=>showTip(+c.dataset.i, s));
+    c.addEventListener("blur",hideTip);
   });
   box.addEventListener("mouseleave",hideTip);
 }
@@ -1255,6 +1333,19 @@ function hideTip(){const t=document.getElementById("tip"); if(t)t.style.display=
 let EXPANDED=false, _panelHome=null;
 function setExpandLabel(){ const b=document.getElementById("expandbtn");
   if(b) b.innerHTML = EXPANDED ? "&#10529; Exit full screen" : "&#10530; Expand"; }
+// Focus trap: keep Tab inside the dialog while it is open.
+function modalFocusables(){
+  const inner=document.querySelector("#chartmodal .modal-inner"); if(!inner) return [];
+  return [...inner.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(el=>el.getClientRects().length);
+}
+function modalTrap(e){
+  if(!EXPANDED || e.key!=="Tab") return;
+  const f=modalFocusables(); if(!f.length) return;
+  const first=f[0], last=f[f.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+}
 function openModal(){
   if(EXPANDED) return;
   const panel=document.getElementById("bigpanel");
@@ -1262,7 +1353,11 @@ function openModal(){
   document.getElementById("modalhost").appendChild(panel);
   document.getElementById("chartmodal").hidden=false;
   document.body.style.overflow="hidden";
+  // Hide + de-tab the rest of the page (the dialog content lives outside .wrap).
+  const wrap=document.querySelector(".wrap"); if(wrap){ wrap.setAttribute("aria-hidden","true"); wrap.inert=true; }
+  document.addEventListener("keydown", modalTrap, true);
   EXPANDED=true; setExpandLabel(); renderBig();
+  setTimeout(()=>{ const c=document.getElementById("modalclose"); if(c) c.focus(); },0);
 }
 function closeModal(){
   if(!EXPANDED) return;
@@ -1271,7 +1366,10 @@ function closeModal(){
   if(_panelHome) _panelHome.parent.insertBefore(panel, _panelHome.next);
   document.getElementById("chartmodal").hidden=true;
   document.body.style.overflow="";
+  const wrap=document.querySelector(".wrap"); if(wrap){ wrap.removeAttribute("aria-hidden"); wrap.inert=false; }
+  document.removeEventListener("keydown", modalTrap, true);
   EXPANDED=false; setExpandLabel(); renderBig();
+  const eb=document.getElementById("expandbtn"); if(eb) eb.focus();   // return focus to the trigger
 }
 function toggleExpand(){ EXPANDED ? closeModal() : openModal(); }
 
@@ -1297,6 +1395,12 @@ function resolvePalette(str){
 }
 // XML-escape text node content (titles/labels may contain & < >).
 function xmlEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// Escape for use inside a double-quoted HTML/SVG attribute (adds the quote).
+function escAttr(s){ return xmlEsc(s).replace(/"/g,"&quot;"); }
+// Polite screen-reader announcement (chart updated / empty state). Re-set even to
+// the same text by clearing first, so repeated identical updates are re-announced.
+function announce(msg){ const l=document.getElementById("live"); if(!l) return;
+  l.textContent=""; setTimeout(()=>{ l.textContent=msg; },30); }
 
 // Legend rebuilt as flat SVG (the on-page legend is HTML). Mirrors renderBig's
 // item set/order/styles exactly. Monospace ⇒ width is predictable (~6.3px/char).

@@ -2,7 +2,33 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-23 (Claude Code session; consistency-cluster round DEPLOYED + live-verified)._
+_Last updated: 2026-06-23 (Claude Code session; WCAG 2.1 AA accessibility pass — deploying)._
+
+## 🚀 DEPLOYING 2026-06-23 — WCAG 2.1 AA accessibility pass (all 4 pages)
+Full accessibility pass committed + pushed; watched workflow_dispatch in flight. Audience stays professional
+(NHS managers/analysts/clinicians) — accessibility only, NO plain-language changes. Audit → fixes → one
+trade-off resolved (full line nudge), all in this session (see DECISIONS 2026-06-23 ×3). Shipped across cancer,
+rtt, compare.html + landing:
+- **1.1.1** every chart `<svg>` → `role="img"` + `<title>`/`<desc>` + summary `aria-label`, PLUS a visually-hidden
+  data `<table>` per big chart / funnel / percentile built from the SAME on-screen series (view-accurate:
+  measure/group/TF/route/range/England overlay; provisional + low-reliability flags as TEXT). Sparklines get a
+  trend `aria-label`.
+- **2.1.1** SVG data points keyboard-focusable (`tabindex=0` + per-point `aria-label`); the hover tooltip also
+  fires on focus, with a visible focus ring.
+- **4.1.2** `aria-pressed` on segmented toggles + cards, `aria-selected` on listbox options, illegal
+  search-in-listbox fixed (role moved to options container), expand modal → `role="dialog"`+`aria-modal` + focus
+  trap + background `inert` + return-focus-on-close.
+- **4.1.3** polite `#live` region announces chart updates + empty/fallback states.
+- **1.4.10** no horizontal scroll at 320px (relaxed fixed min-widths, capped native selects, wrap long-waiter
+  control). **1.4.1** nav links underlined.
+- **1.4.3 text** decoupled: amber "below target" + target-% labels → `--target-text #9a6600` (4.9:1), RTT
+  milestone labels → `--milestone-text #75632f` (5.9:1), cancer low-reliability figure → dark ink.
+- **1.4.11 lines (full nudge, chosen by user):** low-reliability/provisional `--org-muted #6db0ba→#4f9aa6`
+  (3.23:1), England grey `--nat #9aa7ad→#838f95` (3.32:1), milestone `--milestone #b8a06a→#a08a52` (3.36:1) —
+  all now clear 3:1, so the earlier "rely on shape+dash redundancy" 1.4.11 stance is MOOT (clean pass). Primary
+  solid org line untouched, so the visual hierarchy holds (render-verified headless before deploy).
+- Pre-deploy: 55 tests pass; headless confirms tables present + view-accurate, focus tooltips, dialog/inert +
+  focus return, `aria` state, live region, 0px 320px overflow, charts still render correctly for sighted users.
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-23 (run 28019834569, build+deploy GREEN; CI commit 9dbac27) — consistency-cluster round (4 changes)
 Bundled into one watched workflow_dispatch. **Live checks all pass** (curl + headless on the live site):
