@@ -6,7 +6,20 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
-## 2026-06-23 — WCAG 2.1 AA accessibility pass DEPLOYING — full line nudge chosen, whole pass shipped together (Claude Code)
+## 2026-06-23 — WCAG 2.1 AA accessibility pass DEPLOYED + LIVE-VERIFIED — full line nudge chosen, whole pass shipped together (Claude Code)
+
+DEPLOYED run 28040528379 (build+deploy GREEN; CI commit 97049ef). **Live-verified headless** on the deployed
+site (cache-busted): all four HIGH criteria re-confirmed (1.1.1 role=img+aria-label + view-accurate hidden data
+tables — cancer 36 rows @3y → 12 @12mo, RTT rate+count, compare funnel 157 / percentile 139, tables 1×1px
+clipped/invisible; 2.1.1 focus tooltip; 4.1.2 aria-pressed + modal dialog/inert/return-focus; 4.1.3 live region),
+the MEDIUMs (0px 320px overflow on all three; nav links underlined incl. landing), the decoupled dark text labels
+(`--target-text #9a6600`, `--milestone-text #75632f` live), and the nudged lines (`--org-muted #4f9aa6` /
+`--nat #838f95` / `--milestone #a08a52` live). Charts still render correctly for sighted users (screenshot:
+hierarchy holds). CI gates intact: 55 tests, RTT recon OK @2025-04 (pct18 0.5973 / waitlist 7,389,065), TF-sum
+max|Δ|=0, ODS LIVE fetch both pipelines (427 orgs / 353 former / 556 trust codes, as_of 2026-05-07), provider-type
+guards didn't trip. Decision detail below.
+
+
 
 User chose **Option A (full nudge)** from the trade-off render. All three faint reference LINES wired to their
 ~3:1 values in the shared palette, one variable per line: low-reliability/provisional `--org-muted #6db0ba →

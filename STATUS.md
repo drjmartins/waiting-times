@@ -2,10 +2,22 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-23 (Claude Code session; WCAG 2.1 AA accessibility pass — deploying)._
+_Last updated: 2026-06-23 (Claude Code session; WCAG 2.1 AA accessibility pass DEPLOYED + live-verified)._
 
-## 🚀 DEPLOYING 2026-06-23 — WCAG 2.1 AA accessibility pass (all 4 pages)
-Full accessibility pass committed + pushed; watched workflow_dispatch in flight. Audience stays professional
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-23 (run 28040528379, build+deploy GREEN; CI commit 97049ef) — WCAG 2.1 AA accessibility pass (all 4 pages)
+**Live checks all pass** (headless on the deployed site, cache-busted). Per-criterion re-confirmed LIVE: 1.1.1
+chart `role="img"`+`aria-label` + visually-hidden data tables present AND view-accurate (cancer table 36 rows at
+3y → **12 rows at 12mo**, proving it tracks the on-screen window; RTT rate+count 36; compare funnel 157 /
+percentile 139; tables render as a 1×1px clipped box, invisible to sighted users); 2.1.1 focus tooltip shows on
+keyboard focus (display:block); 4.1.2 segmented `aria-pressed`="true,false,false", modal `role=dialog`+
+`aria-modal`, `.wrap` inert while open, focus→close on open + **returned to Expand on close**; 4.1.3 `#live`
+present all pages; 1.4.10 **0px** horizontal overflow at 320px (cancer/rtt/compare); 1.4.3 text `--target-text
+#9a6600` + `--milestone-text #75632f` live; 1.4.11 lines `--org-muted #4f9aa6` / `--nat #838f95` / `--milestone
+#a08a52` live (clean 3:1 pass). Landing + all nav links underlined. Charts still render correctly for sighted
+users (verified screenshot: strong org line, provisional dashed tail, England grey present-but-secondary, dark
+amber target label). CI: 55 tests pass; RTT recon OK @2025-04 (pct18 0.5973 / waitlist 7,389,065); TF-sum gate
+max|Δ|=0 (24,776 org-months); ODS LIVE fetch both pipelines (427 orgs / 353 former / 556 trust codes, as_of
+2026-05-07 — not the fallback); provider-type guards intact (build didn't fail). Audience stays professional
 (NHS managers/analysts/clinicians) — accessibility only, NO plain-language changes. Audit → fixes → one
 trade-off resolved (full line nudge), all in this session (see DECISIONS 2026-06-23 ×3). Shipped across cancer,
 rtt, compare.html + landing:
