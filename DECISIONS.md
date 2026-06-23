@@ -6,9 +6,14 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
-## 2026-06-23 — BUILT (not deployed): consistency-cluster round — RTT region, soft-hidden comparator, compare-this-trust link (Code)
+## 2026-06-23 — DEPLOYED + LIVE-VERIFIED: consistency-cluster round — RTT region, soft-hidden comparator, compare-this-trust link, nav A (Code)
 
-Three small builds + a nav report. All local-verified (headless render + curl), tests 53→55, paused before deploy.
+DEPLOYED run 28019834569 (build+deploy GREEN; CI commit 9dbac27). Live-verified on the deployed site (curl +
+headless): RTT region beside provider (RCF→NE&Y, independents/ICBs/National none; 162/594 real), comparator
+link gone from cancer UI + compare.html still 200s, compare-this-trust in markup but hidden, nav consistent
+across all 3 with current marked, compare.html ?org=RCF → region scope + highlight. CI: 55 tests, RTT recon
+OK + TF-sum max|Δ|=0, ODS LIVE fetch both pipelines (427 orgs/556 trust codes), guards intact. ODS ordering
+note: in CI cancer builds before RTT, so RTT reads a fresh cancer index for regions. Tests 53→55. Detail:
 
 **1. RTT region in provider picker (BUILT).** Premise correction: the RTT org records carried a `region`
 FIELD but it was a hardcoded placeholder ("England" for all 594 providers — the RTT "Full CSV" source has

@@ -2,10 +2,18 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-23 (Claude Code session; consistency-cluster round — deploying)._
+_Last updated: 2026-06-23 (Claude Code session; consistency-cluster round DEPLOYED + live-verified)._
 
-## ⏳ DEPLOYING 2026-06-23 — consistency-cluster round (4 changes, built + local-verified)
-Bundled into one watched workflow_dispatch (live-verify pending):
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-23 (run 28019834569, build+deploy GREEN; CI commit 9dbac27) — consistency-cluster round (4 changes)
+Bundled into one watched workflow_dispatch. **Live checks all pass** (curl + headless on the live site):
+RTT picker shows "North East and Yorkshire" beside Airedale (RCF), independent NPR01 + ICBs + National show
+none; live data 162/594 providers with a real region, ICBs all England. Cancer header nav = "**Cancer** ·
+RTT · All dashboards" with NO visible Compare link; compare.html still 200s. Per-org "Compare this trust"
+link present in markup but hidden (href `compare.html?org=RCF&std=CMB62`). Nav consistent across all three
+(landing current "All dashboards", cancer "Cancer", rtt "RTT"; same order). compare.html `?org=RCF` live →
+scope auto-set to NE&Y + 2 highlight rings. CI: 55 tests, RTT recon OK @2025-04 (pct18 0.5973 / waitlist
+7,389,065), TF-sum max|Δ|=0, ODS LIVE fetch for BOTH pipelines (427 orgs / 556 trust codes, as_of
+2026-05-07 — not the fallback), provider-type guards intact (build didn't fail). Detail below:
 - **RTT region in the provider picker.** The RTT source has no provider region (it wrote "England" for all);
   now it REUSES the cancer dashboard's authoritative (Parent_Org-derived) region, keyed by org code, via new
   shared `pipeline_common/regions.py` reading committed `site/cancer/data/index.json`. So an RTT trust's
