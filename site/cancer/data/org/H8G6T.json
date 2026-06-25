@@ -1,1 +1,1 @@
-{"standards":{},"code":"H8G6T","name":"NSS USC PATHWAY","level":"provider","region":"England"}
+{"standards":{"FDS28":{"label":"28-day Faster Diagnosis Standard","target":0.75,"months":["2026-04"],"performance":[1.0],"within_target":[3],"total":[3],"data_status":["provisional"]}},"code":"H8G6T","name":"NSS USC PATHWAY","level":"provider","region":"England"}
