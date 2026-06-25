@@ -99,8 +99,15 @@ def _map_standard(value):
 
 
 def _is_aggregate(series, dim):
+    # A dimension is "aggregate" if it is an ALL-marker OR blank/missing. Missing
+    # MUST be caught via .isna() and not by stringifying to "nan": pandas 3.0
+    # changed astype(str) to PRESERVE NaN (no longer the literal "nan"), so the
+    # old `isin(["nan", …])` silently stopped matching blank cells under pandas 3
+    # — which mis-classified every blank-modality FDS row as a real breakdown
+    # (FDS carries no modality dimension). Works under both pandas 2.x and 3.0.
+    isna = series.isna()
     low = series.astype(str).str.strip().str.lower()
-    return low.isin(_ALL_MARKERS[dim]) | low.isin(["nan", ""])
+    return isna | low.isin(_ALL_MARKERS[dim]) | low.isin(["nan", ""])
 
 
 def _derive_breakdown(df):

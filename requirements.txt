@@ -1,4 +1,10 @@
-pandas
+# pandas pinned <3: the existing data store + reconciliation gates were built on
+# pandas 2.x, and pandas 3.0 changed astype(str) to PRESERVE NaN (instead of the
+# literal "nan"). That silently mis-classified blank-modality FDS rows on the
+# first file fetched under 3.0 (April-2026). Code is now version-robust (see
+# normalise._is_aggregate), but we pin so newly-fetched months classify
+# IDENTICALLY to the historical store and a major bump can't land silently.
+pandas>=2.2,<3
 openpyxl
 pyarrow
 requests

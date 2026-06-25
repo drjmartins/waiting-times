@@ -6,6 +6,29 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-25 — pandas 3.0 silently broke blank-dimension classification (caught at live-verify) — FIXED + pinned (Claude Code)
+
+**Deployed the FY-boundary fix (run 28160596681, GREEN), then live-verify caught a real data bug:** the Cancer
+dashboard reached April 2026 for CMB31/CMB62 but **FDS28 stopped at March**. Root cause was NOT the FY-boundary code —
+it was **requirements.txt being unpinned**: CI installed the just-released **pandas 3.0.3** (local dev was 2.3.3).
+pandas 3.0 changed `Series.astype(str)` to PRESERVE NaN instead of producing the literal `"nan"`
+(https://pandas.pydata.org/docs/user_guide/migration-3-strings.html). `normalise._is_aggregate` relied on
+`astype(str).isin(["nan",""])` to treat a BLANK modality as aggregate — and FDS rows carry no modality dimension
+(blank), so under 3.0 every blank-modality FDS row was mis-classified as a real breakdown: FDS28's headline `all` slice
+(and its by-cancer rows) vanished for April. Historical months were unaffected (cached in the store from earlier
+pandas-2.x runs; the manifest skips already-seen files) — **April was the first file ever normalised under pandas 3.0**,
+which is why the latent bug surfaced exactly here. The 68 tests passed under 3.0 because every fixture set
+`Treatment_Modality="ALL MODALITIES"` explicitly and never exercised the blank case. The recon gates didn't catch it
+either (FDS lost rows symmetrically; ENG month-contiguity still held via CMB's April row).
+
+**Fix (3 parts):** (1) `_is_aggregate` now catches missing via `.isna()` (version-robust under both 2.x and 3.0);
+(2) `requirements.txt` pins `pandas>=2.2,<3` — so newly-fetched months classify IDENTICALLY to the historical store and
+a major bump can't land silently again; (3) 3 regression tests exercising blank/NaN modality directly (FDS row →
+`all`/`cancer`, not `combination`; `_is_aggregate` NaN check). **Recovery:** purged the corrupt `2026-04` rows from
+`data/processed/tidy.parquet` (24,287 rows) and dropped the April URL from `data/manifest.json` so CI re-fetches +
+re-classifies April cleanly. 71 tests pass. Verified locally: re-ingest → FDS28 ENG 2026-04 `all` slice present
+(perf 0.7591, matches source), 49 months, build + recon gates green. Re-dispatched + re-verified (see STATUS.md).
+
 ## 2026-06-25 — CWT FY-boundary staleness gap: BUILT + demonstrated, NOT deployed (paused before deploy) (Claude Code)
 
 Implements the approach from the investigation entry below; user confirmed all three precedence rules + made the

@@ -85,3 +85,37 @@ def test_region_absent_is_blank_not_error():
     # synthetic / future sources without a region column must not break
     out = _normalise([_real_row("01/10/2025")])
     assert out["region"].iloc[0] == ""
+
+
+# --- the pandas-3.0 blank-dimension guard (silent-failure-prone) -------------
+# FDS rows carry NO modality dimension, so Treatment_Modality is BLANK/NaN. The
+# breakdown derivation must treat a blank dimension as AGGREGATE. pandas 3.0
+# changed astype(str) to preserve NaN (no longer "nan"), which silently broke the
+# old string-based aggregate check and mis-classified every blank-modality FDS
+# row as a real breakdown — FDS28's headline 'all' slice vanished from the build.
+# The existing fixtures never caught it because they set Treatment_Modality
+# explicitly to "ALL MODALITIES". These pin the blank/NaN case directly.
+
+def test_blank_modality_string_is_aggregate():
+    """A blank (empty-string) modality on an FDS all-cancers row -> 'all' slice."""
+    out = _normalise([_real_row("01/10/2025", Standard_or_Item="FDS", Treatment_Modality="")])
+    assert out["breakdown_type"].iloc[0] == "all"
+    assert out["breakdown_value"].iloc[0] == "All"
+
+
+def test_nan_modality_is_aggregate_fds_cancer_row():
+    """A genuine NaN modality (as pandas reads an empty CSV cell) must be treated
+    as aggregate: an FDS by-cancer row classifies to 'cancer', NOT 'combination'."""
+    import numpy as np
+    out = _normalise([_real_row("01/10/2025", Standard_or_Item="FDS",
+                                Cancer_Type="Suspected breast cancer",
+                                Treatment_Modality=np.nan)])
+    assert out["breakdown_type"].iloc[0] == "cancer"
+    assert out["breakdown_value"].iloc[0] == "Suspected breast cancer"
+
+
+def test_is_aggregate_helper_catches_nan_directly():
+    import numpy as np
+    s = pd.Series(["ALL MODALITIES", "", np.nan, "Surgery"])
+    agg = normalise._is_aggregate(s, "modality")
+    assert agg.tolist() == [True, True, True, False]

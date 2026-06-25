@@ -2,9 +2,19 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-25 (Claude Code session; CWT FY-boundary staleness fix BUILT + demonstrated, NOT deployed)._
+_Last updated: 2026-06-25 (Claude Code session; CWT FY-boundary fix DEPLOYED; pandas-3.0 blank-dimension bug caught at live-verify + FIXED, re-deploy in flight)._
 
-## 🛠 BUILT + DEMONSTRATED, NOT DEPLOYED ⏸ 2026-06-25 — CWT financial-year-boundary staleness fix
+## ⚠️→✅ 2026-06-25 — pandas 3.0 silently broke FDS classification (caught at live-verify), FIXED + pinned
+First deploy (run 28160596681) ingested April-2026 but live-verify found **FDS28 stuck at March** while CMB31/CMB62
+reached April. Cause: unpinned `requirements.txt` → CI installed **pandas 3.0.3** (dev was 2.3.3); pandas 3.0 makes
+`astype(str)` preserve NaN (not `"nan"`), so `normalise._is_aggregate` stopped treating BLANK modality (FDS has no
+modality dim) as aggregate → FDS rows mis-classified, `all` slice dropped. April was the first file normalised under 3.0
+(historical months cached from 2.x runs); tests passed because fixtures used explicit `"ALL MODALITIES"`. Fix: `.isna()`
+in `_is_aggregate` (version-robust) + pin `pandas>=2.2,<3` + 3 blank-modality regression tests; purged corrupt 2026-04
+rows + dropped April from manifest so CI re-ingests cleanly. 71 tests pass; recovery verified locally (FDS28 April `all`
+perf 0.7591, 49 months, recon green). See DECISIONS 2026-06-25.
+
+## ✅ DEPLOYED 2026-06-25 — CWT financial-year-boundary staleness fix
 Cancer pipeline now ALSO scrapes the current-FY sub-page (`{fy}-monthly-cancer-waiting-times-statistics/`) for the
 per-MONTH Combined CSVs that appear there before the cumulative file lands on the main page — closing the trail at an
 FY boundary (the April-2026 case). Per-month file is column-identical to the cumulative MINUS the `Period` column;
