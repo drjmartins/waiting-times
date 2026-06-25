@@ -2,7 +2,16 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-25 (Claude Code session; CWT FY-boundary fix DEPLOYED; pandas-3.0 blank-dimension bug caught at live-verify + FIXED, re-deploy in flight)._
+_Last updated: 2026-06-25 (Claude Code session; CWT FY-boundary fix DEPLOYED + LIVE-VERIFIED; pandas-3.0 blank-dimension bug caught at live-verify, FIXED + pinned, re-deployed + LIVE-VERIFIED)._
+
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-25 (run 28163463431, build+deploy GREEN; commit a914ec2) — FY-boundary fix + pandas-3.0 fix
+**Live checks pass** (cache-busted curl + headless on the deployed site): all three standards reach **2026-04, flagged
+provisional** (FDS28 0.7591 / CMB31 0.915 / CMB62 0.6995); meta 49 months → 2026-04, built_at 10:27; provider org files
+(e.g. RCF) reach April; footer renders **"Data to April 2026. Last updated 25 June 2026. Figures for the most recent
+months are provisional and subject to revision."** CI: **pandas 2.3.3** (pin held, not 3.x), 71 tests, ODS live both
+pipelines (427/353/556, as_of 2026-05-07), RTT recon OK @2025-04 (pct18 0.5973 / waitlist 7,389,065), TF-sum max|Δ|=0.
+The first deploy (run 28160596681) ingested April but pandas 3.0.3 (unpinned) silently mis-classified FDS → caught at
+live-verify → fixed + pinned + corrupt month purged → re-deployed clean. See DECISIONS 2026-06-25 (×3).
 
 ## ⚠️→✅ 2026-06-25 — pandas 3.0 silently broke FDS classification (caught at live-verify), FIXED + pinned
 First deploy (run 28160596681) ingested April-2026 but live-verify found **FDS28 stuck at March** while CMB31/CMB62
