@@ -26,8 +26,11 @@ from . import config
 
 # Candidate source-column names for each required scalar field. Add to these
 # lists when NHS changes the layout; order = priority.
+#
+# `month` is handled SEPARATELY (not in this required loop) because the per-month
+# new-FY Combined CSV omits the Period column entirely — its month is implicit in
+# the filename and injected via `period_hint`. See normalise() and MONTH_CANDIDATES.
 COLUMN_CANDIDATES = {
-    "month":           ["MONTH", "PERIOD", "Period", "Month", "REPORTING_PERIOD"],
     "org_level":       ["ORG_LEVEL", "LEVEL", "ORG TYPE", "ORG_TYPE", "Basis"],
     "org_code":        ["ORG_CODE", "ORG CODE", "CODE", "PROVIDER_CODE", "ICB_CODE", "Org_Code"],
     "org_name":        ["ORG_NAME", "ORG NAME", "NAME", "PROVIDER_NAME", "ICB_NAME", "Org_Name"],
@@ -35,6 +38,11 @@ COLUMN_CANDIDATES = {
     "within_target":   ["WITHIN_STANDARD", "WITHIN_TARGET", "TREATED_WITHIN", "SEEN_WITHIN_STANDARD", "Within"],
     "total":           ["TOTAL", "TOTAL_TREATED", "TOTAL_SEEN", "DENOMINATOR", "Total"],
 }
+
+# The period/month column, when the source ships one (the cumulative Combined CSV
+# and older vintages). Absent in the per-month new-FY file -> month is injected
+# from the filename via period_hint instead.
+MONTH_CANDIDATES = ["MONTH", "PERIOD", "Period", "Month", "REPORTING_PERIOD"]
 
 # Breakdown handling supports two source shapes:
 #   (a) an explicit, pre-collapsed (type, value) pair -- the synthetic generator
@@ -133,8 +141,14 @@ def _derive_breakdown(df):
     return btype, bvalue
 
 
-def normalise(df, source_file, data_status):
-    """Take a raw source DataFrame, return a DataFrame in CANONICAL_COLUMNS."""
+def normalise(df, source_file, data_status, period_hint=None):
+    """Take a raw source DataFrame, return a DataFrame in CANONICAL_COLUMNS.
+
+    `period_hint` ('YYYY-MM') supplies the month for the per-month new-FY Combined
+    CSV, which omits the Period column. When a Period column IS present and a hint
+    is also given, the two MUST agree (every row's month == hint) or we raise — a
+    per-month file whose embedded period contradicts its filename is mislabelled
+    and must stop the build, not be ingested."""
     rename = {}
     for field, candidates in COLUMN_CANDIDATES.items():
         col = _find_column(df, candidates)
@@ -193,33 +207,110 @@ def normalise(df, source_file, data_status):
     out["data_status"] = data_status
     out["source_file"] = source_file
 
-    # Normalise month to YYYY-MM. File vintages differ: older files use ISO
-    # (YYYY-MM-DD), the 2025-26 files use DD/MM/YYYY. Parse ISO first, then fall
-    # back to day-first for whatever didn't match -- a blanket dayfirst=True
-    # would misread ISO dates as year-day-month and collapse every month to one.
-    parsed = pd.to_datetime(out["month"], errors="coerce", format="%Y-%m-%d")
-    fallback = parsed.isna()
-    if fallback.any():
-        parsed = parsed.copy()
-        parsed[fallback] = pd.to_datetime(out["month"][fallback], errors="coerce", dayfirst=True)
-    out["month"] = parsed.dt.strftime("%Y-%m")
-    out = out[out["month"].notna()]
+    # Month. Prefer a Period column when the source ships one (cumulative + older
+    # vintages); otherwise inject from the filename (period_hint) for the per-month
+    # new-FY file, which omits Period. If neither is available, fail loud.
+    month_col = _find_column(df, MONTH_CANDIDATES)
+    if month_col is not None:
+        # Normalise month to YYYY-MM. File vintages differ: older files use ISO
+        # (YYYY-MM-DD), the 2025-26 files use DD/MM/YYYY. Parse ISO first, then fall
+        # back to day-first for whatever didn't match -- a blanket dayfirst=True
+        # would misread ISO dates as year-day-month and collapse every month to one.
+        raw_month = df.loc[out.index, month_col]
+        parsed = pd.to_datetime(raw_month, errors="coerce", format="%Y-%m-%d")
+        fallback = parsed.isna()
+        if fallback.any():
+            parsed = parsed.copy()
+            parsed[fallback] = pd.to_datetime(raw_month[fallback], errors="coerce", dayfirst=True)
+        out["month"] = parsed.dt.strftime("%Y-%m").values
+        out = out[out["month"].notna()]
+        # Cross-check against the filename hint when both are present: a per-month
+        # file that carries a Period column disagreeing with its filename month is
+        # mislabelled -> stop the build (the recon gates are blind to month labels).
+        if period_hint is not None:
+            mism = sorted(set(out["month"].unique()) - {period_hint})
+            if mism:
+                raise ValueError(
+                    f"{source_file}: Period column month(s) {mism} disagree with the "
+                    f"filename month {period_hint!r} — mislabelled file, refusing to ingest.")
+    elif period_hint is not None:
+        out["month"] = period_hint
+    else:
+        raise ValueError(
+            f"{source_file}: no Period/month column found (candidates {MONTH_CANDIDATES}) "
+            f"AND no month derivable from the filename. A per-month file whose month "
+            f"cannot be parsed must not be ingested (would mislabel the month). "
+            f"Columns present: {list(df.columns)[:30]}")
 
     return out[config.CANONICAL_COLUMNS].reset_index(drop=True)
+
+
+def assert_month_label(out, expected_month, source_file):
+    """Fail-loud month-label guard for the per-month ingest path (REQUIRED — the
+    only safety net here, since cancer has no national-value reconciliation).
+
+    Asserts the injected month parses as YYYY-MM AND every normalised row carries
+    exactly that one month. A bad filename parse or a multi-month file on this path
+    stops the build rather than silently mislabelling."""
+    import re as _re
+    if not expected_month or not _re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", str(expected_month)):
+        raise ValueError(
+            f"{source_file}: per-month file month {expected_month!r} did not parse as "
+            f"YYYY-MM — refusing to ingest (cannot guess the month).")
+    months = set(out["month"].unique())
+    if months != {expected_month}:
+        raise ValueError(
+            f"{source_file}: expected a single-month file for {expected_month!r} but "
+            f"normalised rows carry months {sorted(months)} — refusing to ingest.")
+
+
+def assert_contiguous_national_months(store):
+    """Fail-loud series guard: the national (ENG) all-slice series must have no
+    duplicate and no missing month between its first and last. A gap would mean a
+    month silently dropped at the cumulative<->per-month seam; a duplicate would
+    mean a dedup/merge failure. Either stops the build."""
+    nat = store[(store["org_code"] == "ENG")]
+    months = sorted(nat["month"].dropna().unique())
+    if not months:
+        return  # no national rows (e.g. minimal fixtures) — nothing to check
+    def _ix(m):
+        y, mm = (int(x) for x in m.split("-"))
+        return y * 12 + (mm - 1)
+    expected = list(range(_ix(months[0]), _ix(months[-1]) + 1))
+    actual = [_ix(m) for m in months]
+    if actual != expected:
+        missing = sorted(set(expected) - set(actual))
+        def _m(i):
+            return f"{i // 12}-{i % 12 + 1:02d}"
+        raise AssertionError(
+            f"national month series is not contiguous: {len(missing)} missing "
+            f"month(s) between {months[0]} and {months[-1]}: {[_m(i) for i in missing][:6]}")
+
+
+def _is_cumulative_source(source_file):
+    """A cumulative Combined CSV is FY-prefixed ('2025-26-…'); a per-month file is
+    month-name-prefixed ('April-2026-…'). Used only to break SAME-STATUS ties."""
+    return source_file.astype(str).str.match(r"\d{4}-\d{2}-").fillna(False)
 
 
 def merge_with_revisions(existing, new):
     """
     Combine existing tidy data with a newly-processed file, applying the
-    revisions rule: for any (month, org_code, standard, breakdown_value) key,
-    the newest data wins, and 'final' always beats 'provisional'.
+    source-precedence rules (confirmed 2026-06-25) for any
+    (month, org_level, org_code, standard, breakdown_type, breakdown_value) key:
+      (a) FINAL always beats PROVISIONAL, regardless of source shape;
+      (b) at EQUAL status, the CUMULATIVE file wins over the per-month file (the
+          consolidated re-publication; numerically identical in practice);
+      (c) on a full tie, the newest-processed (this `new` frame) wins.
+    Implemented as a stable sort on (final, cumulative) ascending + keep-last, so
+    the highest-precedence row survives deterministically regardless of fetch order.
     """
     if existing is None or len(existing) == 0:
         return new
     combined = pd.concat([existing, new], ignore_index=True)
-    # final (1) sorts after provisional (0); keep last per key.
-    combined["_rank"] = (combined["data_status"] == "final").astype(int)
-    combined = combined.sort_values("_rank")
+    combined["_final"] = (combined["data_status"] == "final").astype(int)
+    combined["_cumul"] = _is_cumulative_source(combined["source_file"]).astype(int)
+    combined = combined.sort_values(["_final", "_cumul"], kind="stable")
     key = ["month", "org_level", "org_code", "standard", "breakdown_type", "breakdown_value"]
     combined = combined.drop_duplicates(subset=key, keep="last")
-    return combined.drop(columns="_rank").reset_index(drop=True)
+    return combined.drop(columns=["_final", "_cumul"]).reset_index(drop=True)

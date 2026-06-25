@@ -38,8 +38,20 @@ def _save_store(df, path=TIDY_STORE):
 
 def run_real():
     import requests
+    # Main page: per-FY CUMULATIVE Combined CSVs. Plus the CURRENT FY's sub-page:
+    # per-MONTH Combined CSVs that appear there first at a financial-year boundary
+    # (closes the FY-boundary staleness gap). The sub-page may not exist yet very
+    # early in a new FY — treat a fetch failure there as "no per-month files yet".
     html = discover.fetch_page_html()
     discovered = discover.discover_csv_links(html)
+    fy = discover.current_financial_year()
+    sub_url = discover.fy_subpage_url(fy)
+    try:
+        sub_html = discover.fetch_page_html(sub_url)
+        discovered += discover.discover_csv_links(sub_html, base_url=sub_url)
+    except Exception as e:
+        print(f"Current-FY sub-page {sub_url} not available ({e}); "
+              f"using main-page cumulative files only.")
     manifest = discover.load_manifest()
     todo = discover.select_files_to_process(discovered, manifest)
     store = _load_store()
@@ -47,14 +59,27 @@ def run_real():
         os.makedirs(config.RAW_DIR, exist_ok=True)
         for item in todo:
             print(f"Processing ({item['reason']}): {item['anchor_text']}")
-            raw_path = os.path.join(config.RAW_DIR, os.path.basename(item["url"]))
+            basename = os.path.basename(item["url"])
+            # Fail-loud month-label guard (part 1): a per-month file whose month
+            # could not be parsed from its filename is refused — never guessed.
+            if item.get("shape") == "monthly" and not item.get("month"):
+                raise RuntimeError(
+                    f"per-month Combined CSV {basename!r} present but its month could not "
+                    f"be parsed from the filename — refusing to ingest (would mislabel the "
+                    f"month, and the recon gates can't catch a wrong month label).")
+            raw_path = os.path.join(config.RAW_DIR, basename)
             with requests.get(item["url"], stream=True, timeout=300) as r:
                 r.raise_for_status()
                 with open(raw_path, "wb") as f:
                     for chunk in r.iter_content(1 << 16):
                         f.write(chunk)
             raw = pd.read_csv(raw_path, low_memory=False)
-            tidy = normalise.normalise(raw, os.path.basename(item["url"]), item["status"])
+            tidy = normalise.normalise(raw, basename, item["status"], period_hint=item.get("month"))
+            # Fail-loud month-label guard (part 2): per-month rows must all carry
+            # exactly the filename's month (single, parseable). Skipped for the
+            # cumulative path (multi-month by design).
+            if item.get("month"):
+                normalise.assert_month_label(tidy, item["month"], basename)
             store = normalise.merge_with_revisions(store, tidy)
             manifest["files"][item["url"]] = {
                 "financial_year": item["financial_year"], "status": item["status"],
@@ -68,6 +93,9 @@ def run_real():
     if store is None or len(store) == 0:
         print("No data in store and nothing to fetch; skipping build.")
         return
+    # Fail-loud series guard (part 3): no duplicate/missing month in the national
+    # series across the cumulative<->per-month seam.
+    normalise.assert_contiguous_national_months(store)
     # Shared ODS org-status classification (current/former + succession links) plus
     # the NHS-trust code set for the provider-type filter. Fail-soft: on any ODS
     # outage this returns the last-known committed cache and never raises, so the

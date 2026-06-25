@@ -14,6 +14,16 @@ SOURCE_PAGE = "https://www.england.nhs.uk/statistics/statistical-work-areas/canc
 # table). These substrings identify them in the page's anchor text.
 COMBINED_CSV_MARKERS = ("Monthly Combined CSV",)
 
+# The main SOURCE_PAGE hosts only the per-FY CUMULATIVE Combined CSVs. At a
+# financial-year boundary the new year's data appears first as per-MONTH Combined
+# CSVs on a separate FY sub-page (e.g. April 2026 lived here weeks before any
+# 2026-27 cumulative file existed on the main page), so a main-page-only scrape
+# trails until NHS posts the cumulative file. We also scrape the CURRENT FY's
+# sub-page for those per-month files. The per-month file is column-for-column the
+# same as the cumulative EXCEPT it omits the leading `Period` column (the month is
+# implicit in the filename) — normalise injects it from the filename, guarded.
+SOURCE_FY_PAGE_TEMPLATE = "https://www.england.nhs.uk/statistics/{fy}-monthly-cancer-waiting-times-statistics/"
+
 # The October 2023 standards change means 31-day and 62-day figures before this
 # month are NOT comparable to those after. The dashboard defaults to this start
 # date and treats earlier data as a separate, clearly-labelled historic series.

@@ -2,7 +2,18 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-23 (Claude Code session; WCAG 2.1 AA accessibility pass DEPLOYED + live-verified)._
+_Last updated: 2026-06-25 (Claude Code session; CWT FY-boundary staleness fix BUILT + demonstrated, NOT deployed)._
+
+## 🛠 BUILT + DEMONSTRATED, NOT DEPLOYED ⏸ 2026-06-25 — CWT financial-year-boundary staleness fix
+Cancer pipeline now ALSO scrapes the current-FY sub-page (`{fy}-monthly-cancer-waiting-times-statistics/`) for the
+per-MONTH Combined CSVs that appear there before the cumulative file lands on the main page — closing the trail at an
+FY boundary (the April-2026 case). Per-month file is column-identical to the cumulative MINUS the `Period` column;
+`normalise` injects the month from the filename, guarded. Precedence (user-confirmed): final>provisional, then
+cumulative>per-month at equal status, newest-on-tie. **REQUIRED fail-loud month-label guard** (3 layers: refuse
+monthly+unparseable filename; refuse no-Period+no-hint; assert single parseable injected month) + national contiguity
+guard — the safety net here since cancer has no national-value reconciliation. **68 tests pass** (55 + 13 new).
+Demonstrated on REAL data: April-2026 ingested Provisional (store 48→49 months, to 2026-04); guard fires on bad parse;
+ten-groups + route recon gates GREEN across the seam. PAUSED before deploy. See DECISIONS 2026-06-25 (×2).
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-23 (run 28040528379, build+deploy GREEN; CI commit 97049ef) — WCAG 2.1 AA accessibility pass (all 4 pages)
 **Live checks all pass** (headless on the deployed site, cache-busted). Per-criterion re-confirmed LIVE: 1.1.1

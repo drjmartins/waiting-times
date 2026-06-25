@@ -6,6 +6,93 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-25 — CWT FY-boundary staleness gap: BUILT + demonstrated, NOT deployed (paused before deploy) (Claude Code)
+
+Implements the approach from the investigation entry below; user confirmed all three precedence rules + made the
+month-label guard a REQUIRED fail-loud gate. **68 tests pass** (55 + 13 new in `tests/test_fy_boundary.py`).
+Demonstrated against the REAL April-2026 per-month file + the REAL committed store (all three asks):
+1. **April-2026 ingested as Provisional from the per-month file.** Store 48→**49 months** (2022-04→**2026-04**),
+   +24,287 rows, `status=provisional`; England CMB62 Apr-2026 = 0.6995 (19,546/27,941). Closes the trail — dashboard
+   now reaches April 2026 the day NHS posts the per-month file, not when the cumulative lands.
+2. **Month-label guard fires fail-loud on a bad parse** (3 layers): discovery classifies `Aprl-2026-…` → (monthly,
+   month=None) → run.py raises RuntimeError (refuses to guess); normalise with no Period + no hint raises ValueError;
+   `assert_month_label` rejects an unparseable injected month (e.g. '2026-13') and any multi-month per-month file.
+3. **Reconciliation GREEN across the seam.** `build()` ran the ten-groups==all-cancers + group×route≤group-total
+   gates without tripping on the merged (cumulative→per-month) store; national contiguity guard passed (49 contiguous
+   months, no dup/missing).
+
+**Changes:** `config.SOURCE_FY_PAGE_TEMPLATE` (current-FY sub-page URL); `discover` gains
+`current_financial_year()`/`fy_subpage_url()`/`_classify_file()` (cumulative=FY-prefixed vs monthly=month-name-prefixed,
+parses the per-month month, FY-from-month) and tags each link `shape`/`month`; `run_real()` also scrapes the current-FY
+sub-page (fail-soft if it 404s early in a new FY), enforces guard part 1 (refuse monthly+unparseable) and part 3
+(contiguity before build); `normalise()` takes `period_hint`, injects month when Period absent, cross-checks when Period
+present (mismatch → raise), adds `assert_month_label` (part 2) + `assert_contiguous_national_months`;
+`merge_with_revisions` precedence rewritten to (a) final>provisional, (b) cumulative>per-month at equal status,
+(c) newest-on-full-tie — deterministic via stable sort, independent of fetch order. Main-page cumulative scrape
+unchanged; the two sources coexist and dedup. **PAUSED before deploy per user.**
+
+## 2026-06-25 — CWT financial-year-boundary staleness gap: INVESTIGATION (report-only, no build) (Claude Code)
+
+**Problem confirmed with live evidence.** Cancer `discover.py` scrapes ONLY the main CWT landing page, which hosts
+per-FY CUMULATIVE Combined CSVs. At an FY boundary the new year's data appears first as per-MONTH Combined CSVs on a
+separate FY sub-page; no cumulative file for the new FY exists on the main page yet, so the dashboard correctly trails
+("data to [last month of old FY]"). Live-verified 2026-06-25 — this is exactly the April-2026 situation now.
+
+1. **WHERE / confirmed present.** Per-month new-FY Combined CSVs live on the FY sub-page
+   `https://www.england.nhs.uk/statistics/{fy}-monthly-cancer-waiting-times-statistics/` (linked FROM the main page, not
+   scraped). 2026-27 sub-page is live with **April 2026 Monthly Combined CSV Provisional** present now:
+   `.../uploads/sites/2/2026/06/April-2026-Monthly-Combined-CSV-Provisional.csv` (4.32 MB). URL pattern
+   `<Month>-<Year>-Monthly-Combined-CSV-<Provisional|Final>.csv`. The 2025-26 sub-page confirms the lifecycle: one
+   per-month CSV per month (Provisional → Final as months finalise); cumulative multi-month files appear only on the MAIN
+   page later (e.g. "2025-26 Apr–Sep Cumulative…Final", "2025-26 Oct–Mar Cumulative…Provisional").
+
+2. **FORMAT: drop-in EXCEPT one structural difference — the per-month file omits the `Period` column.**
+   Cumulative header: `Period,Basis,Org_Code,Parent_Org,Org_Name,Standard_or_Item,Cancer_Type,Referral_Route_or_Stage,Treatment_Modality,Total,Within,After,Performance,<wait-bands…>`.
+   Per-month header: identical MINUS the leading `Period` (month is implicit in the filename "April 2026"). All else
+   identical: same Basis (Provider/Commissioner + `Total` pseudo-org→ENG), same standards (FDS/31D/62D + the dropped
+   USC/breast-symptomatic items), same three-column breakdown layout, same wait-bands, same org granularity. Consequence:
+   `normalise.py` would FAIL-LOUD on a per-month file ("could not map required field 'month'") because none of its
+   `month` candidates (MONTH/PERIOD/Period/Month/REPORTING_PERIOD) are present — so it can't silently mis-ingest, but it
+   also can't ingest as-is. Fix = inject the month from the filename/anchor when `Period` is absent (then normalise is
+   unchanged downstream). Note also: the per-month Provisional file carries the "Commissioner aggregations derived from
+   March-2026 mappings / Frimley incomplete" caveat — provisional commissioner figures revise.
+
+3. **MERGE/DEDUP (recommendation — user to ratify rules + precedence).** `merge_with_revisions` already dedups on key
+   (month, org_level, org_code, standard, breakdown_type, breakdown_value) with final>provisional then newest-wins. Per-
+   month rows carry the SAME keys as the eventual cumulative rows for that month, so once a month is injected with its
+   correct `month` value, the existing merge dedups cleanly — no double-counting. Recommended precedence: **status first
+   (final beats provisional), source-shape as tie-break only.** When a cumulative Final later covers a month already
+   ingested from a per-month Provisional, the cumulative Final must win (it's the revised/finalised figure). USER TO
+   DECIDE: (a) confirm final>provisional always wins regardless of source; (b) when both are SAME status (e.g. per-month
+   Final vs cumulative Final for the same month) which wins — recommend cumulative (it's the consolidated re-publication)
+   but per-month Final should be numerically identical; (c) whether to ingest per-month Provisional at all or wait for
+   Final (recommend ingest Provisional — that's the whole point of closing the gap; it already renders with provisional
+   flags).
+
+4. **RECONCILIATION holds across the seam — with ONE flag.** Cancer's fail-loud gates (ten-groups==all-cancers total
+   max|Δ|=0; group×route ≤ group total) are INTERNAL per-(month,org,standard) partition checks on the merged store. Each
+   month's rows are self-contained and a per-month file carries the same complete breakdown set as a cumulative file, so
+   the gate is blind to which source a month came from and holds across a cumulative→per-month seam within a year.
+   **FLAG:** the recon gates do NOT validate the month LABEL — a per-month file whose month is injected wrong (bad
+   filename parse) would still pass every partition check while silently mislabelling a month / colliding on dedup.
+   Recommend a small dedicated guard at ingest (assert injected month parses, is unique vs the file's expected month, and
+   that no month is duplicated/missing in the contiguous series). Also note: cancer has NO national-value reconciliation
+   (that SPN-style gate is RTT-only), so cancer's safety net is purely the internal partition gates + the proposed
+   month-label guard.
+
+5. **RTT is IMMUNE.** `pipeline_rtt/discover.py` already enumerates FY slugs up to the current FY (`financial_years()`)
+   and scrapes each per-FY sub-page for per-month "Full CSV data file" zips — so the new FY appears automatically. (RTT's
+   Full CSV even carries an internal `Period` column, so RTT reads the month from the file, not the filename — a small
+   difference from the cancer fix, which must derive month from the filename.)
+
+**RECOMMENDED APPROACH (for the build round, pending user's merge/precedence decision):** extend cancer discovery to ALSO
+scrape the current-FY sub-page (mirror RTT's `financial_years()` → sub-page URL pattern) for per-month Combined CSVs;
+teach `normalise` to inject `month` from the filename/anchor when the `Period` column is absent (keep the existing fail-
+loud if neither a Period column NOR a derivable month is available); rely on the existing `merge_with_revisions` for
+dedup with final>provisional precedence; add a month-label ingest guard. Keep the main-page cumulative scrape as-is — the
+two sources coexist and dedup. Net effect: new-FY months show as Provisional the day NHS posts the per-month file, then
+silently upgrade to Final / cumulative without double-counting.
+
 ## 2026-06-23 — WCAG 2.1 AA accessibility pass DEPLOYED + LIVE-VERIFIED — full line nudge chosen, whole pass shipped together (Claude Code)
 
 DEPLOYED run 28040528379 (build+deploy GREEN; CI commit 97049ef). **Live-verified headless** on the deployed
