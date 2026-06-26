@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-05-07",
+  "as_of": "2026-06-25",
   "nhs_trust_codes": [
     "G6V2S",
     "K0N6A",
@@ -3252,6 +3252,36 @@
         {
           "code": "FAB",
           "name": "FAB"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "R1H",
+          "name": "BARTS HEALTH NHS TRUST"
+        }
+      ]
+    },
+    "RNJ": {
+      "closed": "2012-04-01",
+      "name": "BARTS AND THE LONDON NHS TRUST",
+      "opened": "1994-04-01",
+      "predecessors": [
+        {
+          "code": "RAK",
+          "name": "ROYAL LONDON HOSPITAL AND ASSOCIATED COMMUNITY SERVICES NHS TRUST"
+        },
+        {
+          "code": "FBX",
+          "name": "FBX"
+        },
+        {
+          "code": "FAY",
+          "name": "FAY"
+        },
+        {
+          "code": "T05",
+          "name": "T05"
         }
       ],
       "status": "former",
