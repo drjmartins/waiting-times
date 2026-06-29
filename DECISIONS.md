@@ -6,7 +6,20 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
-## 2026-06-29 — Cron-wedge fix: layered C+B+A+D BUILT + verified end-to-end on the real corrupt store — NOT deployed (paused per user) (Claude Code)
+## 2026-06-29 — Cron-wedge fix DEPLOYED + LIVE-VERIFIED (run 28362120515, build+deploy GREEN; commit 15acb64) (Claude Code)
+
+Deployed the layered C+B+A+D fix (entry below) directly to master + watched workflow_dispatch. **Cron UNWEDGED**: build
+14m6s + deploy 14s, both GREEN (vs the ~30s pytest-gate failures June-27/28). CI log: 76 tests pass; cancer processed
+exactly **"April 2026 Monthly Combined CSV Provisional New ICB Structure"** (the single vintage B's dedup selected) →
+"Rebuilt site data: 205 orgs, **49 months**" (was 48 → store now reaches April, no longer stuck at March); the strict
+bidirectional `assert_store_reconciles` ran without tripping; RTT recon OK + TF-sum max|Δ|=0; ODS LIVE fetch both
+pipelines (428 classified / 354 former / 556 trust codes, as_of 2026-06-25 — not fallback). **Live-verified** (cache-
+busted curl): meta 49 months → 2026-04, built_at today; England FDS28 2026-04 **status=provisional**; all 6 new ICBs
+present + `reltype=formed` (D7T5G/S0E4D/S1Y5D/S9B9J/T6Y0W/Z9B2Z), 12 old merged ICBs `former=True`/`superseded`
+(QHG/QUE/QH8…) — vintage choice and ODS lifecycle AGREE on the live site. Parked the pre-existing synthetic-run
+'Lower GI' unmapped-label bug (CI-independent) on the STATUS open-items list.
+
+## 2026-06-29 — Cron-wedge fix: layered C+B+A+D BUILT + verified end-to-end on the real corrupt store (Claude Code)
 
 Implements all four layers from the investigation below; **76 tests pass** (71 + 5 new). Verified end-to-end against
 the REAL corrupt June-26 store + the REAL three NHS April-2026 files.

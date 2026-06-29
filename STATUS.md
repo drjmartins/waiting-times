@@ -2,9 +2,20 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-29 (Claude Code session; cron-wedge fix BUILT + verified end-to-end, NOT deployed — paused per user)._
+_Last updated: 2026-06-29 (Claude Code session; cron-wedge fix DEPLOYED + LIVE-VERIFIED, run 28362120515)._
 
-## ⏸ BUILT, NOT DEPLOYED 2026-06-29 — cron-wedge fix (layered C+B+A+D); 76 tests pass
+## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-29 (run 28362120515, build+deploy GREEN; commit 15acb64) — cron-wedge fix (layered C+B+A+D); 76 tests pass
+**Cron UNWEDGED** (14m6s build + 14s deploy — a real full run, vs the ~30s test-gate failures June-27/28). **Live checks
+all pass** (cache-busted curl on the deployed site): cancer meta **49 months → 2026-04**, built_at today; England FDS28
+2026-04 **status=provisional**; CI ingested exactly the **"April 2026 … New ICB Structure"** file (single vintage,
+B's dedup choice); all **6 new ICBs present + reltype=formed** (D7T5G "NHS Essex…", S0E4D "NHS Thames Valley…", S1Y5D/
+S9B9J/T6Y0W/Z9B2Z) while the **12 old merged ICBs are former=True/superseded** (QHG/QUE/QH8…) — so the vintage choice
+and the ODS lifecycle AGREE on the live site. CI: 76 tests, strict bidirectional `assert_store_reconciles` passed
+(build completed past it), RTT recon OK @2025-04 (pct18 0.5973 / waitlist 7,389,065), TF-sum max|Δ|=0, ODS LIVE fetch
+both pipelines (428 classified / 354 former / 556 trust codes, as_of 2026-06-25 — not the fallback), provider-type
+guards intact. Detail below.
+
+### What was wrong + the layered fix (BUILT 2026-06-29, now DEPLOYED)
 The daily cron FAILED June-27 + June-28 (runs 28295888701/28329562744, ~30s, exit 1) at the pytest gate — NOT a fetch/
 ODS/dependency error. Root cause: on June-26 NHS published April-2026 provisional under THREE filenames (old-ICB-
 structure `April-2026-…`, FY-prefixed re-publication `2026-27-Apr-…`, and `…-New-ICB-Structure.csv`); the per-month
