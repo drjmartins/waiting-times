@@ -250,6 +250,83 @@ def _cancer_group_route_slices(srows, route_values, cancer_values):
     return out
 
 
+def assert_store_reconciles(df):
+    """Fail-loud BIDIRECTIONAL reconciliation gate for the real accumulated store,
+    run on the CI build path BEFORE the rebuilt data is committed (2026-06-29).
+
+    It mirrors EXACTLY the two store reconciliation tests, so the build gate and
+    the pre-fetch test gate now agree by construction: a vintage-mix (two source
+    files disagreeing within one month-cell) fails THE BUILD, loudly, before
+    commit — instead of slipping through a one-directional build check, getting
+    committed, and wedging every subsequent run at the pre-fetch test gate (the
+    2026-06-27/28 failure).
+
+    Two identities, both checked in FULL (over- AND under-count):
+      1. per (month, org, standard): ten groups + the Missing/Invalid residue ==
+         the all-cancers headline (CMB31/CMB62 carry no residue, so == exactly);
+      2. per (org, group, month) for CMB31/CMB62: the cancer x route combinations
+         partition the group's cancer total exactly.
+    Deliberately SEPARATE from the in-build `_group_route_section` guard, which
+    stays one-directional (it must tolerate the partial-combo minimal unit
+    fixtures and a genuinely-missing route degrades gracefully). This gate runs
+    only on the real multi-source store, where the partition is exact."""
+    cg = cancer_groups
+    can = df[df["breakdown_type"] == "cancer"].copy()
+    if can.empty:
+        return
+    can["group"] = can["breakdown_value"].map(cg.group_for)   # raises on any unmapped label
+    rolled = can[can["group"].isin(cg.TEN_GROUPS)]
+    keys = ["month", "org_code", "standard"]
+    g = rolled.groupby(keys, as_index=False).agg(
+        g_total=("total", "sum"), g_within=("within_target", "sum"))
+    a = (df[df["breakdown_type"] == "all"].groupby(keys, as_index=False)
+         .agg(a_total=("total", "sum"), a_within=("within_target", "sum")))
+    excl = (can[can["group"] == cg.EXCLUDED_GROUP].groupby(keys, as_index=False)
+            .agg(x_total=("total", "sum"), x_within=("within_target", "sum")))
+    m = g.merge(a, on=keys, how="outer", indicator=True)
+    if not (m["_merge"] == "both").all():
+        raise AssertionError(
+            f"store recon: groups/all cells don't align: {m['_merge'].value_counts().to_dict()}")
+    m = m.merge(excl, on=keys, how="left").fillna({"x_total": 0.0, "x_within": 0.0})
+    for std in ("FDS28", "CMB31", "CMB62"):
+        s = m[m["standard"] == std]
+        dt = (s["g_total"] + s["x_total"] - s["a_total"]).abs()
+        dw = (s["g_within"] + s["x_within"] - s["a_within"]).abs()
+        if dt.max() >= 0.6 or dw.max() >= 0.6:
+            bad = s.loc[dt.idxmax()]
+            raise AssertionError(
+                f"store recon: ten groups + excluded != all-cancers for {std} "
+                f"(max|Δtotal|={dt.max()}, max|Δwithin|={dw.max()}); e.g. "
+                f"{bad['org_code']} {bad['month']}: g={bad['g_total']} x={bad['x_total']} "
+                f"a={bad['a_total']} — likely two source files mixed in one month-cell.")
+    for std in ("CMB31", "CMB62"):
+        d = df[df["standard"] == std]
+        routes = set(d.loc[d["breakdown_type"] == "route", "breakdown_value"])
+        cancers = set(d.loc[d["breakdown_type"] == "cancer", "breakdown_value"])
+        comb = d[d["breakdown_type"] == "combination"].copy()
+        if comb.empty:
+            continue
+        parts = comb["breakdown_value"].str.split("|", n=1, expand=True)
+        comb["_a"], comb["_b"] = parts[0].str.strip(), parts[1].str.strip()
+        cxr = comb[comb["_a"].isin(cancers) & comb["_b"].isin(routes)].copy()
+        cxr["group"] = cxr["_a"].map(cg.group_for)
+        rt = cxr.groupby(["org_code", "group", "month"])["total"].sum()
+        canc = d[d["breakdown_type"] == "cancer"].copy()
+        canc["group"] = canc["breakdown_value"].map(cg.group_for)
+        gt = canc.groupby(["org_code", "group", "month"])["total"].sum()
+        j = gt.to_frame("g").join(rt.to_frame("r"), how="left")
+        if not j["r"].notna().all():
+            miss = j[j["r"].isna()]
+            raise AssertionError(
+                f"store recon: {std} — {len(miss)} group-cells have cancer data but no "
+                f"route partition (e.g. {miss.index[0]}).")
+        diff = (j["g"] - j["r"]).abs()
+        if diff.max() >= 0.6:
+            raise AssertionError(
+                f"store recon: {std} — cancer x route partition != group cancer total "
+                f"(max|Δ|={diff.max()}).")
+
+
 def _breakdown_payload(df_org):
     """Per-org breakdown series for every standard. Carries the raw granular
     dimensions (cancer / route / modality + published pairwise combinations) AND

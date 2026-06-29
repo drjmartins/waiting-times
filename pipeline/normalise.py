@@ -309,15 +309,35 @@ def merge_with_revisions(existing, new):
       (b) at EQUAL status, the CUMULATIVE file wins over the per-month file (the
           consolidated re-publication; numerically identical in practice);
       (c) on a full tie, the newest-processed (this `new` frame) wins.
-    Implemented as a stable sort on (final, cumulative) ascending + keep-last, so
-    the highest-precedence row survives deterministically regardless of fetch order.
+
+    CELL SINGLE-SOURCE (2026-06-29, defence-in-depth): precedence is applied at the
+    granularity of a (month, org_level, org_code, standard) CELL, not a single
+    breakdown row. The winning source FILE for a cell supplies ALL of that cell's
+    rows; rows from any losing sibling file are dropped WHOLESALE. Row-by-row
+    deduplication alone (the previous behaviour) only collapsed EXACT-key
+    duplicates, so when two vintages of one month disagreed on WHICH breakdown rows
+    exist (NHS's April-2026 ICB-merger re-publication dropped/restructured some
+    rows), the leftover rows from the superseded file lingered and broke the exact
+    ten-groups+excluded==all-cancers reconciliation. Picking one file per cell
+    keeps each cell internally consistent even if `dedupe_per_month` is bypassed.
+
+    Implemented as a stable sort on (final, cumulative, arrival-order) ascending so
+    the highest-precedence row sorts last; the per-cell winning source is that
+    cell's last row, and we keep only rows from that source.
     """
     if existing is None or len(existing) == 0:
         return new
     combined = pd.concat([existing, new], ignore_index=True)
     combined["_final"] = (combined["data_status"] == "final").astype(int)
     combined["_cumul"] = _is_cumulative_source(combined["source_file"]).astype(int)
-    combined = combined.sort_values(["_final", "_cumul"], kind="stable")
+    combined["_ord"] = range(len(combined))      # arrival order: `new` rows sort last
+    combined = combined.sort_values(["_final", "_cumul", "_ord"], kind="stable")
+    cell = ["month", "org_level", "org_code", "standard"]
+    # The winning source FILE per cell = the source_file of that cell's last
+    # (highest-precedence) row. Keep only rows from the winning source for each cell.
+    win = combined.groupby(cell, sort=False)["source_file"].last().rename("_win_src")
+    combined = combined.join(win, on=cell)
+    combined = combined[combined["source_file"] == combined["_win_src"]]
     key = ["month", "org_level", "org_code", "standard", "breakdown_type", "breakdown_value"]
     combined = combined.drop_duplicates(subset=key, keep="last")
-    return combined.drop(columns=["_final", "_cumul"]).reset_index(drop=True)
+    return combined.drop(columns=["_final", "_cumul", "_ord", "_win_src"]).reset_index(drop=True)

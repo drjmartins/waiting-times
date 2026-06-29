@@ -197,6 +197,16 @@ def test_cancer_group_route_partition_reconciles_in_store():
 
 
 @_store_only
+def test_store_passes_build_recon_gate():
+    # The build path (run_real) calls b.assert_store_reconciles(store) before
+    # committing rebuilt data, so the BUILD gate and these store tests enforce the
+    # SAME bidirectional identities — a vintage-mix fails the build, not a later
+    # run's pre-fetch test gate (the 2026-06-27/28 wedge). This exercises that exact
+    # gate against the real store; the two tests above remain the independent spec.
+    b.assert_store_reconciles(pd.read_parquet(STORE))
+
+
+@_store_only
 def test_cancer_group_route_activity_separation_real():
     # The >=1% bar is safe only because the data separates starkly: a route that
     # applies to a group is well above 1% of its activity, the noise cells far below.

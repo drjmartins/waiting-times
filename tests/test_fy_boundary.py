@@ -168,3 +168,84 @@ def test_cumulative_wins_at_equal_status():
     # cumulative already in the store, per-month arriving as `new` -> still cumulative
     m2 = normalise.merge_with_revisions(cumul, permonth)
     assert m2.iloc[0]["within_target"] == 90
+
+
+# --- 2026-04 ICB-merger triple: single-vintage discovery + cell single-source --
+
+def test_classify_fyprefixed_single_month_vs_cumulative():
+    # A single-month re-publication NHS posted FY-prefixed at the 2026-27 boundary
+    # resolves to its one month; a true month-RANGE cumulative stays cumulative.
+    assert discover._classify_file(
+        "2026-27-Apr-Monthly-Combined-CSV-Provisional.csv") == ("monthly", "2026-04")
+    assert discover._classify_file(
+        "2025-26-Apr-Sep-Cumulative-Monthly-Combined-CSV-Final.csv") == ("cumulative", None)
+    assert discover._classify_file(
+        "2022-23-Apr-Mar-Monthly-Combined-CSV-Final.csv") == ("cumulative", None)
+    assert discover._classify_file(
+        "April-2026-Monthly-Combined-CSV-Provisional-New-ICB-Structure.csv") == ("monthly", "2026-04")
+
+
+def test_dedupe_per_month_keeps_one_vintage_prefers_new_structure():
+    # The real 2026-04 case: three April provisionals (old structure, FY-prefixed
+    # re-publication, and explicit New-ICB-Structure) collapse to ONE — the
+    # new-structure file — while a cumulative is left untouched.
+    html = "".join([
+        _anchor("https://x/2025-26-Oct-Mar-Cumulative-Monthly-Combined-CSV-Provisional.csv",
+                "2025-26 Oct – Mar Monthly Combined CSV Provisional"),
+        _anchor("https://x/April-2026-Monthly-Combined-CSV-Provisional.csv",
+                "April 2026 Monthly Combined CSV Provisional"),
+        _anchor("https://x/2026-27-Apr-Monthly-Combined-CSV-Provisional.csv",
+                "2026-27 Apr Monthly Combined CSV Provisional"),
+        _anchor("https://x/April-2026-Monthly-Combined-CSV-Provisional-New-ICB-Structure.csv",
+                "April 2026 Monthly Combined CSV Provisional New ICB Structure"),
+    ])
+    kept = discover.dedupe_per_month(discover.discover_csv_links(html))
+    names = {i["url"].rsplit("/", 1)[-1] for i in kept}
+    assert "2025-26-Oct-Mar-Cumulative-Monthly-Combined-CSV-Provisional.csv" in names  # cumulative untouched
+    april = [n for n in names if "2026" in n and "Cumulative" not in n]
+    assert april == ["April-2026-Monthly-Combined-CSV-Provisional-New-ICB-Structure.csv"]
+
+
+def test_dedupe_per_month_keeps_distinct_statuses():
+    # A provisional and a final for the SAME month are different vintages-of-record
+    # (final supersedes provisional via the merge) — dedup must keep both.
+    html = "".join([
+        _anchor("https://x/April-2026-Monthly-Combined-CSV-Provisional.csv",
+                "April 2026 Monthly Combined CSV Provisional"),
+        _anchor("https://x/April-2026-Monthly-Combined-CSV-Final.csv",
+                "April 2026 Monthly Combined CSV Final"),
+    ])
+    kept = discover.dedupe_per_month(discover.discover_csv_links(html))
+    assert {i["status"] for i in kept} == {"provisional", "final"}
+
+
+def _brow(source_file, btype, bvalue, total, status="provisional"):
+    return {"month": "2026-04", "org_level": "icb", "org_code": "UNKNOWN",
+            "org_name": "T", "region": "", "standard": "FDS28",
+            "breakdown_type": btype, "breakdown_value": bvalue,
+            "within_target": total, "total": total,
+            "performance": 1.0, "data_status": status, "source_file": source_file}
+
+
+def test_merge_keeps_cell_single_source():
+    # The 2026-06-27/28 root cause: the per-month original carried a 'Missing or
+    # Invalid' cancer row the cumulative re-publication dropped. Row-by-row dedup
+    # left it lingering, so the cancer rows summed to MORE than the all-cancers
+    # headline. Cell single-source must drop the losing file's rows wholesale.
+    old = "April-2026-Monthly-Combined-CSV-Provisional.csv"        # per-month
+    new = "2026-27-Apr-Monthly-Combined-CSV-Provisional.csv"       # FY-prefixed -> cumulative precedence
+    existing = pd.DataFrame([
+        _brow(old, "all", "All", 100),
+        _brow(old, "cancer", "Breast", 98),
+        _brow(old, "cancer", "Missing or Invalid", 2),
+    ])
+    incoming = pd.DataFrame([
+        _brow(new, "all", "All", 100),
+        _brow(new, "cancer", "Breast", 100),
+    ])
+    merged = normalise.merge_with_revisions(existing, incoming)
+    assert set(merged["source_file"]) == {new}                     # one source for the cell
+    assert "Missing or Invalid" not in set(merged["breakdown_value"])
+    # cancer rows now reconcile exactly to the all-cancers headline
+    assert merged[merged.breakdown_type == "cancer"]["total"].sum() == \
+        merged[merged.breakdown_type == "all"]["total"].sum()

@@ -6,6 +6,110 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-06-29 — Cron-wedge fix: layered C+B+A+D BUILT + verified end-to-end on the real corrupt store — NOT deployed (paused per user) (Claude Code)
+
+Implements all four layers from the investigation below; **76 tests pass** (71 + 5 new). Verified end-to-end against
+the REAL corrupt June-26 store + the REAL three NHS April-2026 files.
+
+**C — recovery (done, the deliverable that unwedges CI).** Purged the 24,287 corrupt `2026-04` rows from
+`data/processed/tidy.parquet` (store now ends 2026-03, 1,147,011 rows) and dropped the three April per-month URLs from
+`data/manifest.json` (5 cumulative entries remain). Same playbook as the 2026-06-25 pandas recovery: CI re-ingests April
+cleanly on the next run. The recovered (March-latest) store passes the pre-fetch test gate, so CI gets past it to fetch.
+
+**B — discovery single-vintage (`discover.dedupe_per_month`, wired into `run_real`).** NHS published April-2026
+provisional THREE ways: `April-2026-…` (OLD ICB structure: 22 pre-merger ICBs, no Period col), `2026-27-Apr-…`
+(re-publication, NEW structure, FY-prefixed, has Period), `April-2026-…-New-ICB-Structure.csv` (NEW structure, no
+Period). **Evidence (downloaded + normalised all three):** each file is INDIVIDUALLY self-consistent (recon max|Δ|=0);
+the mix was the only problem; B_repub≡C_newicb byte-for-byte in normalised data; A=old ICBs, B/C=new ICBs (D7T5G + the
+15 survivors). **Selection rule (deterministic, `_vintage_rank`, highest wins):** (1) explicit `New-ICB-Structure`
+marker, else (2) FY-prefixed consolidated re-publication, else (3) plain month-prefixed, with the URL as final
+tie-break. Cumulatives (a month RANGE → month=None) pass through untouched; provisional+final of one month both kept
+(status-keyed). For April this picks the **New-ICB-Structure** file — correct because the dashboard's ODS lifecycle
+already treats the 12 pre-merger ICBs as FORMER from April 2026 and expects the 6 new ones to appear. Also refined
+`_classify_file` to resolve single-month FY-prefixed names (`2026-27-Apr-…` → 2026-04) so they're deduped + month-label-
+guarded; the Period-column cross-check confirms the injected month (contradiction still fails loud).
+
+**A — cell single-source (`merge_with_revisions`, defence-in-depth).** Precedence (final>provisional, then
+cumulative>per-month, then arrival order) now resolves at the granularity of a (month, org_level, org_code, standard)
+CELL: the winning source FILE supplies ALL of that cell's rows; a losing sibling's rows are dropped WHOLESALE — not just
+exact-key dupes. Restores the build's load-bearing assumption ("all cancer rows in a cell come from one source file").
+**Proven independent of B:** ingesting all three April files in worst-case order still yields max 1 source-file per cell
+and passes the bidirectional gate (A guarantees the ARITHMETIC; B guarantees the right STRUCTURE is shown — a transition
+month under A-alone could show both old+new ICBs, reconciled; B narrows to new-only).
+
+**D — split-brain closed (`build_site_data.assert_store_reconciles`, called in `run_real` before build/commit).** New
+BIDIRECTIONAL gate mirroring the two store tests EXACTLY (ten groups + Missing/Invalid == all-cancers, both directions;
+cancer×route partitions the group total). Kept SEPARATE from the in-build one-directional `_group_route_section` guard
+(which must tolerate partial-combo unit fixtures); the new gate runs only on the real multi-source store. A new test
+`test_store_passes_build_recon_gate` exercises the actual gate fn, so build gate == test gate by construction.
+**D pre-flight (the user's required check):** ran the strict bidirectional identity across the ENTIRE clean historical
+store (2022-04→2026-04, all months) — **0 violations, 0 benign shortfalls** in either identity (groups+excluded==all AND
+route partition). So adopting the strict gate surfaces NOTHING pre-existing; the old "shortfalls degrade gracefully"
+worry never actually occurs in real data. Confirmed the gate would have CAUGHT the corrupt store (raises pointing at
+UNKNOWN 2026-04, "two source files mixed in one month-cell").
+
+**End-to-end demonstration (real corrupt store → recovery → re-ingest):** purge 2026-04 → discovery dedup picks the
+New-ICB-Structure file → normalise + month-label guard → merge → store reaches **2026-04 as a SINGLE vintage** (one
+source_file), all 6 new ICBs present (D7T5G/S0E4D/S1Y5D/S9B9J/T6Y0W/Z9B2Z), zero old merged ICBs for April, contiguity
+guard PASS, **assert_store_reconciles PASS (both directions, max|Δ|=0)**. Aside (out of scope, NOT fixed): `pipeline.run
+--synthetic` fails pre-existing on an unmapped synthetic 'Lower GI' label — confirmed identical on the original code; CI
+runs only pytest + the real run, not synthetic. **PAUSED before deploy per user.** Deliverables to commit on say-so:
+the 4 pipeline files + 2 test files + purged parquet + trimmed manifest + docs.
+
+## 2026-06-29 — Cron wedged 2 days (runs 28295888701 June-27, 28329562744 June-28): per-month merge unioned two April-2026 provisional vintages — INVESTIGATION, report-only, NO fix yet (Claude Code)
+
+**Symptom.** Scheduled cron FAILED June-27 + June-28 (29s/34s, exit 1), deploy correctly skipped (needs:build) — live
+site unaffected, still shows the June-26 deploy. NOT a fetch error, NOT an ODS outage, NOT a dependency issue. The
+failure is the **pytest gate** (workflow step runs FIRST, before any fetch — hence ~30s), reading the COMMITTED store.
+Two reconciliation tests fail in `tests/test_cancer_groups.py`:
+`test_real_store_reconciles_across_all_three_standards` (FDS28, |Δ|=2.0) and
+`test_cancer_group_route_partition_reconciles_in_store` (CMB62, |Δ|=15.0). Both assert the EXACT bidirectional
+identity `groups + excluded == all-cancers` (`.abs().max() < 0.6`).
+
+**Root cause (confirmed by drilling the June-26 store `f7ed40f:data/processed/tidy.parquet`).** A REAL NHS publishing
+event: on June 26 the 2026-27 FY sub-page carried April-2026 provisional under THREE filenames — the original
+`April-2026-Monthly-Combined-CSV-Provisional.csv`, a re-publication `2026-27-Apr-Monthly-Combined-CSV-Provisional.csv`,
+and `…-New-ICB-Structure.csv`. The June-26 cron (commit f7ed40f) ingested them. The single failing org is `UNKNOWN`
+(the long-standing ICB-level *unattributed* commissioner pseudo-org, present every month since 2022 — NOT a new code).
+For `UNKNOWN/FDS28/2026-04`: the `all` headline = **708** (from the re-published file), but the cancer-type rows sum to
+**710** — 708 from the re-published file PLUS a leftover **"Missing or Invalid" = 2** that survived from the *original*
+April file. Same mechanism for CMB62 (Δ=15): 7 combination + 1 route Screening-family rows survived from the original
+file that the re-publication restructured away. The two source files mixed into one cell.
+
+**Why the merge mixed them.** `normalise.merge_with_revisions` dedups on the full key
+`(month, org_level, org_code, standard, breakdown_type, breakdown_value)` via `drop_duplicates(keep=last)` after a stable
+sort on (final, cumulative). The two April files are BOTH per-month (`_cumul=0`) + BOTH provisional (`_final=0`) → they
+tie. Exact-key duplicates collapse to one, but breakdown rows present in ONLY ONE file have no collision, so BOTH are
+kept (a row-by-row UNION). When NHS re-publishes the same month with a non-identical breakdown decomposition, the union
+over-counts the cancer breakdown vs the `all` headline. The dedup has no notion of "one source file is authoritative for
+a whole (month) cell".
+
+**Why it shipped on June-26 but wedges June-27/28 (the load-bearing split-brain).** The BUILD recon gates
+(`build_site_data.py:222`, and the per-standard gate) are deliberately ONE-DIRECTIONAL — they fail only when groups/routes
+EXCEED the total (the inflation/double-count direction), treating a shortfall as "a route is missing, degrades
+gracefully". The over-count here is in the cancer-vs-all direction the build gate doesn't check, so June-26 built,
+committed (f7ed40f) and deployed cleanly. The pytest gate's recon is BIDIRECTIONAL and runs against the now-committed
+store → it catches the mismatch and blocks EVERY subsequent run at the pre-fetch gate. Same failure both days because the
+committed store can't change (the build can never get past the test gate to fetch/commit a fix). Note `test_real_store_
+every_label_maps` PASSED — every label maps; this is NOT an unmapped Cancer_Type.
+
+**Answers to the brief:** (1) error = `AssertionError` on the two store-recon tests above (FDS28 Δ2 / CMB62 Δ15), exit 1
+at the "Run tests" step. (2) ~30s = the pre-fetch pytest gate, not data processing. (3) NOT a clean fail-loud guard
+refusing bad NHS data — it's a half-caught condition: the lenient one-directional BUILD gate shipped a subtly
+over-counted merged store, and the strict TEST gate now wedges the cron after the fact. (4) YES there is a real
+external trigger — NHS re-published April-2026 provisional under multiple per-month filenames with non-identical
+breakdown row sets; the FY-boundary per-month ingest (added June-25) picks up all of them and the merge unions
+leftovers.
+
+**Recommended fix (NOT applied — user to decide).** (A) Make the merge choose ONE authoritative source file per
+(month[, cell]) at equal precedence tier instead of unioning breakdown rows — drop the losing sibling's rows wholesale,
+not just exact-key dupes. And/or (B) at discovery, ingest at most one per-month provisional file per month (prefer the
+New-ICB-Structure / most-recent re-publication). (C) Recovery: purge the corrupt 2026-04 rows + drop the offending
+April per-month URLs from `data/manifest.json` so CI re-ingests cleanly under the chosen rule (same playbook as the
+2026-06-25 pandas recovery). (D) Hardening: close the build/test split-brain — either tighten the build gate to the
+same bidirectional EXCLUDED_GROUP-aware identity the test uses (so a future mix fails the build LOUDLY before commit,
+not the cron two days later), or the inverse. PAUSED before any change per user.
+
 ## 2026-06-25 — pandas 3.0 silently broke blank-dimension classification (caught at live-verify) — FIXED + pinned (Claude Code)
 
 **Deployed the FY-boundary fix (run 28160596681, GREEN), then live-verify caught a real data bug:** the Cancer

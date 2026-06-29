@@ -52,6 +52,10 @@ def run_real():
     except Exception as e:
         print(f"Current-FY sub-page {sub_url} not available ({e}); "
               f"using main-page cumulative files only.")
+    # Collapse multiple vintages of the SAME month to one authoritative file before
+    # selection, so a month is never ingested from two disagreeing files (the
+    # 2026-04 ICB-merger triple that wedged the cron). Cumulatives pass through.
+    discovered = discover.dedupe_per_month(discovered)
     manifest = discover.load_manifest()
     todo = discover.select_files_to_process(discovered, manifest)
     store = _load_store()
@@ -96,6 +100,12 @@ def run_real():
     # Fail-loud series guard (part 3): no duplicate/missing month in the national
     # series across the cumulative<->per-month seam.
     normalise.assert_contiguous_national_months(store)
+    # Fail-loud BIDIRECTIONAL reconciliation gate (2026-06-29): the ten groups +
+    # Missing/Invalid residue must equal the all-cancers headline, and cancer x
+    # route must partition the group total — both exactly, both directions. This
+    # is the SAME check the store tests run, so a future vintage-mix fails the
+    # build here (before commit) rather than wedging the next run's test gate.
+    build_site_data.assert_store_reconciles(store)
     # Shared ODS org-status classification (current/former + succession links) plus
     # the NHS-trust code set for the provider-type filter. Fail-soft: on any ODS
     # outage this returns the last-known committed cache and never raises, so the

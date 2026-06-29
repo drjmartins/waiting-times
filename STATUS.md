@@ -2,7 +2,30 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-25 (Claude Code session; CWT FY-boundary fix DEPLOYED + LIVE-VERIFIED; pandas-3.0 blank-dimension bug caught at live-verify, FIXED + pinned, re-deployed + LIVE-VERIFIED)._
+_Last updated: 2026-06-29 (Claude Code session; cron-wedge fix BUILT + verified end-to-end, NOT deployed — paused per user)._
+
+## ⏸ BUILT, NOT DEPLOYED 2026-06-29 — cron-wedge fix (layered C+B+A+D); 76 tests pass
+The daily cron FAILED June-27 + June-28 (runs 28295888701/28329562744, ~30s, exit 1) at the pytest gate — NOT a fetch/
+ODS/dependency error. Root cause: on June-26 NHS published April-2026 provisional under THREE filenames (old-ICB-
+structure `April-2026-…`, FY-prefixed re-publication `2026-27-Apr-…`, and `…-New-ICB-Structure.csv`); the per-month
+merge UNIONED breakdown rows from two disagreeing vintages (the re-publication dropped rows the original kept), so the
+ten cancer groups over-counted the all-cancers headline by 2 (FDS28) / 15 (CMB62) for the UNKNOWN unattributed-ICB cell.
+The one-directional BUILD gate let it through and committed it (run 28255139256); the bidirectional pre-fetch TEST gate
+then wedged every later run. Live site UNAFFECTED (deploy needs:build; June-26's data is live, the 2/15-patient skew is
+invisible). FIX (all four, layered, verified end-to-end on the real corrupt store + real NHS files):
+- **C recovery:** purged corrupt 2026-04 rows (store→2026-03) + dropped the 3 April per-month URLs from manifest → CI
+  re-ingests April cleanly. Recovered store passes the pre-fetch test gate.
+- **B discovery:** `dedupe_per_month` keeps ONE vintage per (month, status), preferring the current org structure
+  (New-ICB-Structure marker > FY-prefixed re-publication > plain); cumulatives untouched. Each file is individually
+  self-consistent, so picking one = exact recon. April picks the New-ICB-Structure file (correct: old ICBs are Former
+  from Apr-2026). `_classify_file` now resolves single-month FY-prefixed names too.
+- **A merge (defence-in-depth):** `merge_with_revisions` makes a (month,org,standard) cell single-source — the winning
+  file supplies all rows, a losing sibling's rows drop wholesale. Proven to clean up even all-3-ingested.
+- **D hardening:** new bidirectional `assert_store_reconciles` runs on the CI build path before commit (mirrors the
+  store tests exactly → build gate == test gate). Pre-flight: the ENTIRE clean history passes the strict gate with 0
+  violations / 0 shortfalls — adopting it surfaces nothing pre-existing. Confirmed it catches the corrupt store.
+- **Verified:** re-ingest → April single-vintage, all 6 new ICBs present, no old merged ICBs for April, contiguity +
+  bidirectional recon PASS. 76 tests (71+5). Deliverables ready to commit on say-so. See DECISIONS 2026-06-29 (×2).
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-25 (run 28163463431, build+deploy GREEN; commit a914ec2) — FY-boundary fix + pandas-3.0 fix
 **Live checks pass** (cache-busted curl + headless on the deployed site): all three standards reach **2026-04, flagged
@@ -354,6 +377,12 @@ hook `?england=off`.
    comparison view (planned, not built). (b) Overdispersion ↔ study-protocol
    alignment — a methods decision for the research side (multiplicative Winsorised
    φ vs additive random-effects, Winsorisation fraction, whether to adjust).
+   (c) `python -m pipeline.run --synthetic` fails on an unmapped synthetic
+   Cancer_Type 'Lower GI' (cancer_groups.group_for raises) — PRE-EXISTING, found
+   2026-06-29. CI-independent (CI runs pytest + the real run only, never
+   --synthetic), so it never affected deploys; the offline-dev synthetic path is
+   just broken. Fix someday: map 'Lower GI' (and audit synthetic's labels against
+   GROUP_OF) so the offline demo build works again.
 
 ## Known things to keep an eye on
 - FDS28 funnel has very high φ (~80) — verified not degenerate (15 trusts beyond
