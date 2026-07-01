@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-06-25",
+  "as_of": "2026-06-30",
   "nhs_trust_codes": [
     "G6V2S",
     "K0N6A",
@@ -969,7 +969,7 @@
       "successors": [
         {
           "code": "RA7",
-          "name": "UNIVERSITY HOSPITALS BRISTOL AND WESTON NHS FOUNDATION TRUST"
+          "name": "BRISTOL NHS FOUNDATION TRUST"
         }
       ]
     },
@@ -987,6 +987,23 @@
       "opened": null,
       "predecessors": [],
       "status": "former",
+      "successors": []
+    },
+    "RA7": {
+      "closed": null,
+      "name": "BRISTOL NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RA3",
+          "name": "WESTON AREA HEALTH NHS TRUST"
+        },
+        {
+          "code": "RVJ",
+          "name": "NORTH BRISTOL NHS TRUST"
+        }
+      ],
+      "status": "current",
       "successors": []
     },
     "RA8": {
@@ -4331,6 +4348,28 @@
       "predecessors": [],
       "status": "former",
       "successors": []
+    },
+    "RVJ": {
+      "closed": "2026-07-01",
+      "name": "NORTH BRISTOL NHS TRUST",
+      "opened": "1999-04-01",
+      "predecessors": [
+        {
+          "code": "REE",
+          "name": "SOUTHMEAD HEALTH SERVICES NHS TRUST"
+        },
+        {
+          "code": "REB",
+          "name": "FRENCHAY HEALTHCARE NHS TRUST"
+        }
+      ],
+      "status": "former",
+      "successors": [
+        {
+          "code": "RA7",
+          "name": "BRISTOL NHS FOUNDATION TRUST"
+        }
+      ]
     },
     "RVK": {
       "closed": null,
