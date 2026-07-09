@@ -29,7 +29,17 @@
       "financial_year": "2026-27",
       "status": "provisional",
       "anchor_text": "April 2026 Monthly Combined CSV Provisional New ICB Structure"
+    },
+    "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/07/2026-27-Apr-May-Cumulative-Monthly-Combined-CSV-Provisional.csv": {
+      "financial_year": "2026-27",
+      "status": "provisional",
+      "anchor_text": "2026-27 Apr &#8211; May Monthly Combined CSV Provisional (CSV, 10.1MB)"
+    },
+    "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/07/May-2026-Monthly-Combined-CSV-Provisional.csv": {
+      "financial_year": "2026-27",
+      "status": "provisional",
+      "anchor_text": "May 2026 Monthly Combined CSV Provisional"
     }
   },
-  "last_checked": "2026-06-29T09:26:56.726168Z"
+  "last_checked": "2026-07-09T17:50:53.464948Z"
 }
