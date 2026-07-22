@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-07-13",
+  "as_of": "2026-07-21",
   "nhs_trust_codes": [
     "G6V2S",
     "K0N6A",
@@ -4832,6 +4832,23 @@
           "name": "SUSSEX PARTNERSHIP NHS FOUNDATION TRUST"
         }
       ]
+    },
+    "RXG": {
+      "closed": null,
+      "name": "SOUTH WEST YORKSHIRE PARTNERSHIP TEACHING NHS FOUNDATION TRUST",
+      "opened": null,
+      "predecessors": [
+        {
+          "code": "RGF",
+          "name": "WAKEFIELD AND PONTEFRACT COMMUNITY HEALTH NHS TRUST"
+        },
+        {
+          "code": "RMW",
+          "name": "DEWSBURY HEALTH CARE NHS TRUST"
+        }
+      ],
+      "status": "current",
+      "successors": []
     },
     "RXH": {
       "closed": "2021-04-01",
