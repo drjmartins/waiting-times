@@ -39,7 +39,17 @@
       "financial_year": "2026-27",
       "status": "provisional",
       "anchor_text": "May 2026 Monthly Combined CSV Provisional"
+    },
+    "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/08/2026-27-Apr-Jun-Cumulative-Monthly-Combined-CSV-Provisional.csv": {
+      "financial_year": "2026-27",
+      "status": "provisional",
+      "anchor_text": "2026-27 Apr &#8211; Jun Monthly Combined CSV Provisional (CSV, 14.0MB)"
+    },
+    "https://www.england.nhs.uk/statistics/wp-content/uploads/sites/2/2026/08/June-2026-Monthly-Combined-CSV-Provisional.csv": {
+      "financial_year": "2026-27",
+      "status": "provisional",
+      "anchor_text": "June 2026 Monthly Combined CSV Provisional"
     }
   },
-  "last_checked": "2026-07-09T17:50:53.464948Z"
+  "last_checked": "2026-08-13T16:50:11.470396Z"
 }
