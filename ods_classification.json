@@ -866,19 +866,6 @@
       "status": "former",
       "successors": []
     },
-    "R1E": {
-      "closed": "2018-06-01",
-      "name": "STAFFORDSHIRE AND STOKE ON TRENT PARTNERSHIP NHS TRUST",
-      "opened": null,
-      "predecessors": [],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RRE",
-          "name": "MIDLANDS PARTNERSHIP UNIVERSITY NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "R1G": {
       "closed": "2015-10-01",
       "name": "TORBAY AND SOUTHERN DEVON HEALTH AND CARE NHS TRUST",
@@ -959,19 +946,6 @@
       "predecessors": [],
       "status": "former",
       "successors": []
-    },
-    "RA3": {
-      "closed": "2020-04-01",
-      "name": "WESTON AREA HEALTH NHS TRUST",
-      "opened": null,
-      "predecessors": [],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RA7",
-          "name": "BRISTOL NHS FOUNDATION TRUST"
-        }
-      ]
     },
     "RA5": {
       "closed": null,
@@ -1203,19 +1177,6 @@
       "status": "former",
       "successors": []
     },
-    "RBA": {
-      "closed": "2020-04-01",
-      "name": "TAUNTON AND SOMERSET NHS FOUNDATION TRUST",
-      "opened": null,
-      "predecessors": [],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RH5",
-          "name": "SOMERSET NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "RBB": {
       "closed": "2015-02-01",
       "name": "ROYAL NATIONAL HOSPITAL FOR RHEUMATIC DISEASES NHS FOUNDATION TRUST",
@@ -1321,24 +1282,6 @@
         {
           "code": "RC9",
           "name": "BEDFORDSHIRE HOSPITALS NHS FOUNDATION TRUST"
-        }
-      ]
-    },
-    "RC3": {
-      "closed": "2014-10-01",
-      "name": "EALING HOSPITAL NHS TRUST",
-      "opened": "1992-04-01",
-      "predecessors": [
-        {
-          "code": "EKA",
-          "name": "EKA"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "R1K",
-          "name": "LONDON NORTH WEST UNIVERSITY HEALTHCARE NHS TRUST"
         }
       ]
     },
@@ -1533,24 +1476,6 @@
       "predecessors": [],
       "status": "former",
       "successors": []
-    },
-    "RD7": {
-      "closed": "2014-10-01",
-      "name": "HEATHERWOOD AND WEXHAM PARK HOSPITALS NHS FOUNDATION TRUST",
-      "opened": "1992-04-01",
-      "predecessors": [
-        {
-          "code": "KE1",
-          "name": "KE1"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RDU",
-          "name": "FRIMLEY HEALTH NHS FOUNDATION TRUST"
-        }
-      ]
     },
     "RD8": {
       "closed": null,
@@ -2032,24 +1957,6 @@
       "predecessors": [],
       "status": "former",
       "successors": []
-    },
-    "RFW": {
-      "closed": "2015-09-01",
-      "name": "WEST MIDDLESEX UNIVERSITY HOSPITAL NHS TRUST",
-      "opened": "1993-04-01",
-      "predecessors": [
-        {
-          "code": "EJW",
-          "name": "EJW"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RQM",
-          "name": "CHELSEA AND WESTMINSTER HOSPITAL NHS FOUNDATION TRUST"
-        }
-      ]
     },
     "RFX": {
       "closed": null,
@@ -2585,24 +2492,6 @@
       "status": "former",
       "successors": []
     },
-    "RJF": {
-      "closed": "2018-07-01",
-      "name": "BURTON HOSPITALS NHS FOUNDATION TRUST",
-      "opened": "1993-04-01",
-      "predecessors": [
-        {
-          "code": "MH1",
-          "name": "MH1"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RTG",
-          "name": "UNIVERSITY HOSPITALS OF DERBY AND BURTON NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "RJH": {
       "closed": "2007-04-07",
       "name": "GOOD HOPE HOSPITAL NHS TRUST",
@@ -2909,24 +2798,6 @@
       "status": "former",
       "successors": []
     },
-    "RLU": {
-      "closed": "2017-02-01",
-      "name": "BIRMINGHAM WOMEN'S NHS FOUNDATION TRUST",
-      "opened": "1994-04-01",
-      "predecessors": [
-        {
-          "code": "MQ5",
-          "name": "MQ5"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RQ3",
-          "name": "BIRMINGHAM WOMEN'S AND CHILDREN'S NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "RLW": {
       "closed": null,
       "name": "CITY HOSPITAL NHS TRUST",
@@ -2955,28 +2826,6 @@
       ],
       "status": "current",
       "successors": []
-    },
-    "RM2": {
-      "closed": "2017-10-01",
-      "name": "UNIVERSITY HOSPITAL OF SOUTH MANCHESTER NHS FOUNDATION TRUST",
-      "opened": "1994-04-01",
-      "predecessors": [
-        {
-          "code": "PM1",
-          "name": "PM1"
-        },
-        {
-          "code": "PM2",
-          "name": "PM2"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "R0A",
-          "name": "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST"
-        }
-      ]
     },
     "RM4": {
       "closed": "2012-04-01",
@@ -3327,28 +3176,6 @@
         }
       ]
     },
-    "RNL": {
-      "closed": "2019-10-01",
-      "name": "NORTH CUMBRIA UNIVERSITY HOSPITALS NHS TRUST",
-      "opened": "2001-04-01",
-      "predecessors": [
-        {
-          "code": "RLG",
-          "name": "CARLISLE HOSPITALS NHS TRUST"
-        },
-        {
-          "code": "RE7",
-          "name": "WEST CUMBRIA HEALTH CARE NHS TRUST"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RNN",
-          "name": "NORTH CUMBRIA INTEGRATED CARE NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "RNM": {
       "closed": null,
       "name": "NEWCASTLE CITY HEALTH NHS TRUST",
@@ -3551,24 +3378,6 @@
       "status": "former",
       "successors": []
     },
-    "RPR": {
-      "closed": "2009-04-01",
-      "name": "ROYAL WEST SUSSEX NHS TRUST",
-      "opened": "1994-04-01",
-      "predecessors": [
-        {
-          "code": "HSR",
-          "name": "HSR"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RYR",
-          "name": "UNIVERSITY HOSPITALS SUSSEX NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "RPS": {
       "closed": null,
       "name": "MID SUSSEX NHS TRUST",
@@ -3637,28 +3446,6 @@
       "predecessors": [],
       "status": "former",
       "successors": []
-    },
-    "RQ6": {
-      "closed": "2019-10-01",
-      "name": "ROYAL LIVERPOOL AND BROADGREEN UNIVERSITY HOSPITALS NHS TRUST",
-      "opened": "1995-04-01",
-      "predecessors": [
-        {
-          "code": "RBM",
-          "name": "ROYAL LIVERPOOL UNIVERSITY HOSPITAL NHS TRUST"
-        },
-        {
-          "code": "RBR",
-          "name": "BROADGREEN HOSPITAL NHS TRUST"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "REM",
-          "name": "LIVERPOOL UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"
-        }
-      ]
     },
     "RQ7": {
       "closed": null,
@@ -4302,28 +4089,6 @@
         }
       ]
     },
-    "RV8": {
-      "closed": "2014-10-01",
-      "name": "NORTH WEST LONDON HOSPITALS NHS TRUST",
-      "opened": "1999-04-01",
-      "predecessors": [
-        {
-          "code": "RFZ",
-          "name": "NORTHWICK PARK AND ST MARKS NHS TRUST"
-        },
-        {
-          "code": "RAU",
-          "name": "CENTRAL MIDDLESEX HOSPITAL NHS TRUST"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "R1K",
-          "name": "LONDON NORTH WEST UNIVERSITY HEALTHCARE NHS TRUST"
-        }
-      ]
-    },
     "RV9": {
       "closed": null,
       "name": "HUMBER TEACHING NHS FOUNDATION TRUST",
@@ -4508,32 +4273,6 @@
       "predecessors": [],
       "status": "former",
       "successors": []
-    },
-    "RW3": {
-      "closed": "2017-10-01",
-      "name": "CENTRAL MANCHESTER UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
-      "opened": "2001-04-01",
-      "predecessors": [
-        {
-          "code": "RQ7",
-          "name": "THE MANCHESTER CHILDREN'S HOSPITALS NHS TRUST"
-        },
-        {
-          "code": "RBU",
-          "name": "CENTRAL MANCHESTER HEALTHCARE NHS TRUST"
-        },
-        {
-          "code": "RM4",
-          "name": "TRAFFORD HEALTHCARE NHS TRUST"
-        }
-      ],
-      "status": "former",
-      "successors": [
-        {
-          "code": "R0A",
-          "name": "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST"
-        }
-      ]
     },
     "RW7": {
       "closed": null,
@@ -4952,19 +4691,6 @@
       "status": "current",
       "successors": []
     },
-    "RY1": {
-      "closed": "2018-04-01",
-      "name": "LIVERPOOL COMMUNITY HEALTH NHS TRUST",
-      "opened": null,
-      "predecessors": [],
-      "status": "former",
-      "successors": [
-        {
-          "code": "RW4",
-          "name": "MERSEY CARE NHS FOUNDATION TRUST"
-        }
-      ]
-    },
     "RY2": {
       "closed": "2026-04-01",
       "name": "BRIDGEWATER COMMUNITY HEALTHCARE NHS FOUNDATION TRUST",
@@ -5079,19 +4805,6 @@
       "status": "current",
       "successors": []
     },
-    "RYH": {
-      "closed": null,
-      "name": "NHS DIRECT NHS TRUST",
-      "opened": "2007-04-01",
-      "predecessors": [
-        {
-          "code": "T1370",
-          "name": "T1370"
-        }
-      ],
-      "status": "current",
-      "successors": []
-    },
     "RYJ": {
       "closed": null,
       "name": "IMPERIAL COLLEGE HEALTHCARE NHS TRUST",
@@ -5139,27 +4852,6 @@
       "opened": null,
       "predecessors": [],
       "status": "former",
-      "successors": []
-    },
-    "RYQ": {
-      "closed": null,
-      "name": "SOUTH LONDON HEALTHCARE NHS TRUST",
-      "opened": "2009-04-01",
-      "predecessors": [
-        {
-          "code": "RG3",
-          "name": "BROMLEY HOSPITALS NHS TRUST"
-        },
-        {
-          "code": "RGZ",
-          "name": "QUEEN MARY'S SIDCUP NHS TRUST"
-        },
-        {
-          "code": "RG2",
-          "name": "QUEEN ELIZABETH HOSPITAL NHS TRUST"
-        }
-      ],
-      "status": "current",
       "successors": []
     },
     "RYR": {
