@@ -6,6 +6,76 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-09-18 — Egress-blocking investigation + notification-mute options — REPORT ONLY, nothing built, nothing changed (Claude Code)
+
+Confirms and sharpens the theory from the last entry, and gives ranked options for two tracks the user asked to
+investigate rather than have solved by a code change. No code, workflow file, or GitHub setting was touched.
+
+**Track 1 — the hypothesis is well-precedented, not exotic.** GitHub-hosted Actions runners egress from a large
+shared Azure IP pool (GitHub's published `actions` ranges: **6,926 CIDR blocks**, `api.github.com/meta`). This exact
+pool is a known, common target of "hosting-provider" bot-mitigation rules that treat cloud/datacenter-origin traffic
+as inherently suspicious regardless of headers — most directly, **AWS WAF's managed IP-reputation rule group ships a
+`HostingProviderIPList`** that explicitly nets Azure/AWS/GCP-etc. ranges (AWS's own docs + support threads confirm
+this is a known false-positive source people request exclusions for), and Cloudflare's Bot Fight Mode/WAF has the
+same documented failure mode against GitHub Actions specifically (a Cloudflare Community thread titled exactly "My
+WAF Firewall rule is blocking my requests from Github Actions"). One illustrative real case matches our symptom
+almost exactly: bot mitigation answering **quietly** — "the mitigation is not blocking everything — it is
+discriminating on client... it returned a clean-looking pass/fail over a page that was not the site" — i.e. 200 OK,
+no exception, just not-the-real-content. That is precisely what both our RTT (09-16/17) and cancer (09-18) failures
+looked like: no WARN/HTTP-error logged, just zero matching links. NHS's response headers (`x-cache: Hit from
+cloudfront`, `server: nginx`) are consistent with a CloudFront-fronted origin, which is where an AWS WAF would sit —
+consistent with, not proof of, the IP-reputation mechanism, since we can't inspect NHS's WAF config directly.
+
+**Options to change the fetch's network path (ranked by robustness vs. maintenance cost — not built, for user choice):**
+1. **Self-hosted runner** (on a machine/VM the user controls, egressing from a non-hosting-flagged IP). Most direct,
+   most durable fix. Highest ongoing cost: a machine that must stay online for the daily schedule, patched, and is a
+   new security surface running GitHub's runner agent.
+2. **Proxy / exit-node relay for just the two NHS fetch calls**, `ubuntu-latest` runner otherwise unchanged (e.g. a
+   small always-on VM or home exit node the pipeline routes `requests` through via `proxies=`). Moderate cost: one
+   small always-on relay + a secret to manage; smaller blast radius than a full self-hosted runner since only the
+   fetch step's egress changes.
+3. **Decouple fetch from build**: a separate, non-Actions-egressed fetcher (the user's own machine/cron, or a
+   non-flagged host) does the NHS scrape and hands CI the raw files/links (via a data-holding branch, release asset,
+   or bucket) instead of CI fetching NHS directly. Most architectural surgery — two moving parts to keep healthy
+   instead of one, and a new hand-off artifact to design (cancer's raw CSVs are large; the FY-boundary work already
+   noted cwt_tidy.csv is too big for git).
+4. **UA/header tuning only** (no network-path change) — cheap to try, but LOW confidence: if the mechanism really is
+   IP-reputation (as AWS's HostingProviderIPList explicitly is), it keys on source IP/ASN, not headers, so this is
+   unlikely to help; worth a quick free experiment before investing in 1–3, not a plan to rely on.
+5. **GitHub "larger runners" with region selection** (Team/Enterprise plans only) — picking a different Azure region
+   might dodge a stale/regional reputation entry, but the IP is still Azure/hosting-flagged in general, so this is a
+   low-confidence, paid-tier-gated option.
+6. **Ask NHS England to allowlist or point at a proper data API** — outside engineering entirely: NHS publishes this
+   data precisely to be consumed, so their web/CDN team may not intend to block a legitimate low-volume daily
+   consumer, and could allowlist by ASN or point to a non-WAF-guarded bulk-data endpoint if one exists. Zero
+   engineering cost, most durable if it works, but slow/uncertain turnaround and outside this session's ability to
+   action (a support request only the user can send).
+
+**Track 2 — notification-mute options, ranked by reversibility (report only — nothing toggled):**
+- **Recommended: per-repo "Watch" → Custom → uncheck "Actions"** on `drjmartins/waiting-times`
+  (github.com/drjmartins/waiting-times → Watch dropdown → Custom). Purely a personal inbox filter: the schedule,
+  the workflow, the retry, and the fail-loud guard all keep running exactly as now — NHS still gets fetched every
+  day, so if the block clears, the cron silently starts succeeding again with zero action needed. Undo = re-check
+  the same box. The only real risk: it also mutes any OTHER future failure on this repo while it's off, so it's a
+  "remember to check the Actions tab occasionally" tradeoff, not a "forget forever and go stale" one.
+- **Discouraged: pausing the `schedule:` trigger** (comment it out, keep `workflow_dispatch`) or **`gh workflow
+  disable`**. Both stop the workflow from RUNNING at all, not just from emailing — recreating exactly the silent
+  stale-data failure mode this session's guard was built to end, and worse: zero attempts, not just zero alerts.
+  Only the notification-settings route (above) keeps the self-healing property (a cleared block fixes itself with no
+  further action) that the do-nothing-else plan below depends on.
+
+**Track 1, part 1 (wait for tonight's cron) — not yet observed.** Tonight's scheduled run (~19:1x–19:3x UTC) hadn't
+happened yet at time of writing; will report the result when checked/asked. Live site remains safe on the
+2026-09-15 deploy regardless of outcome.
+
+Sources: [Cloudflare Community — "My WAF Firewall rule is blocking my requests from GitHub Actions"](https://community.cloudflare.com/t/my-waf-firewall-rule-is-blocking-my-requests-from-github-actions-how-to-fix-it/415086) ·
+[AWS re:Post — "AWS WAF Has My ISP's IP Addresses on HostingProviderIPList"](https://repost.aws/questions/QUvsGopLg3TVKsI7u0_gqmEA/aws-waf-has-my-isp-s-ip-addresses-on-hostingprovideriplist-how-to-get-them-removed) ·
+[AWS WAF developer guide — IP reputation rule groups](https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html) ·
+[AWS knowledge center — allow IPs blocked by reputation/anonymous lists](https://www.repost.aws/knowledge-center/waf-allow-ip-using-reputation-anon-list) ·
+[GitHub Discussions — Actions IP ranges](https://github.com/orgs/community/discussions/26442) ·
+[Ken Muse — Restricting IP Access on GitHub-Hosted Runners](https://www.kenmuse.com/blog/restricting-ip-access-on-github-hosted-runners/) ·
+[GitHub roadmap #821 — outbound network control for GitHub-hosted runners](https://github.com/github/roadmap/issues/821)
+
 ## 2026-09-18 — Retry fix PUSHED (commit f55d992); live-verify workflow_dispatch FAILED — the outage is broader/ongoing, not a cleared 2-day blip (Claude Code)
 
 Committed + pushed the retry-with-backoff fix (previous entry) and triggered a watched `workflow_dispatch` (run
