@@ -6,6 +6,53 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-09-18 — Retry fix PUSHED (commit f55d992); live-verify workflow_dispatch FAILED — the outage is broader/ongoing, not a cleared 2-day blip (Claude Code)
+
+Committed + pushed the retry-with-backoff fix (previous entry) and triggered a watched `workflow_dispatch` (run
+35337260861) to live-verify per user say-so. **It failed** — not the way expected.
+
+**What happened.** The cancer step failed this time (RTT never got to run — job stops on the first failed step):
+`Real run failed (discovered no Combined CSV links on the NHS source page(s) — refusing to build)`, with both retry
+log lines present (`Discovered 0 Combined CSV links on attempt 1/3` / `attempt 2/3`) — so the NEW retry+guard code
+executed exactly as designed: it retried twice with the full 5s backoff, then failed loud rather than silently, after
+genuinely getting zero links on all 3 attempts. Deploy correctly skipped (needs:build); live site unaffected, still
+serving the Sept-15 deploy (verified: cancer + RTT meta.json both still show `built_at` 2026-09-15 — no regression,
+but no update either, so both dashboards are now 3 days stale).
+
+**This is NOT a code bug.** Ran the exact same call (`pipeline.discover.scrape_all_links_with_retry()`) from this
+machine within a couple of minutes of the failed CI run and got **11 real links** back (6 main-page cumulative + 5
+current-FY sub-page monthly files) — identical code, identical URLs, identical User-Agent header, working correctly.
+So the discovery logic and the retry wiring are both fine; the difference is which network path the request travels.
+
+**Revised theory — this looks like a GitHub-Actions-network-specific issue, not a rare NHS-side 2-day blip that already
+cleared.** Three things now point away from Wednesday's "transient CDN glitch, probably resolved" read: (1) the SAME
+"200 OK, zero expected content, no exception" symptom now hit a SECOND, unrelated NHS page family (cancer, not just
+RTT) on a THIRD calendar day; (2) it reproduced on literally the first live test after the fix, i.e. it is still
+happening right now, not just on 09-16/17; (3) my own fetch of the identical page succeeds immediately. The earlier
+curl check (2026-09-18 investigation) that found the RTT page fine used `x-cache: Hit from cloudfront` /
+`x-amz-cf-pop: LHR5-P3` (a London edge) — my traffic and GitHub Actions' traffic (Azure `westus` per the run's own
+"Runner Image" log block) very plausibly resolve to DIFFERENT CloudFront edge PoPs for the same Anycast domain. The
+leading hypothesis is now a US-side CloudFront edge (or a WAF/bot-mitigation rule keyed on cloud-hosting ASINs/IP
+ranges) serving england.nhs.uk traffic FROM GitHub Actions' network specifically with stripped/empty page bodies —
+stable enough within a single run's ~10s retry window that 3 quick attempts couldn't route around it, so a short
+bounded retry cannot be expected to fix this class of failure; it can only rescue a genuinely brief, single-request
+blip (which is still a real and worthwhile case to guard against, just evidently not what's happening this week).
+
+**Practical consequence of what's now live on master:** for as long as this persists, EVERY future cron run will
+likely fail loud on cancer (probably RTT too, though this run never reached it) — a real behaviour change from before,
+where cancer would have silently stayed green on stale data. That is the correct trade-off per the user's own
+stated goal (loud beats silent), but it means the site gets NO further daily updates and the cron alerts on every
+run until the underlying NHS/CloudFront/GitHub-Actions path issue clears.
+
+**Not declaring this deployed-and-verified — it explicitly isn't.** The retry code is confirmed live on master and
+confirmed to behave exactly as designed (retries, backs off, fails loud only after exhausting attempts) — that part
+is proven, not undone. But the live-verification the user asked for (a green run, both pipelines completing, gates
+intact) did NOT happen; the workflow_dispatch run failed for a real, currently-active reason outside this fix's
+control. Awaiting user direction: candidates are (a) wait and watch tonight's scheduled cron in case the bad routing
+clears on its own; (b) investigate further (NHS/GitHub status pages, whether GitHub Actions' published IP ranges are
+listed anywhere as blocked); (c) a much longer/more patient retry budget if there's reason to think this cycles; (d)
+do nothing further right now — the live site is safe on the Sept-15 deploy regardless.
+
 ## 2026-09-18 — Bounded retry-with-backoff for the transient empty-discovery glitch, BOTH pipelines, symmetric — BUILT + tested, NOT DEPLOYED (Claude Code)
 
 Fixes the class, not the instance, per user direction: the Sept-16/17 failure mode (NHS/CloudFront briefly serving

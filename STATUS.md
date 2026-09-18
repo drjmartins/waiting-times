@@ -2,7 +2,19 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-06-29 (Claude Code session; cron-wedge fix DEPLOYED + LIVE-VERIFIED, run 28362120515)._
+_Last updated: 2026-09-18 (Claude Code session; retry fix pushed but live-verify FAILED — see open item below)._
+
+## ⚠️ OPEN — cron down since 2026-09-16; retry-with-backoff fix pushed (commit f55d992) but did NOT clear it on live-verify
+Both dashboards are stuck on the **2026-09-15** deploy (3+ days stale as of 2026-09-18). Root cause: NHS's site
+returns HTTP 200 with **zero of the expected data-file links** to GitHub Actions' network specifically (confirmed:
+the identical code/URL fetched from elsewhere returns full correct content within minutes of a failing CI run) — not
+an NHS format change, not a code bug. Hit RTT on Sept-16/17, then ALSO hit cancer on a manual re-test Sept-18, so it's
+broader and more persistent than first thought (leading theory: a CloudFront edge PoP or WAF rule specific to
+GitHub Actions' egress network, not a brief self-clearing blip). Added a bounded retry (3 attempts, 5s backoff) to
+BOTH pipelines' discovery, plus a fail-loud guard on cancer that didn't exist before (a silent gap this surfaced) —
+both are live on master and proven to work exactly as designed (11 tests), but the retry is too short to route
+around a fault that's stable for the ~10s it tested. **Next scheduled cron is the thing to watch**; see DECISIONS.md
+2026-09-18 (×2) for full detail and options. Live site is safe either way (still serving the last good Sept-15 deploy).
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-29 (run 28362120515, build+deploy GREEN; commit 15acb64) — cron-wedge fix (layered C+B+A+D); 76 tests pass
 **Cron UNWEDGED** (14m6s build + 14s deploy — a real full run, vs the ~30s test-gate failures June-27/28). **Live checks
