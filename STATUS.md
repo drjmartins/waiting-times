@@ -14,7 +14,16 @@ GitHub Actions' egress network, not a brief self-clearing blip). Added a bounded
 BOTH pipelines' discovery, plus a fail-loud guard on cancer that didn't exist before (a silent gap this surfaced) —
 both are live on master and proven to work exactly as designed (11 tests), but the retry is too short to route
 around a fault that's stable for the ~10s it tested. **Next scheduled cron is the thing to watch**; see DECISIONS.md
-2026-09-18 (×2) for full detail and options. Live site is safe either way (still serving the last good Sept-15 deploy).
+2026-09-18 (×3) for full detail and options. Live site is safe either way (still serving the last good Sept-15 deploy).
+
+**Failure emails are muted by a personal GitHub inbox filter (repo Watch → Custom → "Actions" unchecked on
+drjmartins/waiting-times), NOT by pausing anything.** The schedule, the retry, and the fail-loud guard are all still
+running exactly as before, every day, unattended — so if the block clears on its own, the cron quietly starts
+succeeding again with zero action needed. This is deliberately reversible with one checkbox (re-check "Actions" in
+that same Custom watch menu) and does NOT touch `.github/workflows/update-data.yml` or the workflow's enabled state.
+**Tradeoff to remember: this also mutes any OTHER future Actions failure on this repo while it's off** — so check
+the [Actions tab](https://github.com/drjmartins/waiting-times/actions) periodically rather than relying on email
+until this is resolved and the filter is turned back on.
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-29 (run 28362120515, build+deploy GREEN; commit 15acb64) — cron-wedge fix (layered C+B+A+D); 76 tests pass
 **Cron UNWEDGED** (14m6s build + 14s deploy — a real full run, vs the ~30s test-gate failures June-27/28). **Live checks

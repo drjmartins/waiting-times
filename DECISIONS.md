@@ -6,6 +6,37 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-09-18 — Decision recorded: mute-by-inbox-filter (user applies), no workaround yet, NHS-outreach ruled out (Claude Code)
+
+User's call on all three open questions from the investigation report. Nothing built or toggled by this session.
+
+**MUTE — confirmed path, user will apply it themselves.** GitHub repo page → **Watch** dropdown (top right, next to
+Star/Fork) → **Custom** → uncheck **Actions** → Apply, on `drjmartins/waiting-times`. This is a personal notification
+subscription setting only — it does not touch `.github/workflows/update-data.yml`, does not pause or disable the
+workflow, and does not affect other collaborators. The schedule keeps firing daily, the retry keeps attempting
+recovery, and the fail-loud guard keeps guarding — all exactly as now, silently, so a self-clearing block requires
+zero follow-up action. Reversal is the same menu, same checkbox, re-checked. Noted in STATUS.md's OPEN banner so the
+mute-vs-paused distinction stays visible, plus a standing reminder to check the Actions tab periodically since other
+future failures on this repo are muted too while this is in effect.
+
+**WORKAROUND — not building one yet.** Watching the next few scheduled crons first; if the block clears on its own,
+this costs nothing further. Rationale for waiting stays as logged in the previous two entries (a bounded retry can't
+be expected to route around a fault stable across a whole retry window, but we don't yet know if the underlying
+condition itself is stable across DAYS — only that it was stable within the ~10s of one job's retry attempts).
+
+**DURABLE FIX, if it persists — narrowed candidate list.** Option 6 (ask NHS to allowlist / point at a proper data
+API) is RULED OUT — not realistic for this project to pursue. If the block hasn't cleared after ~3-4 more scheduled
+cycles, the fix will be technical, narrowed to the two candidates from the investigation report:
+  - **#2 — proxy/exit-node relay for just the two NHS fetch calls**, `ubuntu-latest` runner otherwise unchanged.
+  - **#1 — self-hosted runner** egressing from a non-hosting-flagged IP.
+(Options #3 decouple-fetch-from-build, #4 UA/header tuning, #5 larger-runner region selection remain on the table
+only as lower-priority fallbacks — not the two front-runners.) No action needed now; this just marks where to start
+if/when the trigger below fires.
+
+**Trigger to revisit:** still failing after ~3-4 scheduled cycles (i.e. cron failures persisting into roughly
+2026-09-21/22). Will report each scheduled cron's result as it's checked; STATUS.md's OPEN banner stays until this
+resolves either way (self-clears, or a durable fix from the two candidates above ships).
+
 ## 2026-09-18 — Egress-blocking investigation + notification-mute options — REPORT ONLY, nothing built, nothing changed (Claude Code)
 
 Confirms and sharpens the theory from the last entry, and gives ranked options for two tracks the user asked to
