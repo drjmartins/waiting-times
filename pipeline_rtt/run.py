@@ -24,13 +24,7 @@ def run_real():
     import requests
     fys = discover.financial_years()
     print(f"Scraping {len(fys)} FY pages: {', '.join(fys)}")
-    htmls = []
-    for fy in fys:
-        try:
-            htmls.append(discover.fetch_page_html(discover.fy_page_url(fy)))
-        except Exception as e:
-            print(f"  WARN: {fy} page fetch failed ({e})")
-    links = discover.discover_links(htmls)
+    links = discover.discover_links_with_retry(fys)
     if not links:
         raise RuntimeError("discovered no Full-CSV links — refusing to build")
     print(f"Discovered {len(links)} monthly Full-CSV files "

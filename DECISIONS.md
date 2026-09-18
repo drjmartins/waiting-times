@@ -6,6 +6,93 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-09-18 — Bounded retry-with-backoff for the transient empty-discovery glitch, BOTH pipelines, symmetric — BUILT + tested, NOT DEPLOYED (Claude Code)
+
+Fixes the class, not the instance, per user direction: the Sept-16/17 failure mode (NHS/CloudFront briefly serving
+200-OK with zero of the expected links, no HTTP error) hits both pipelines' discovery the same way, since both scrape
+the same NHS domain with the same "found nothing → refuse to build" intent — RTT just got unlucky first.
+
+**New shared helper `pipeline_common/retry.py::retry_until_nonempty(fn, attempts=3, backoff_seconds=5.0, sleep_fn, on_retry)`.**
+Calls `fn()` up to `attempts` times, returning as soon as a call is truthy; if every attempt is still empty/falsy,
+returns the last (empty) result UNCHANGED so the caller's own fail-loud guard fires on it. Deliberately bounded (3
+tries, short backoff) and deliberately does NOT catch/retry exceptions — a real HTTP error is still the caller's own
+per-page try/except's job, unchanged. `sleep_fn` is injectable so tests never actually wait.
+
+**RTT (`pipeline_rtt/discover.py`).** Moved the "fetch every FY page, WARN+skip on error, combine links" loop out of
+`run.py` into a new `scrape_all_links(fys)`, then wrapped it in `discover_links_with_retry(fys)`. `run.py::run_real()`
+now calls `discover.discover_links_with_retry(fys)` in place of the old inline loop; the existing
+`if not links: raise RuntimeError(...)` guard is UNCHANGED — it now just fires only after retries are exhausted.
+
+**Cancer (`pipeline/discover.py`) — same fix, PLUS a guard that didn't exist before.** Cancer's `run_real()` had NO
+equivalent to RTT's "zero discovery → refuse to build" check: a genuinely empty main-page scrape would just print "No
+new or revised files" and silently rebuild from the existing store, indistinguishable from the ordinary (extremely
+common) case of no new NHS publication that day. So cancer wasn't just "equally exposed and didn't get unlucky" — it
+had no guard to even NOTICE if it did. Added `scrape_all_links()` (the existing main+current-FY-sub-page fetch, factored
+out unchanged — a sub-page 404 is still expected/tolerated) wrapped in `scrape_all_links_with_retry()`, and a NEW
+fail-loud guard in `run.py::run_real()`: `if not discovered: raise RuntimeError("discovered no Combined CSV links on
+the NHS source page(s) — refusing to build")`. Safe to add: the main page always lists at least the historical per-FY
+cumulative files in the healthy case, so a genuinely empty combined scrape is exactly the same "something's wrong"
+signal RTT already relies on — the previous silent-empty behaviour would already have quietly hidden this Sept-16/17
+event on the cancer side too, had it also hit cancer's page that day (we can't tell either way — see below).
+
+**Bounded means bounded, both directions.** `tests/test_retry.py` (5 tests) exercises the generic helper directly:
+recovers on attempt 2 of 3 without exhausting attempts (and without sleeping before the first try); calls the exact
+number of times and sleeps exactly `attempts - 1` times when persistently empty, returning the empty result unchanged;
+`on_retry` fires with the right attempt number; rejects `attempts=0`. `tests_rtt/test_discover.py` (+3) and the new
+`tests/test_discover_retry.py` (+3) mirror this at the real integration seam for each pipeline (monkeypatching
+`fetch_page_html`): transient empty-then-populated recovers without using every attempt; persistent-empty still comes
+back empty after exactly `attempts` fetches (for `run_real`'s guard to raise on); the common all-good-first-try case
+makes exactly one fetch per page and never sleeps. **87 tests pass** (76 + 11 new).
+
+**Today's (Sept-18) scheduled cron has not run yet** at time of writing (~10:46 UTC; the daily schedule fires
+~19:1x–19:3x UTC) — so whether it self-recovered on its own (supporting the transient-glitch read) is not yet known.
+The retry is worth having regardless, per the user: rescues the transient case either way, and doesn't affect the
+guard's role as backstop against a genuine future NHS format/location change (an exception still fails immediately;
+persistent zero-discovery still fails loud, just after 3 tries instead of 1).
+
+**NOT deployed.** Working-tree changes only (`pipeline/discover.py`, `pipeline/run.py`, `pipeline_rtt/discover.py`,
+`pipeline_rtt/run.py`, new `pipeline_common/retry.py`, 3 test files) — nothing committed or pushed. Awaiting user
+say-so to commit; pushing to master doesn't itself trigger a build (workflow triggers on `schedule` +
+`workflow_dispatch` only — see [[cwt_pipeline_gotchas]]), so a commit would sit inert until either the next scheduled
+cron or an explicit `workflow_dispatch` test run.
+
+## 2026-09-18 — Cron failing 2 days running (Sept-16/17, runs 35139610859 / 35265052216): RTT discovery found ZERO Full-CSV links on all 5 FY pages — INVESTIGATION, no fix yet (Claude Code)
+
+**Symptom.** Scheduled cron FAILED Sept-16 + Sept-17 — NOT a fast pre-flight gate fail (pytest 76/76 passed in both) and
+NOT a GitHub-infra blip like the runner-not-acquired/deploy-internal-error ones correctly ignored recently: the cancer
+pipeline ran its full ~6min fetch+rebuild first and SUCCEEDED ("No new or revised files … 210 orgs, 52 months"), THEN
+the RTT step's own fail-loud guard tripped: `RuntimeError("discovered no Full-CSV links — refusing to build")` in
+`pipeline_rtt/run.py::run_real()`, after scraping all 5 FY sub-pages (2022-23…2026-27). Deploy correctly skipped
+(needs:build); live site unaffected, still serving the last good deploy (commit 4bfda23, Sept-15).
+
+**Not a source format/regex problem.** Live-fetched all 5 `rtt-data-{fy}` pages directly (2026-09-18, both a custom UA
+matching the scraper's and a generic browser UA): every page returns 200, and the current 2026-27 page's real content
+has 5 well-formed links (`Full-CSV-data-file-Jul26-ZIP-4M-....zip` etc) that match `discover.discover_links`'s regex
+cleanly. So NHS has NOT changed the RTT page/file naming — this is not the FY-boundary or multi-vintage trap seen on
+the cancer side before.
+
+**No page-fetch exceptions logged either.** `run_real()` wraps each of the 5 page fetches in its own try/except with a
+`WARN: {fy} page fetch failed (...)` print on error — the CI log shows ZERO such WARN lines on either failing run,
+meaning `requests.get(...).raise_for_status()` did NOT raise for any of the 5 pages (no 4xx/5xx, no timeout, no
+connection error) — yet `discover_links` still returned an empty dict across all 5 pages' HTML combined. Combined with
+the sub-second total runtime for 5 real external HTTPS GETs (~0.44s Sept-17, ~1.0s Sept-16), this points to the NHS/
+CloudFront origin briefly serving 200-OK responses with the CSV links stripped/absent — a CDN edge-cache anomaly or a
+brief WordPress content-render hiccup — specifically on the RTT sub-pages, on both of those two runs, not a lasting
+change (identical URLs fetched a day later return full correct content).
+
+**Persistent for exactly 2 days so far; status of today's (Sept-18, ~19:20 UTC) cron unknown at time of writing** (has
+not run yet). Cancer pipeline unaffected both days (same NHS domain, same request-library pattern, succeeded both
+runs) — argues against a GitHub-Actions-IP-wide block and toward something RTT-sub-page-specific and transient at the
+source/CDN layer, rather than a code regression.
+
+**No fix applied — awaiting user decision.** Options: (a) do nothing and watch whether tonight's cron self-resolves
+(favoured if this was a one-off NHS/CDN glitch); (b) add retry-with-backoff around each of the 5 page fetches in
+`discover.fetch_page_html` / `run_real` so a transient empty-content response gets a second chance before the
+fail-loud guard trips (keeps the guard as the real backstop against a genuine future format change, just makes it
+robust to transient blips); (c) manually re-run the workflow now to test recovery. NONE done — no deploy/run action
+taken pending user say-so. See STATUS.md / project + pipeline-gotchas memory for the CI step-order and gate
+architecture this sits inside.
+
 ## 2026-06-29 — Cron-wedge fix DEPLOYED + LIVE-VERIFIED (run 28362120515, build+deploy GREEN; commit 15acb64) (Claude Code)
 
 Deployed the layered C+B+A+D fix (entry below) directly to master + watched workflow_dispatch. **Cron UNWEDGED**: build

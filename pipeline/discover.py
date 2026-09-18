@@ -15,6 +15,7 @@ take an optional `html` argument so they can be unit-tested offline.
 import json
 import os
 import re
+import time
 import datetime as dt
 from urllib.parse import urljoin
 
@@ -24,6 +25,7 @@ except ImportError:
     requests = None
 
 from . import config
+from pipeline_common import retry
 
 
 _MONTHS = {"january": 1, "february": 2, "march": 3, "april": 4, "may": 5,
@@ -92,6 +94,49 @@ def discover_csv_links(html, base_url=config.SOURCE_PAGE):
             "month": month,
         })
     return out
+
+
+def scrape_all_links():
+    """Fetch the main page (per-FY cumulative Combined CSVs) plus the current
+    FY's sub-page (per-month Combined CSVs, present before the cumulative
+    file lands at a financial-year boundary) and combine their discovered
+    links.
+
+    The sub-page may legitimately not exist yet very early in a new FY —
+    that fetch failure is expected and silently tolerated (falls back to
+    main-page cumulative files only). A genuinely empty MAIN page is not
+    expected: it always lists at least the historical per-FY cumulative
+    files, so zero links from it is the same "something's wrong" signal as
+    pipeline_rtt's zero-links case."""
+    html = fetch_page_html()
+    discovered = discover_csv_links(html)
+    fy = current_financial_year()
+    sub_url = fy_subpage_url(fy)
+    try:
+        sub_html = fetch_page_html(sub_url)
+        discovered += discover_csv_links(sub_html, base_url=sub_url)
+    except Exception as e:
+        print(f"Current-FY sub-page {sub_url} not available ({e}); "
+              f"using main-page cumulative files only.")
+    return discovered
+
+
+def scrape_all_links_with_retry(attempts=retry.DEFAULT_ATTEMPTS,
+                                 backoff_seconds=retry.DEFAULT_BACKOFF_SECONDS,
+                                 sleep_fn=time.sleep):
+    """`scrape_all_links`, retried a bounded number of times if it comes back
+    with zero links. Same transient NHS/CDN empty-response glitch class as
+    pipeline_rtt (seen 2026-09-16/17 on the RTT pages) — cancer hits the same
+    NHS domain the same way and is equally exposed, it just didn't get
+    unlucky those two days. If every attempt is still empty, the empty list
+    is returned as-is so run.py's fail-loud guard raises on it."""
+    def on_retry(attempt, backoff):
+        print(f"  Discovered 0 Combined CSV links on attempt {attempt}/{attempts}; "
+              f"retrying in {backoff:.0f}s (possible transient NHS/CDN glitch)...")
+
+    return retry.retry_until_nonempty(
+        scrape_all_links, attempts=attempts, backoff_seconds=backoff_seconds,
+        sleep_fn=sleep_fn, on_retry=on_retry)
 
 
 def _classify_file(basename):

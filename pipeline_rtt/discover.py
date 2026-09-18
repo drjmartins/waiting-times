@@ -13,6 +13,7 @@ import datetime as dt
 import json
 import os
 import re
+import time
 from urllib.parse import urljoin
 
 try:
@@ -21,6 +22,7 @@ except ImportError:
     requests = None
 
 from . import config
+from pipeline_common import retry
 
 _ABBR = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
          "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
@@ -63,6 +65,39 @@ def discover_links(htmls, base_url=config.SOURCE_INDEX):
             month = f"20{int(m.group(2)):02d}-{mon:02d}"
             out[month] = urljoin(base_url, href)
     return out
+
+
+def scrape_all_links(fys):
+    """Fetch every FY page and combine their discovered Full-CSV links.
+
+    A page that fails to fetch (network error, non-2xx) is WARNed and
+    skipped — it doesn't stop the other pages' links from counting."""
+    htmls = []
+    for fy in fys:
+        try:
+            htmls.append(fetch_page_html(fy_page_url(fy)))
+        except Exception as e:
+            print(f"  WARN: {fy} page fetch failed ({e})")
+    return discover_links(htmls)
+
+
+def discover_links_with_retry(fys, attempts=retry.DEFAULT_ATTEMPTS,
+                               backoff_seconds=retry.DEFAULT_BACKOFF_SECONDS,
+                               sleep_fn=time.sleep):
+    """`scrape_all_links`, retried a bounded number of times if it comes back
+    with zero links across every page. Rescues a transient empty-content
+    response from NHS/CloudFront (all 5 FY pages returned 200 with none of
+    the expected links on 2026-09-16/17) without masking a genuine, lasting
+    change — if every attempt is still empty, the empty dict is returned
+    as-is so run.py's fail-loud guard raises on it."""
+    def on_retry(attempt, backoff):
+        print(f"  Discovered 0 links on attempt {attempt}/{attempts} across "
+              f"all {len(fys)} FY pages; retrying in {backoff:.0f}s "
+              f"(possible transient NHS/CDN glitch)...")
+
+    return retry.retry_until_nonempty(
+        lambda: scrape_all_links(fys), attempts=attempts,
+        backoff_seconds=backoff_seconds, sleep_fn=sleep_fn, on_retry=on_retry)
 
 
 def load_manifest(path=config.MANIFEST_PATH):

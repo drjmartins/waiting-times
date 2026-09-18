@@ -41,17 +41,15 @@ def run_real():
     # Main page: per-FY CUMULATIVE Combined CSVs. Plus the CURRENT FY's sub-page:
     # per-MONTH Combined CSVs that appear there first at a financial-year boundary
     # (closes the FY-boundary staleness gap). The sub-page may not exist yet very
-    # early in a new FY — treat a fetch failure there as "no per-month files yet".
-    html = discover.fetch_page_html()
-    discovered = discover.discover_csv_links(html)
-    fy = discover.current_financial_year()
-    sub_url = discover.fy_subpage_url(fy)
-    try:
-        sub_html = discover.fetch_page_html(sub_url)
-        discovered += discover.discover_csv_links(sub_html, base_url=sub_url)
-    except Exception as e:
-        print(f"Current-FY sub-page {sub_url} not available ({e}); "
-              f"using main-page cumulative files only.")
+    # early in a new FY — treat a fetch failure there as "no per-month files yet"
+    # (handled inside scrape_all_links). Retried a bounded number of times if
+    # BOTH pages come back with zero links — the same transient NHS/CDN
+    # empty-response glitch pipeline_rtt hit on 2026-09-16/17 — before the
+    # fail-loud guard below refuses to build.
+    discovered = discover.scrape_all_links_with_retry()
+    if not discovered:
+        raise RuntimeError(
+            "discovered no Combined CSV links on the NHS source page(s) — refusing to build")
     # Collapse multiple vintages of the SAME month to one authoritative file before
     # selection, so a month is never ingested from two disagreeing files (the
     # 2026-04 ICB-merger triple that wedged the cron). Cumulatives pass through.
