@@ -6,6 +6,105 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-09-21 — £0-budget investigation: sharpened diagnosis, free options ranked, mothball picture spelled out — REPORT ONLY (Claude Code)
+
+Paid proxy is off the table (£0 budget). Re-confirmed persistence first: `gh run list` shows scheduled failures
+2026-09-16 through 2026-09-20 (5/5), latest (run 35528992541) failing on the SAME symptom on **cancer** now too.
+Re-fetched both NHS pages from here today (2026-09-21): still 200 OK with full correct content (6 cancer links, 5
+RTT links) — confirms the block is still Actions-specific and ongoing, not a general NHS outage that's since lifted.
+
+### Part A — sharpened diagnosis (as far as checkable for free, from outside)
+
+**Can't literally test other clouds' egress** — no AWS/GCP/etc. infrastructure available in this session, so that
+specific question stays untested rather than guessed at. What WAS checkable:
+
+- **AWS WAF's `HostingProviderIPList` — verified directly from AWS's own developer guide (not just search
+  summaries this time)**: "Inspects for a list of IP addresses from web hosting and cloud providers... **The IP list
+  does not include AWS IP addresses.**" So IF NHS's WAF uses this specific AWS-managed rule, AWS-origin traffic is
+  explicitly, officially excluded from it — a concrete mechanism, though WHICH WAF vendor NHS actually runs remains
+  unconfirmed from outside (their CloudFront+nginx headers are consistent with, not proof of, an AWS WAF setup).
+- **GitHub Actions runner region: confirmed NOT selectable** on public-repo standard hosted runners (community
+  discussions + GitHub's own docs agree — US-only, no region parameter exists); "larger runners" do offer region
+  choice but always cost money, ruling them out under the £0 constraint regardless.
+- **No free unblocked mirror found** (this would have been the best outcome): `data.gov.uk`'s RTT dataset page links
+  only to defunct 2009–2012 National Archives pages, nothing current. NHS's newer WLMDS dataset (RTT-adjacent) has
+  **no API** — file downloads only — and lives on the SAME `www.england.nhs.uk` domain, so almost certainly the SAME
+  WAF exposure, plus it's a structurally different dataset (weekly demand/activity/waiting-list breakdowns, not the
+  18-week-standard treatment-function data our pipeline computes) that would need a substantial rebuild even if
+  reachable. `digital.nhs.uk` (checked headers directly) runs on **Cloudflare**, a different vendor from the
+  statistics site's CloudFront — interesting confirmation NHS's domains vary in CDN — but it doesn't host the raw
+  CSVs, and Cloudflare has its own independently documented history of blocking GitHub Actions traffic (found in the
+  2026-09-18 investigation), so it isn't an obviously safer harbour anyway.
+- **No public announcement found** of an NHS WAF/bot-policy change around Sept 2026 — inconclusive either way; a
+  routine WAF/reputation-list tuning wouldn't typically be publicly announced regardless of whether it happened.
+- **Best honest read on intent/permanence**: still genuinely unknowable from outside. The sudden Sept-16 onset after
+  months of clean operation is MORE consistent with an automatic reputation-list update (Azure's shared IP pool
+  picking up a bad score from OTHER tenants' unrelated abuse, which can also later drift back) than a deliberate,
+  targeted policy change — but a first-time enable of an existing managed rule (which then stays on indefinitely) is
+  equally plausible and would look identical from here. No way to distinguish the two without either it self-clearing
+  or NHS confirming directly (ruled out per this session's scope).
+
+### Part B — free options, ranked
+
+1. **AWS Lambda (or similar AWS free-tier compute) as a self-built relay — best candidate.** Lambda's free tier
+   (1M requests/month) is a standing, not time-limited, allowance — trivially covers ~2 fetches/day. Rationale: the
+   verified AWS-exclusion above. Setup is one-time (a small function + a GitHub Secret for its invoke URL/token,
+   same credential discipline as the earlier proxy design); ongoing hassle is near-zero after that (no server to
+   patch, no device to keep powered on — AWS manages the runtime). Genuinely unverified whether it defeats THIS
+   specific block (unconfirmed WAF vendor) — needs a cheap live test before relying on it, same as any option here.
+2. **Home relay (a device on the user's own residential connection), via Cloudflare Tunnel or Tailscale Funnel to
+   skip router/DDNS pain** — the SUREST to technically work (a genuine residential IP is exactly the class my own
+   successful test fetches have used throughout this incident), £0 if hardware exists. But it's the same ongoing
+   personal-infrastructure commitment already disfavoured when self-hosting (#1, ruled out) was rejected — an
+   always-on device, reliable home internet, tunnel software kept alive. Fallback if Lambda doesn't pan out and some
+   manual-infra tradeoff is acceptable.
+3. **Free-tier commercial proxy — RULED OUT, not a caveat.** Checked directly: Webshare's well-known "10 proxies +
+   1GB/month, forever, free" tier is explicitly **datacenter** proxies, not residential — every free tier surveyed
+   works the same way (real residential/ISP IPs cost the provider real money, so free tiers are datacenter-class).
+   Datacenter IPs are exactly the "hosting provider" category already implicated in the block — a free proxy would
+   very plausibly just swap one flagged IP for another (quite possibly an already MORE abused/blocklisted one, given
+   free shared IPs see heavy indiscriminate use). Static residential/ISP is a PAID product across every provider
+   checked — off the table at £0.
+4. **Free unblocked mirror** — not available (see Part A).
+5. **Free runner/region tricks** — not available (see Part A); larger runners cost money regardless.
+
+**Honest bottom line: exactly one free option (#1, AWS Lambda) has real promise and is untested; #2 (home relay)
+works for certain but reintroduces the maintenance burden already ruled out once; nothing else survives scrutiny.**
+
+### Part C — the mothball fallback, spelled out
+
+**Confirmed: doing nothing means the site stays live indefinitely, unchanged, at zero cost and zero risk.** GitHub
+Pages' free tier for public repos has no expiry and no dependency on future Actions runs succeeding — the currently
+-served build (still the 2026-09-15 deploy) keeps being served exactly as-is forever, until something actively
+replaces or deletes it. It does not go offline, degrade, or start costing anything by sitting still.
+
+**A manual data refresh is straightforward; getting it actually LIVE on Pages today is NOT, given how this repo is
+wired — worth being precise about rather than overclaiming.** Traced the actual workflow
+(`.github/workflows/update-data.yml`): Pages deployment runs via `actions/upload-pages-artifact` (inside the
+`build` job, AFTER the fetch steps) + a separate `deploy` job gated on `needs: build`. `run_real()` in both
+pipelines unconditionally attempts the live NHS scrape first, regardless of whether the local manifest/store is
+already fully current — so even a perfectly up-to-date local store would NOT let a scheduled/dispatched Actions run
+get past the same blocked scrape to reach the deploy step. Concretely, this means:
+  - **The DATA-refresh half is something I (or the user) can do right now, any time it's asked for**: run
+    `python -m pipeline.run` / `python -m pipeline_rtt.run` from here (or the user's own machine) — both unblocked,
+    exactly as this session's repeated test fetches have shown all along — then commit the refreshed files to
+    master. This keeps the repository's data current and ready.
+  - **The PUBLISHING half is currently NOT reachable without either fixing the block or adding one small, separate,
+    low-risk lever**: e.g. a `workflow_dispatch` input that skips the fetch steps and just packages + deploys
+    whatever is ALREADY committed in `site/` — cheap to add later if wanted (a few lines in the workflow YAML,
+    doesn't touch the fetch/guard logic at all), but NOT built as part of this report-only investigation.
+  - So today, literally right now with zero further changes: a manual refresh updates the repo's data but not yet
+    the public URL. If the user wants an actual "refresh the live site by hand" lever while this is unresolved,
+    that small workflow addition is the cheap way to get one — flagged for a future decision, not actioned here.
+
+**Status:** report only, nothing built, no secret/workflow/code change made. STATUS.md OPEN banner stays;
+notifications remain muted via the personal Watch filter (no change).
+
+Sources: [AWS WAF developer guide — IP reputation rule groups (HostingProviderIPList excludes AWS IPs)](https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-ip-rep.html) ·
+[data.gov.uk — NHS RTT waiting times dataset page](https://www.data.gov.uk/dataset/aa157669-910b-46ff-91bd-b3dbdd7d2257/nhs_referral_to_treatment_rtt_waiting_times_statistics_for_england) ·
+[NHS England — Waiting List Minimum Data Set (WLMDS)](https://www.england.nhs.uk/statistics/statistical-work-areas/rtt-waiting-times/wlmds/) ·
+[GitHub Community — feature request: specify region for GitHub-hosted runner](https://github.com/orgs/community/discussions/140310)
+
 ## 2026-09-21 — Trigger fired: proxy workaround DESIGN (not built) — awaiting approval (Claude Code)
 
 Confirmed via `gh run list`: failed every scheduled run 2026-09-16 through 2026-09-20 (5 consecutive days), and the
