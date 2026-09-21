@@ -6,6 +6,98 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-09-21 — Trigger fired: proxy workaround DESIGN (not built) — awaiting approval (Claude Code)
+
+Confirmed via `gh run list`: failed every scheduled run 2026-09-16 through 2026-09-20 (5 consecutive days), and the
+latest (run 35528992541, Sept-20) now fails on the SAME `discovered no Combined CSV links … refusing to build`
+symptom on the **cancer** step too — matching the user's read exactly: not self-clearing, broadened to both
+pipelines. Per user decision: build the proxy workaround (#2); NHS-outreach (#6) and self-hosted runner (#1) stay
+ruled out unless proxy proves unworkable. This entry is the DESIGN ONLY — nothing built, pending user approval.
+
+**1. Proxy choice: a commercial STATIC (not rotating) residential/ISP-class proxy — not a self-run relay.** The
+property that matters is the IP's reputation CLASS, not who operates it: the block is (per the 2026-09-18
+investigation) most likely an IP-reputation rule keyed on "hosting provider" ranges (AWS WAF's own managed
+`HostingProviderIPList` is the closest documented match), and **almost every VPS/cloud provider — including one the
+user would rent and run themselves — is ITSELF classified as "hosting provider"** in the same reputation databases.
+So a self-run relay on a typical cloud VPS likely doesn't fix anything; it only works if hosted on a genuine
+residential/ISP connection (e.g. a Raspberry Pi at the user's home), which reintroduces exactly the "must stay
+online, dynamic IP/DDNS, home-network single point of failure" maintenance burden the user explicitly ruled out by
+ruling out #1 (self-hosted) — a home relay is functionally the same commitment with extra steps. A commercial
+static-IP residential/ISP proxy service has none of that: no server to patch or reboot, a real non-"hosting-provider"
+IP that directly defeats the actual blocking mechanism, and — given this pipeline makes only ~2 lightweight page
+fetches a day — bandwidth/request volume is tiny, so even a cheap single-static-IP plan comfortably covers it.
+**Selection criteria to shop against** (not a single vendor endorsement — pick current best fit): (a) a STATIC/
+dedicated IP, not a rotating pool — a stable, single, testable IP rather than a different (possibly still-flagged)
+IP on every request; (b) genuinely ISP-registered / residential-classified, not another datacenter IP wearing a
+"residential" label; (c) clear, ethical IP sourcing — prefer an ISP-partnered static allocation over a peer-to-peer
+"residential" network built from bundled consumer VPN/SDK traffic of uncertain consent; (d) plain HTTP(S) proxy auth
+(`http://user:pass@host:port`), which `requests` supports natively via `proxies=`. Category examples to evaluate
+(Webshare, IPRoyal, Bright Data, Smartproxy all offer static-ISP-class plans) — pricing/ToS check is the user's call,
+not verified live by this session. **Tradeoff:** small recurring cost (expect low single-digit £/$ per month at this
+volume) + one more third-party vendor dependency, against zero maintenance and a proxy purpose-built for exactly
+this failure mode.
+
+**2. Credentials: GitHub encrypted repo Secret, step-scoped, never logged — repo is PUBLIC so this matters.**
+Store as a repo Secret (Settings → Secrets and variables → Actions), e.g. `NHS_PROXY_URL` holding the full
+`http://user:pass@host:port` form (or split into host/user/pass secrets). Inject via `env:` scoped to ONLY the
+fetch/build steps that need it (`Fetch new data and rebuild site (Cancer Waiting Times)` / `(RTT)`) — not the whole
+job, so `pytest`, the git-commit step, and the deploy step never see it. GitHub Actions automatically redacts any
+log line containing a secret's exact value, AND — defense in depth, since redaction only catches exact-string
+matches — the code itself must never `print()` the proxy URL or credential; retry/status messages stay as they are
+today (attempt counts only, no URL). Forked-PR workflow runs never receive repo secrets at all (GitHub's own
+default), which matters for a public repo. Python side: `os.environ.get("NHS_PROXY_URL")` →
+`requests.get(url, proxies={"https": proxy_url, "http": proxy_url})`; absent env var → `proxies=None` (today's exact
+direct-connection behaviour), so this is opt-in and safe for local dev with no proxy configured. Recommend rotating
+the credential periodically as standard public-repo hygiene.
+
+**3. Scope: EVERY NHS-domain (england.nhs.uk) request in both pipelines, not just page-discovery.** Clarifying one
+ambiguity: "the two NHS fetch calls" needs to mean, per pipeline, BOTH the discovery page fetch(es)
+(`fetch_page_html` in `pipeline/discover.py` and `pipeline_rtt/discover.py`) AND the actual raw CSV/zip download
+calls inside `pipeline/run.py::run_real()` and `pipeline_rtt/run.py::run_real()` — all of these hit the same
+england.nhs.uk domain/CDN, so fixing discovery alone while leaving the file download on the normal runner IP would
+just move the failure one step later. **Explicitly OUT of scope, stays on the normal runner network:** the ODS
+org-status fetch (`pipeline_common/ods.py`, a DIFFERENT domain — `directory.spineservices.nhs.uk`) — confirmed
+unaffected throughout this incident (every failing run's log still shows a successful live ODS fetch before the NHS
+statistics-page guard fires) — plus `pip install`, `pytest`, git operations, and the Pages deploy. Smallest blast
+radius: one small shared helper (e.g. `pipeline_common/http.py::nhs_session()` or a `proxies_from_env()` used by
+both pipelines' `fetch_page_html` and raw-download calls) rather than touching unrelated code.
+
+**4. Fail-loud preserved — confirmed by construction, not just intent.** The proxy only adds a `proxies=` kwarg to
+`requests.get()` calls that already fail loud today. A dead/unreachable proxy or bad credential raises
+`requests.exceptions.ProxyError`/`ConnectionError`/a 407 — an EXCEPTION, exactly like any other network fault
+already does: for RTT's per-page loop it's caught by the existing per-page try/except (WARN, contributes to the
+eventual empty-links guard); for cancer's main-page fetch and both pipelines' raw-file downloads (currently
+unwrapped) it propagates straight up through `run_real()`'s top-level `try/except` → `sys.exit(1)`. Nothing about
+the retry logic, the "found nothing → refuse to build" guards, or the reconciliation/month-label/contiguity/SPN/
+TF-sum gates changes — the proxy changes WHERE the bytes come from, not what happens when they don't arrive. No new
+silent-fallback path is introduced.
+
+**5. How this gets tested BEFORE the real pipeline relies on it:**
+   a. Unit level (offline, no real network): assert `fetch_page_html()` passes `proxies=` through to `requests.get`
+      when the env var is set, and `proxies=None` when it isn't — cheap, deterministic, matches the existing
+      network-optional test philosophy.
+   b. **The test that actually matters**: an isolated connectivity check run FROM GitHub Actions itself (a throwaway
+      `workflow_dispatch` step, or a minimal standalone script), doing nothing but `requests.get(NHS_URL,
+      proxies=...)` with the real proxy secret and printing the discovered link count — BEFORE wiring the proxy into
+      the real pipeline, so proxy connectivity issues don't get tangled up with a full build/commit run. Confirms
+      the actual blocked network path, not a stand-in (my own machine already works without a proxy, so testing
+      from here proves nothing about whether the proxy defeats the block).
+   c. Once (b) shows real content (expect ~6 cancer main-page links / 11 combined, matching what this session's
+      direct-from-elsewhere checks already found), wire the proxy into the real `fetch_page_html`/download calls,
+      re-run the full local test suite (87 tests must still pass unmodified — proxy is opt-in via absent env var by
+      default), then a full watched `workflow_dispatch` of the real pipeline with the proxy secret set, mirroring
+      the same live-verification rigor as the retry fix (green run, both pipelines complete, all gates intact).
+   d. Negative-case check (cheap, folds into the same diagnostic run): deliberately set a wrong/expired proxy
+      credential once and confirm the run fails loud immediately rather than silently — verifies claim 4 empirically
+      in the real CI environment, not just by code inspection.
+
+**Noted, no action:** the Sept-17/20 run logs carry a GitHub notice that `ubuntu-latest` migrates to Ubuntu 26 on
+2026-10-19. Unrelated to this failure (proxy usage is Python/`requests`-level, not OS-level) — just a flag to sanity
+-check the test suite against when that migration lands, separately from this work.
+
+**Status:** design only, awaiting user approval before any code/secret/workflow change. STATUS.md OPEN banner stays;
+notifications remain muted via the personal Watch filter (no change).
+
 ## 2026-09-18 — Decision recorded: mute-by-inbox-filter (user applies), no workaround yet, NHS-outreach ruled out (Claude Code)
 
 User's call on all three open questions from the investigation report. Nothing built or toggled by this session.
