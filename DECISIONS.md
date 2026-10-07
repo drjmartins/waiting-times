@@ -6,6 +6,35 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-10-07 — Mothball DEPLOYED + LIVE-VERIFIED via the new manual lever (run 37625493430, commit 3ab1844) (Claude Code)
+
+User approved the three extras (commit the 651 RTT breakdown files + `.gitignore` change; delete `site/rtt/index 2.html`; keep
+`built_at` so "Last updated" = 15 Sept) and the frozen month (July 2026). Pre-deploy, snapshotted 190 live files (checksums) as a
+baseline; then committed, pushed, and ran `gh workflow run update-data.yml` (default `skip_fetch=true`).
+
+**Run log (skip path held):** build 1m20s + deploy 28s, green. Steps: tests (91 passed) ✓, "Rebuild cancer site from the committed
+store (no NHS fetch)" ✓ — "--no-fetch: rebuilding from the COMMITTED store; NHS and ODS are not contacted" / "Rebuilt site data from
+committed store: 210 orgs, 52 months (last 2026-07)" (so every contiguity + bidirectional reconciliation gate passed on committed
+data), "Mark site as manually updated" ✓ (stamped both `meta.json`); **Fetch (cancer), Fetch (RTT) and Commit were SKIPPED**; no
+"Scraping" / "Discovered" / "ODS:" line anywhere in the log — i.e. no NHS or ODS request was attempted.
+
+**Live checks (cache-busted):** (1) **182/190 sampled files byte-identical** to the pre-deploy baseline — incl. 80 org core files,
+80 org breakdown files (cancer's regenerated + RTT's newly-committed), 15 compare files, national files, downloads index. The 8 that
+changed are exactly the expected ones: the 5 page HTML responses and the 2 `meta.json`, whose only difference from the pre-mothball
+copy is the added `updates_paused` key (`built_at` unchanged: 2026-09-15). (2) Footers — cancer, RTT, compare: "Data to July 2026.
+Last updated 15 September 2026. Automatic updates are currently paused."; landing: "Automatic updates are currently paused. Cancer
+Waiting Times data to July 2026; RTT data to July 2026." (3) RTT treatment-function view, exercised for real: England → Cardiology and
+Airedale (RCF) → Trauma & Orthopaedic both selected; `national.breakdown.json` and `org/RCF.breakdown.json` served 200 and the chart
+rendered to Jul 2026. (4) `/rtt/index%202.html` → 404.
+
+**Known benign wrinkle (not fixed):** cancer's comparison JSONs sort trusts by denominator with no secondary key, so trusts with an
+identical denominator (e.g. RWF/RP5 at 706.5) can swap places between builds — 61 files differed in raw bytes after a local rebuild
+but are identical once sorted by code. None of the 15 sampled live compare files hit it. Cosmetic; a `code` tie-break would make
+rebuilds deterministic if it ever matters.
+
+**State now:** both dashboards live and frozen (data to July 2026), cron deliberately disabled, manual lever works end-to-end,
+notifications stay muted (no cron = no failure emails). Un-mothball + hand-refresh steps: STATUS.md banner / entry below.
+
 ## 2026-10-07 — DECISION: MOTHBALL both dashboards, frozen at the current live build (data to July 2026) — BUILT, awaiting review before deploy (Claude Code)
 
 **Decision (user):** the NHS/Actions block hasn't cleared (scheduled runs failed every day 2026-09-16 → 2026-10-06, 21 in a

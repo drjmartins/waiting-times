@@ -2,9 +2,15 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-10-07 (Claude Code session; dashboards MOTHBALLED — built, awaiting review + deploy)._
+_Last updated: 2026-10-07 (Claude Code session; dashboards MOTHBALLED — DEPLOYED + LIVE-VERIFIED, run 37625493430, commit 3ab1844)._
 
 ## 🧊 MOTHBALLED 2026-10-07 — site frozen on its last good build (data to **July 2026**), automatic updates deliberately OFF
+**Deployed + live-verified 2026-10-07** via the new manual lever (run 37625493430: build 1m20s + deploy 28s, green; the NHS
+fetch / RTT rebuild / commit steps were SKIPPED and the log has no NHS or ODS request). Live: 182/190 sampled files
+byte-identical to before; the 8 that changed are the 5 page HTMLs + 2 `meta.json` (only the added `updates_paused`
+flag; `built_at` unchanged) — all footers show the note, RTT treatment-function view works (committed breakdown files
+serve 200), `/rtt/index%202.html` now 404.
+
 **Both dashboards stay live, unchanged, on GitHub Pages (static, free, indefinitely).** They are a frozen snapshot:
 **data to July 2026** (cancer AND RTT, 52 months Apr-2022 → Jul-2026), built **15 Sept 2026**. Every page footer now
 says "Automatic updates are currently paused." (landing page too). No final refresh was done before freezing.
