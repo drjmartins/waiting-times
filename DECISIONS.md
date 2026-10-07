@@ -6,6 +6,61 @@ entries on top. Keep entries short (~3 lines): what, why, date, which session.
 
 ---
 
+## 2026-10-07 — DECISION: MOTHBALL both dashboards, frozen at the current live build (data to July 2026) — BUILT, awaiting review before deploy (Claude Code)
+
+**Decision (user):** the NHS/Actions block hasn't cleared (scheduled runs failed every day 2026-09-16 → 2026-10-06, 21 in a
+row), a paid proxy is off the table (£0), and the free fixes aren't worth the standing infrastructure. Stale-but-live is
+the accepted end state. Frozen at the CURRENT live build — no final refresh. This is the *chosen* outcome, not the
+silent-stale-data trap the fail-loud guards exist to prevent: the cron is off on purpose, nothing fails unnoticed, and the
+site says on its face that updates are paused.
+
+**Frozen data month — confirmed from the live `meta.json`: JULY 2026, on BOTH dashboards** (52 months, Apr-2022 → Jul-2026;
+built 15 Sept 2026). The expectation "likely April 2026" was wrong: the FY-boundary fix did its job and the cron ingested
+May, June and July before the block began. The committed core JSON is byte-identical to live on both dashboards (checksummed
+meta/index/national + sample orgs), so "what's committed" == "what's live" for everything that's tracked.
+
+**The four parts:**
+1. **Cron disabled** — `schedule:` commented out in `update-data.yml` (not deleted); retry + all guards untouched.
+2. **Manual lever** — `workflow_dispatch` input `skip_fetch` (default **true**, so the button is safe while mothballed). Skip path:
+   tests → `python -m pipeline.run --no-fetch` → `pipeline_common.freeze_note` → upload → deploy; the NHS fetch, RTT rebuild and
+   data-commit steps are all gated off (`if: !inputs.skip_fetch`). Unset input (a revived `schedule`) means the normal path runs.
+3. **On-site note** — the three dashboard footers (cancer, RTT, compare) add "Automatic updates are currently paused." after
+   the existing "Data to {month}. Last updated {date}."; the landing page reads both `meta.json` files and adds one line with
+   both data months. Driven by an `updates_paused` flag that ONLY the manual lever stamps; a real fetch run rebuilds `meta.json`
+   without it, so un-mothballing removes the note with no HTML edit. No reason is given on the page — just that updates are paused.
+4. **Docs** — STATUS.md banner replaced with the MOTHBALLED section (what/why/lever/hand-refresh/un-mothball); this entry.
+
+**Things "deploy whatever's committed" turned out to need (found while building — not in the brief, worth knowing):**
+- **RTT cannot rebuild offline** — its build reads ~50 raw monthly zips that are gitignored and never committed, and the
+  per-org/national **breakdown files** (treatment-function view, ~11 MB) were gitignored build artefacts that exist only inside
+  the deployed site. A naive "skip the fetch and deploy `site/`" would have shipped an RTT with a broken TF selector. Fix: pulled
+  all 651 breakdown files from the live site (validated JSON, 0 failures) and COMMIT them; `.gitignore` no longer ignores
+  `site/rtt/data/**/*.breakdown.json`. Consequence for a future revival: the CI commit step will commit them when data changes.
+- **Cancer CAN rebuild offline** — the processed store (`data/processed/tidy.parquet`) is committed, so the skip path reruns every
+  contiguity/reconciliation gate and regenerates downloads, breakdown and comparison files exactly as a normal run would.
+  `--no-fetch` uses the **committed ODS cache** (`ods.load()`), not a live ODS fetch — zero network, and the frozen snapshot's
+  org-status can't drift. `built_at` is carried over from the existing `meta.json` so "Last updated" says when the DATA was
+  refreshed (15 Sept), not the deploy day.
+- **Stray public page:** `site/rtt/index 2.html` — a Finder duplicate of an early RTT page, committed in the restructure — is
+  served at `/rtt/index%202.html` (HTTP 200) and would sidestep the note. Proposed for deletion in this change set.
+
+**Tests:** 91 pass (87 + 4 new in `tests/test_mothball.py`: offline path contacts neither NHS nor ODS and keeps `built_at`; refuses a
+missing store; freeze stamp keeps the rest of `meta.json` and refuses to half-stamp).
+
+**Parked, for a future revival:** the **AWS Lambda relay** (a small function doing only the england.nhs.uk fetches; AWS's own WAF docs
+say `HostingProviderIPList` excludes AWS IPs — untested whether NHS's WAF is that rule). Home relay (Cloudflare Tunnel/Tailscale)
+is the certain-but-maintenance-heavy fallback. Ruled out: paid proxy (budget), free proxy tiers (datacenter-class), NHS outreach,
+self-hosted runner. Full reasoning: DECISIONS 2026-09-21 / 2026-09-18.
+
+**HOW TO UN-MOTHBALL:** (1) establish a working fetch route — test whether the block has cleared with
+`gh workflow run update-data.yml -f skip_fetch=false` (green run = cleared), else build the Lambda relay; (2) uncomment `schedule:`;
+(3) flip the `skip_fetch` default to `false`; (4) re-check Watch → Custom → "Actions" so failures email again. The on-site note clears
+on the first real fetch run. **Hand refresh meanwhile:** `python -m pipeline.run` + `python -m pipeline_rtt.run` on an unblocked machine,
+commit the CI `git add` list, push, `gh workflow run update-data.yml`.
+
+**Housekeeping, flagged not done:** stray git ref `.git/refs/heads/master 2` (Finder duplicate) makes `git fetch` print a harmless
+"bad object" error; ubuntu-latest → Ubuntu 26 on 2026-10-19.
+
 ## 2026-09-21 — £0-budget investigation: sharpened diagnosis, free options ranked, mothball picture spelled out — REPORT ONLY (Claude Code)
 
 Paid proxy is off the table (£0 budget). Re-confirmed persistence first: `gh run list` shows scheduled failures

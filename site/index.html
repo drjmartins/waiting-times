@@ -65,7 +65,25 @@
     Built on <a href="https://www.england.nhs.uk/statistics/" target="_blank" rel="noopener">NHS England statistics</a>
     under the Open Government Licence v3.0. These are independent tools and are not affiliated with or
     endorsed by NHS England.
+    <p id="paused" hidden style="margin:10px 0 0"></p>
   </footer>
 </div>
+<script>
+// Shown only while a dashboard's meta.json carries updates_paused (set by the manual
+// publish workflow); any real data refresh rebuilds meta.json without it. Fails silent.
+(async()=>{
+  try{
+    const get=async p=>(await fetch(p,{cache:"no-store"})).json();
+    const [c,r]=await Promise.all([get("cancer/data/meta.json"),get("rtt/data/meta.json")]);
+    if(!(c.updates_paused||r.updates_paused)) return;
+    const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const lbl=m=>{const[y,mm]=m.split("-");return MN[+mm-1]+" "+y;};
+    const el=document.getElementById("paused");
+    el.textContent="Automatic updates are currently paused. Cancer Waiting Times data to "+
+      lbl(c.months[c.months.length-1])+"; RTT data to "+lbl(r.months[r.months.length-1])+".";
+    el.hidden=false;
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

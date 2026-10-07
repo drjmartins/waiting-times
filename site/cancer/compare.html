@@ -123,7 +123,7 @@ const isoDate = iso => {const[y,m,d]=iso.slice(0,10).split("-");return (+d)+" "+
 function footerHTML(META){
   const latest=fullMonth(META.months[META.months.length-1]), built=isoDate(META.built_at);
   return `Data source: NHS England Cancer Waiting Times statistics, published monthly and used here under the Open Government Licence v3.0. This dashboard is an independent tool and is not affiliated with or endorsed by NHS England.<br><br>`+
-    `Data to ${latest}. Last updated ${built}. Figures for the most recent months are provisional and subject to revision.<br><br>`+
+    `Data to ${latest}. Last updated ${built}.${META.updates_paused?" Automatic updates are currently paused.":""} Figures for the most recent months are provisional and subject to revision.<br><br>`+
     `The 31-day and 62-day standards changed in October 2023; figures before that month are not directly comparable and are shown separately.`;
 }
 

@@ -1,0 +1,1 @@
+{"code":"N3I9D","level":"provider","tfs":{"C_130":{"name":"Ophthalmology Service","months":["2026-06","2026-07"],"measures":{"pct18":{"performance":[1.0,1.0],"within_target":[5,33],"total":[5,33]},"waitlist":{"value":[5,33]},"longwait":{"w52":[0,0],"w65":[0,0],"w78":[0,0],"w104":[0,0]}}}}}

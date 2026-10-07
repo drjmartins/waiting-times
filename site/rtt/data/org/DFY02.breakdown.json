@@ -1,0 +1,1 @@
+{"code":"DFY02","level":"provider","tfs":{"C_330":{"name":"Dermatology Service","months":["2023-04","2023-05","2023-06","2023-07"],"measures":{"pct18":{"performance":[1.0,0.9783,0.978,0.9756],"within_target":[115,90,89,40],"total":[115,92,91,41]},"waitlist":{"value":[115,92,91,41]},"longwait":{"w52":[0,0,0,0],"w65":[0,0,0,0],"w78":[0,0,0,0],"w104":[0,0,0,0]}}}}}

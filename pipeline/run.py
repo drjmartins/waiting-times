@@ -10,6 +10,7 @@ new or revised since the last run (per the manifest), then rebuilds the site
 data from the full accumulated tidy table.
 """
 import argparse
+import json
 import os
 import sys
 
@@ -95,6 +96,15 @@ def run_real():
     if store is None or len(store) == 0:
         print("No data in store and nothing to fetch; skipping build.")
         return
+    meta = _gate_and_build(store)
+    print(f"{'Rebuilt' if todo else 'Rebuilt (no new data)'} site data: "
+          f"{meta['n_orgs']} orgs, {len(meta['months'])} months.")
+
+
+def _gate_and_build(store, ods_data=None):
+    """Run every fail-loud gate on `store`, then rebuild the site from it. Shared
+    by the normal fetch path (run_real) and the no-fetch publish path (run_offline)
+    so both are guarded identically."""
     # Fail-loud series guard (part 3): no duplicate/missing month in the national
     # series across the cumulative<->per-month seam.
     normalise.assert_contiguous_national_months(store)
@@ -108,7 +118,8 @@ def run_real():
     # the NHS-trust code set for the provider-type filter. Fail-soft: on any ODS
     # outage this returns the last-known committed cache and never raises, so the
     # data update can't crash on the new external dependency.
-    ods_data = ods.refresh_or_cache()
+    if ods_data is None:
+        ods_data = ods.refresh_or_cache()
     if not ods_data.get("nhs_trust_codes"):
         raise RuntimeError("ODS classification returned no NHS-trust codes (live fetch AND committed "
                            "cache both empty) — refusing to build a provider-type split that would "
@@ -117,10 +128,36 @@ def run_real():
     # the download slices and comparison JSONs are build artefacts (gitignored,
     # not in the checkout), so the Pages artefact would otherwise ship without
     # them on any run that found no new data.
-    meta = build_site_data.build(store, classification=ods_data["orgs"],
+    return build_site_data.build(store, classification=ods_data["orgs"],
                                  trust_codes=set(ods_data.get("nhs_trust_codes") or []))
-    print(f"{'Rebuilt' if todo else 'Rebuilt (no new data)'} site data: "
-          f"{meta['n_orgs']} orgs, {len(meta['months'])} months.")
+
+
+def run_offline():
+    """Publish path for the mothballed site: rebuild from the COMMITTED store only.
+
+    Never contacts england.nhs.uk (the Actions-egress block) and never goes to ODS
+    either — it uses the committed ODS cache, so the frozen snapshot's org status
+    can't drift and there is no network dependency at all. Every gate still runs.
+    `built_at` is carried over from the existing meta.json, so the footer's "Last
+    updated" keeps naming when the DATA was refreshed, not the day it was re-deployed.
+    """
+    store = _load_store()
+    if store is None or len(store) == 0:
+        raise RuntimeError("--no-fetch needs the committed store (data/processed/tidy.parquet) "
+                           "but it is missing/empty — refusing to publish an empty dashboard.")
+    meta_path = os.path.join(config.SITE_DATA_DIR, "meta.json")
+    prev_built_at = None
+    if os.path.exists(meta_path):
+        with open(meta_path) as f:
+            prev_built_at = json.load(f).get("built_at")
+    print("--no-fetch: rebuilding from the COMMITTED store; NHS and ODS are not contacted.")
+    meta = _gate_and_build(store, ods_data=ods.load())
+    if prev_built_at:
+        meta["built_at"] = prev_built_at
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2)
+    print(f"Rebuilt site data from committed store: {meta['n_orgs']} orgs, "
+          f"{len(meta['months'])} months (last {meta['months'][-1]}).")
 
 
 def run_synthetic():
@@ -137,12 +174,15 @@ def run_synthetic():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--synthetic", action="store_true")
+    ap.add_argument("--no-fetch", action="store_true",
+                    help="rebuild from the committed store without contacting NHS/ODS "
+                         "(the mothball publish path)")
     args = ap.parse_args()
     if args.synthetic:
         run_synthetic()
     else:
         try:
-            run_real()
+            run_offline() if args.no_fetch else run_real()
         except Exception as e:
             print(f"Real run failed ({e}).", file=sys.stderr)
             sys.exit(1)

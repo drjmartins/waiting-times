@@ -1,10 +1,23 @@
 name: Update CWT + RTT data and deploy
 
-# Daily refresh + deploy. Manual run via the Actions tab or `gh workflow run`.
+# MOTHBALLED 2026-10-07 — the daily schedule is deliberately DISABLED (see STATUS.md /
+# DECISIONS.md). NHS England's CDN/WAF serves empty pages to GitHub Actions' egress IPs,
+# so the scheduled fetch failed every day from 2026-09-16; the site is frozen on its last
+# good build and this workflow is now a manual publish path.
+#
+#   Publish what is already committed (default; never contacts NHS):
+#       gh workflow run update-data.yml            # skip_fetch defaults to true
+#   Un-mothball: apply a working fetch route, re-enable the schedule below, and flip the
+#   skip_fetch default to false (see STATUS.md "How to un-mothball").
 on:
-  schedule:
-    - cron: "0 16 * * *"   # daily 16:00 UTC; only does work when NHS posts new files
-  workflow_dispatch: {}      # manual trigger
+  # schedule:
+  #   - cron: "0 16 * * *"   # daily 16:00 UTC; only does work when NHS posts new files
+  workflow_dispatch:
+    inputs:
+      skip_fetch:
+        description: "Skip the NHS fetch: rebuild from the COMMITTED data and deploy only"
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -27,9 +40,24 @@ jobs:
         run: |
           pip install pytest
           python -m pytest -q
+
+      # ---- Publish path (skip_fetch): committed data only, NHS never contacted ----
+      - name: Rebuild cancer site from the committed store (no NHS fetch)
+        if: ${{ inputs.skip_fetch }}
+        # Runs every reconciliation / contiguity gate against the committed store, using
+        # the committed ODS cache. RTT cannot rebuild offline (its raw zips are not
+        # committed), so its committed site/rtt/data is published as-is.
+        run: python -m pipeline.run --no-fetch
+      - name: Mark site as manually updated (automatic updates paused)
+        if: ${{ inputs.skip_fetch }}
+        run: python -m pipeline_common.freeze_note
+
+      # ---- Normal path (scheduled / skip_fetch=false): fetch from NHS and rebuild ----
       - name: Fetch new data and rebuild site (Cancer Waiting Times)
+        if: ${{ !inputs.skip_fetch }}
         run: python -m pipeline.run
       - name: Fetch new data and rebuild site (RTT)
+        if: ${{ !inputs.skip_fetch }}
         # Scrapes the RTT FY pages, fetches each month's Full CSV (raw zips are
         # gitignored + not persisted between runs, so every run re-fetches and picks
         # up NHS's latest revisions), then rebuilds site/rtt/data. The build runs BOTH
@@ -38,6 +66,7 @@ jobs:
         # never ships stale or partial RTT data.
         run: python -m pipeline_rtt.run
       - name: Commit refreshed data + manifest
+        if: ${{ !inputs.skip_fetch }}
         # Only commit when something OTHER than meta.json's built_at changed.
         # build_at churns every run, so committing unconditionally created a
         # daily no-op "Auto update CWT data" commit that every manual deploy then

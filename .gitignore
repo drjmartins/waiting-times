@@ -20,10 +20,11 @@ site/cancer/data/org/*.breakdown.json
 site/cancer/data/national.breakdown.json
 
 # RTT load-on-demand per-org + national treatment-function breakdown files
-# (~9.6MB) — rebuilt every run, same pattern as the cancer breakdown files. The
-# lean core org/<CODE>.json stays committed.
-site/rtt/data/org/*.breakdown.json
-site/rtt/data/national.breakdown.json
+# (~11MB) are COMMITTED (deliberately not ignored since the 2026-10-07 mothball): RTT
+# cannot rebuild offline (its raw zips aren't committed), so the manual publish
+# workflow (skip_fetch) can only ship these if they live in git. Cancer's breakdown
+# files stay ignored above because the cancer build regenerates them from the
+# committed store.
 
 # Local dev verification screenshots (not part of the site or pipeline)
 screenshots/

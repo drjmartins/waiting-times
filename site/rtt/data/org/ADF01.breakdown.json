@@ -1,0 +1,1 @@
+{"code":"ADF01","level":"provider","tfs":{"C_330":{"name":"Dermatology Service","months":["2024-11","2024-12","2025-01","2025-02"],"measures":{"pct18":{"performance":[1.0,1.0,1.0,1.0],"within_target":[54,49,35,17],"total":[54,49,35,17]},"waitlist":{"value":[54,49,35,17]},"longwait":{"w52":[0,0,0,0],"w65":[0,0,0,0],"w78":[0,0,0,0],"w104":[0,0,0,0]}}}}}

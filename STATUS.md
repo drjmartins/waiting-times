@@ -2,28 +2,49 @@
 
 At-a-glance project state. For the full decision history see `DECISIONS.md`.
 
-_Last updated: 2026-09-18 (Claude Code session; retry fix pushed but live-verify FAILED — see open item below)._
+_Last updated: 2026-10-07 (Claude Code session; dashboards MOTHBALLED — built, awaiting review + deploy)._
 
-## ⚠️ OPEN — cron down since 2026-09-16; retry-with-backoff fix pushed (commit f55d992) but did NOT clear it on live-verify
-Both dashboards are stuck on the **2026-09-15** deploy (3+ days stale as of 2026-09-18). Root cause: NHS's site
-returns HTTP 200 with **zero of the expected data-file links** to GitHub Actions' network specifically (confirmed:
-the identical code/URL fetched from elsewhere returns full correct content within minutes of a failing CI run) — not
-an NHS format change, not a code bug. Hit RTT on Sept-16/17, then ALSO hit cancer on a manual re-test Sept-18, so it's
-broader and more persistent than first thought (leading theory: a CloudFront edge PoP or WAF rule specific to
-GitHub Actions' egress network, not a brief self-clearing blip). Added a bounded retry (3 attempts, 5s backoff) to
-BOTH pipelines' discovery, plus a fail-loud guard on cancer that didn't exist before (a silent gap this surfaced) —
-both are live on master and proven to work exactly as designed (11 tests), but the retry is too short to route
-around a fault that's stable for the ~10s it tested. **Next scheduled cron is the thing to watch**; see DECISIONS.md
-2026-09-18 (×3) for full detail and options. Live site is safe either way (still serving the last good Sept-15 deploy).
+## 🧊 MOTHBALLED 2026-10-07 — site frozen on its last good build (data to **July 2026**), automatic updates deliberately OFF
+**Both dashboards stay live, unchanged, on GitHub Pages (static, free, indefinitely).** They are a frozen snapshot:
+**data to July 2026** (cancer AND RTT, 52 months Apr-2022 → Jul-2026), built **15 Sept 2026**. Every page footer now
+says "Automatic updates are currently paused." (landing page too). No final refresh was done before freezing.
 
-**Failure emails are muted by a personal GitHub inbox filter (repo Watch → Custom → "Actions" unchecked on
-drjmartins/waiting-times), NOT by pausing anything.** The schedule, the retry, and the fail-loud guard are all still
-running exactly as before, every day, unattended — so if the block clears on its own, the cron quietly starts
-succeeding again with zero action needed. This is deliberately reversible with one checkbox (re-check "Actions" in
-that same Custom watch menu) and does NOT touch `.github/workflows/update-data.yml` or the workflow's enabled state.
-**Tradeoff to remember: this also mutes any OTHER future Actions failure on this repo while it's off** — so check
-the [Actions tab](https://github.com/drjmartins/waiting-times/actions) periodically rather than relying on email
-until this is resolved and the filter is turned back on.
+**Why:** from 2026-09-16 every scheduled run failed (21 consecutive days to 2026-10-06). NHS England's CDN/WAF returns
+HTTP 200 with an empty page to GitHub Actions' egress IPs (Azure; the identical code/URL works from a normal
+connection) — first RTT, then cancer too. Not an NHS format change and not a code bug. A bounded retry + a new
+cancer fail-loud guard shipped (commit f55d992) but can't route around a fault stable across days. A paid proxy is
+off the table (£0 budget); free options were investigated (DECISIONS 2026-09-21) and none is worth the standing
+infrastructure, so the call is: stale-but-live is the acceptable end state.
+
+**The cron is deliberately DISABLED** (the `schedule:` trigger in `.github/workflows/update-data.yml` is commented out,
+not deleted). That is intentional — NOT the silent-stale-data trap: nothing is failing, nothing is being missed, and the
+site says on its face that updates are paused. The workflow, retry, and every fail-loud guard are intact and revivable.
+Failure emails are also still muted via the personal Watch → Custom → "Actions" filter; with no cron there are none
+anyway (re-check "Actions" when un-mothballing so a revived cron can alert again).
+
+**Manual publish lever** (`workflow_dispatch`, input `skip_fetch`, default **true**): `gh workflow run update-data.yml`
+(or Actions tab → Run workflow). It runs the tests, rebuilds the cancer site from the COMMITTED store (all gates;
+committed ODS cache; **never contacts NHS or ODS**), publishes RTT's committed `site/rtt/data` as-is, stamps the
+"updates paused" note, and deploys. RTT can't rebuild offline (raw zips aren't committed) so its breakdown files are
+now COMMITTED (`.gitignore` no longer ignores them) — without that a publish would ship an RTT with no
+treatment-function view. `built_at` is preserved, so "Last updated" names the data refresh, not the deploy day.
+
+**Occasional hand refresh** (from any unblocked machine — this laptop, or Claude Code on request): run
+`python -m pipeline.run` and `python -m pipeline_rtt.run` locally → commit the CI list
+(`git add data/manifest.json data/processed site/cancer/data data_rtt/manifest.json site/rtt/data ods_classification.json`)
+→ push → `gh workflow run update-data.yml`. Check the footer afterwards: it shows the new data month.
+
+**How to UN-MOTHBALL:** (1) get a working fetch route — either the block has cleared (test with
+`gh workflow run update-data.yml -f skip_fetch=false`; green = cleared) or apply the parked free option: an **AWS
+Lambda relay** doing just the england.nhs.uk fetches (AWS's own WAF docs say `HostingProviderIPList` excludes AWS IPs;
+untested; design + credential handling in DECISIONS 2026-09-21); (2) uncomment `schedule:` in the workflow; (3) flip
+the `skip_fetch` default to `false`; (4) re-check Watch → Custom → "Actions". The on-site note vanishes by itself on the
+first real fetch run (it's driven by a flag only the manual lever sets). Note the revived CI commit step will now also
+commit RTT's ~11 MB breakdown files when data changes.
+
+**Housekeeping flagged, not done:** a stray Finder-duplicate git ref `.git/refs/heads/master 2` makes `git fetch`
+print a harmless "bad object" error; ubuntu-latest migrates to Ubuntu 26 on 2026-10-19 (re-run the tests on it before
+the next real use).
 
 ## ✅ DEPLOYED + LIVE-VERIFIED 2026-06-29 (run 28362120515, build+deploy GREEN; commit 15acb64) — cron-wedge fix (layered C+B+A+D); 76 tests pass
 **Cron UNWEDGED** (14m6s build + 14s deploy — a real full run, vs the ~30s test-gate failures June-27/28). **Live checks
